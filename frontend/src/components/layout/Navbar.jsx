@@ -1,15 +1,19 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Gavel, User, LogOut } from 'lucide-react';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout, reset } from '../../redux/authSlice';
 
 const Navbar = () => {
-  // Mock login state (We will replace this with Redux later)
-  const isLoggedIn = false; 
-  const userRole = 'bidder'; // 'bidder', 'seller', 'admin'
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // Get real user state from Redux Store
+  const { user } = useSelector((state) => state.auth);
 
   const handleLogout = () => {
-    // TODO: Implement logout logic
+    dispatch(logout());
+    dispatch(reset());
     navigate('/login');
   };
 
@@ -37,21 +41,29 @@ const Navbar = () => {
               About
             </Link>
             
-            {isLoggedIn ? (
+            {user ? (
               <div className="flex items-center gap-4">
                 <Link 
-                  to={`/dashboard/${userRole}`} 
+                  to={`/dashboard/${user.role}`} 
                   className="text-gray-900 font-semibold hover:text-bid-purple capitalize"
                 >
                   Dashboard
                 </Link>
-                <button 
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </button>
+                
+                <div className="flex items-center gap-2">
+                    {/* Optional: Show user name */}
+                    <span className="text-sm text-gray-500 hidden lg:block">
+                        Hello, {user.name}
+                    </span>
+                    
+                    <button 
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition"
+                    >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                    </button>
+                </div>
               </div>
             ) : (
               <div className="flex items-center gap-4">
@@ -71,9 +83,8 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button (Simple version) */}
+          {/* Mobile Menu Icon (Placeholder) */}
           <div className="md:hidden">
-             {/* We can add a hamburger menu here later */}
              <User className="h-6 w-6 text-gray-600" />
           </div>
         </div>
