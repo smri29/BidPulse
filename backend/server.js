@@ -5,6 +5,7 @@ const http = require('http'); // Needed for Socket.io
 const { Server } = require('socket.io');
 const connectDB = require('./config/db.js');
 const authRoutes = require('./routes/authRoutes');
+const auctionRoutes = require('./routes/auctionRoutes');
 
 // 1. Load Config
 dotenv.config();
@@ -27,6 +28,7 @@ app.use(cors());
 app.use(express.json()); // Allow parsing JSON bodies
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/auctions', auctionRoutes);
 
 // 5. Test Route (To check if API is working)
 app.get('/', (req, res) => {
