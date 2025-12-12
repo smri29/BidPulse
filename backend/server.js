@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const connectDB = require('./config/db.js');
 const authRoutes = require('./routes/authRoutes');
 const auctionRoutes = require('./routes/auctionRoutes');
+const bidRoutes = require('./routes/bidRoutes');
 
 // 1. Load Config
 dotenv.config();
@@ -29,6 +30,7 @@ app.use(express.json()); // Allow parsing JSON bodies
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/auctions', auctionRoutes);
+app.use('/api/bids', bidRoutes);
 
 // 5. Test Route (To check if API is working)
 app.get('/', (req, res) => {
@@ -49,6 +51,36 @@ app.set('socketio', io);
 
 // 8. Start Server
 const PORT = process.env.PORT || 5000;
+
+const cron = require('node-cron');
+const Auction = require('./models/Auction'); // Make sure to require the model
+
+// Cron Job: Run every minute to check for expired auctions
+cron.schedule('* * * * *', async () => {
+  try {
+    const now = new Date();
+    
+    // Find active auctions that have passed their end time
+    const expiredAuctions = await Auction.find({ 
+      status: 'active', 
+      endTime: { $lt: now } 
+    });
+
+    for (const auction of expiredAuctions) {
+      if (auction.bids.length > 0) {
+        auction.status = 'completed';
+        auction.winner = auction.highestBidder;
+        // TODO: Send Email to Winner & Seller here later
+      } else {
+        auction.status = 'unsold';
+      }
+      await auction.save();
+      console.log(`Auction ${auction._id} closed.`);
+    }
+  } catch (error) {
+    console.error('Cron job error:', error);
+  }
+});
 
 server.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
