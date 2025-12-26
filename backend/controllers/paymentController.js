@@ -28,6 +28,8 @@ exports.createCheckoutSession = async (req, res) => {
             product_data: {
               name: auction.title,
               description: auction.description,
+              // Note: If auction.images is empty or contains invalid URLs, Stripe might throw an error here.
+              // Ensure your auction images are valid public URLs (e.g. starting with http/https).
             },
             unit_amount: Math.round(auction.currentPrice * 100), // Stripe uses cents
           },
@@ -45,6 +47,9 @@ exports.createCheckoutSession = async (req, res) => {
 
     res.status(200).json({ id: session.id, url: session.url });
   } catch (error) {
+    // --- THIS IS THE UPDATE ---
+    console.error("STRIPE ERROR:", error); 
+    // -------------------------
     res.status(500).json({ message: error.message });
   }
 };
@@ -67,21 +72,20 @@ exports.releaseFunds = async (req, res) => {
     // 2. Calculate Commission (8%)
     const totalAmount = auction.currentPrice;
     const commission = totalAmount * 0.08;
-    const sellerPayout = totalAmount - commission; // FIXED: Removed space
+    const sellerPayout = totalAmount - commission;
 
     // 3. Transfer to Seller (Stripe Connect)
     // NOTE: In a real app, you need the Seller's Connected Account ID.
-    // We check if it exists before trying to transfer.
     if (auction.seller.stripeAccountId) {
       try {
         await stripe.transfers.create({
-          amount: Math.round(sellerPayout * 100), // FIXED: Variable name matching
+          amount: Math.round(sellerPayout * 100),
           currency: 'usd',
           destination: auction.seller.stripeAccountId,
         });
       } catch (stripeError) {
         console.error('Stripe Transfer Failed:', stripeError.message);
-        // Continue to update DB even if transfer fails for MVP testing
+        // We continue to update DB for MVP purposes even if transfer fails
       }
     }
 
@@ -92,6 +96,7 @@ exports.releaseFunds = async (req, res) => {
     res.status(200).json({ message: 'Funds released to seller. Transaction complete.' });
 
   } catch (error) {
+    console.error("RELEASE FUNDS ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };

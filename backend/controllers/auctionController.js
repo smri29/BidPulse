@@ -1,12 +1,14 @@
 const Auction = require('../models/Auction');
 
-// @desc    Get all active auctions
+// @desc    Get all auctions (Active, Completed, Unsold)
 // @route   GET /api/auctions
 // @access  Public
 exports.getAllAuctions = async (req, res) => {
   try {
-    // Simple filter: only show active auctions
-    const auctions = await Auction.find({ status: 'active' }).sort({ createdAt: -1 });
+    // --- FIX ---
+    // Removed { status: 'active' }. Now it fetches everything.
+    // This prevents products from disappearing when the timer ends.
+    const auctions = await Auction.find().sort({ createdAt: -1 });
     res.status(200).json(auctions);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -19,8 +21,8 @@ exports.getAllAuctions = async (req, res) => {
 exports.getAuctionById = async (req, res) => {
   try {
     const auction = await Auction.findById(req.params.id)
-      .populate('seller', 'name email') // Show seller info
-      .populate('bids.bidder', 'name'); // Show bidder names in history
+      .populate('seller', 'name email')
+      .populate('bids.bidder', 'name'); 
 
     if (!auction) {
       return res.status(404).json({ message: 'Auction not found' });
@@ -38,13 +40,18 @@ exports.createAuction = async (req, res) => {
   const { title, description, category, startingPrice, endTime, images } = req.body;
 
   try {
+    if (req.user.role === 'bidder') {
+        return res.status(403).json({ message: 'Only sellers can create auctions' });
+    }
+
     const auction = await Auction.create({
       title,
       description,
       category,
       startingPrice,
+      currentPrice: startingPrice, 
       endTime,
-      images, // Expecting an array of image URL strings for now
+      images,
       seller: req.user._id,
     });
 
@@ -65,12 +72,10 @@ exports.deleteAuction = async (req, res) => {
       return res.status(404).json({ message: 'Auction not found' });
     }
 
-    // Check if user is seller or admin
     if (auction.seller.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
-    // Check if bids exist (Optional rule: cannot delete if bidding started)
     if (auction.bids.length > 0) {
       return res.status(400).json({ message: 'Cannot delete auction with active bids' });
     }
@@ -78,6 +83,61 @@ exports.deleteAuction = async (req, res) => {
     await auction.deleteOne();
     res.status(200).json({ message: 'Auction removed' });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Place a bid
+// @route   POST /api/auctions/:id/bid
+// @access  Private
+exports.placeBid = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const auction = await Auction.findById(req.params.id);
+
+    if (!auction) {
+      return res.status(404).json({ message: 'Auction not found' });
+    }
+
+    // 1. Validations
+    if (auction.status !== 'active') {
+      return res.status(400).json({ message: 'Auction is closed' });
+    }
+
+    if (amount <= auction.currentPrice) {
+      return res.status(400).json({ message: 'Bid must be higher than current price' });
+    }
+
+    if (auction.seller.toString() === req.user.id) {
+      return res.status(400).json({ message: 'You cannot bid on your own auction' });
+    }
+
+    // 2. Add Bid to Database
+    const newBid = {
+      bidder: req.user.id,
+      amount: Number(amount),
+      time: Date.now(),
+    };
+
+    auction.bids.push(newBid);
+    auction.currentPrice = amount;
+    auction.winner = req.user.id; 
+
+    await auction.save();
+
+    // 3. Populate names
+    const updatedAuction = await Auction.findById(req.params.id)
+      .populate('seller', 'name')
+      .populate('bids.bidder', 'name');
+
+    // 4. Emit Real-Time Update
+    const io = req.app.get('io');
+    io.to(req.params.id).emit('bidUpdated', updatedAuction);
+
+    res.status(200).json(updatedAuction);
+
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ message: error.message });
   }
 };

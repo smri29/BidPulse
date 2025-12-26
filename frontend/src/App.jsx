@@ -16,6 +16,7 @@ import AdminDashboard from './pages/dashboard/AdminDashboard';
 import CreateAuction from './pages/dashboard/CreateAuction';
 import AuctionDetails from './pages/AuctionDetails';
 import EditAuction from './pages/dashboard/EditAuction';
+import PaymentSuccess from './pages/PaymentSuccess';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="/create-auction" element={<CreateAuction />} />
           <Route path="/auction/:id" element={<AuctionDetails />} />
           <Route path="/edit-auction/:id" element={<EditAuction />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
           <Route path="*" element={<div className="p-10 text-center">404 Not Found</div>} />
         </Routes>
       </div>

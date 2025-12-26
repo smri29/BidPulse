@@ -4,8 +4,9 @@ const {
   getAuctionById,
   createAuction,
   deleteAuction,
+  placeBid // <--- Added this import
 } = require('../controllers/auctionController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -13,7 +14,10 @@ router.get('/', getAllAuctions);
 router.get('/:id', getAuctionById);
 
 // Protected Routes
-router.post('/', protect, authorize('seller', 'admin'), createAuction);
-router.delete('/:id', protect, authorize('seller', 'admin'), deleteAuction);
+router.post('/', protect, createAuction);
+router.delete('/:id', protect, deleteAuction);
+
+// Bidding Route (Added)
+router.post('/:id/bid', protect, placeBid);
 
 module.exports = router;

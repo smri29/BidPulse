@@ -2,7 +2,6 @@ const express = require('express');
 const dotenv = require('dotenv');
 
 // 1. Load Config (MUST BE FIRST)
-// This ensures process.env is ready before we require any other files
 dotenv.config(); 
 
 const cors = require('cors');
@@ -15,14 +14,13 @@ const stripe = require('stripe');
 // Import Models
 const Auction = require('./models/Auction'); 
 
-// Import Routes (Require these AFTER dotenv.config)
+// Import Routes
 const authRoutes = require('./routes/authRoutes');
 const auctionRoutes = require('./routes/auctionRoutes');
-const bidRoutes = require('./routes/bidRoutes');
+//const bidRoutes = require('./routes/bidRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
-// Initialize Stripe Client for Webhook
-// (We check if key exists to prevent crashing if you haven't added it yet)
+// Initialize Stripe Client
 const stripeClient = process.env.STRIPE_SECRET_KEY 
   ? stripe(process.env.STRIPE_SECRET_KEY) 
   : null;
@@ -35,14 +33,16 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*', 
+    origin: '*', // In production, replace with your frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
   },
 });
 
+// Make io accessible in controllers
+app.set('io', io);
+
 // 4. STRIPE WEBHOOK (Must be before express.json)
 app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  // If stripe isn't set up, ignore webhooks to prevent crash
   if (!stripeClient) return res.status(500).send('Stripe not configured');
 
   const sig = req.headers['stripe-signature'];
@@ -91,7 +91,7 @@ app.use(express.json());
 // 6. Register Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/auctions', auctionRoutes);
-app.use('/api/bids', bidRoutes);
+//app.use('/api/bids', bidRoutes);
 app.use('/api/payment', paymentRoutes);
 
 // 7. Test Route
@@ -103,8 +103,10 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
 
-  socket.on('join_auction', (auctionId) => {
+  // UPDATED: Matches the frontend emit 'joinAuction'
+  socket.on('joinAuction', (auctionId) => {
     socket.join(auctionId);
+    console.log(`User ${socket.id} joined room: ${auctionId}`);
   });
 
   socket.on('disconnect', () => {
@@ -112,9 +114,7 @@ io.on('connection', (socket) => {
   });
 });
 
-app.set('socketio', io);
-
-// 9. Cron Job
+// 9. Cron Job (Checks for expired auctions every minute)
 cron.schedule('* * * * *', async () => {
   try {
     const now = new Date();
@@ -126,7 +126,11 @@ cron.schedule('* * * * *', async () => {
     for (const auction of expiredAuctions) {
       if (auction.bids.length > 0) {
         auction.status = 'completed';
-        auction.winner = auction.highestBidder;
+        // Set winner to the last person who bid
+        // (Assuming bids are pushed in order, last one is highest)
+        const lastBid = auction.bids[auction.bids.length - 1];
+        auction.winner = lastBid.bidder;
+
         io.to(auction._id.toString()).emit('auction_ended', {
              auctionId: auction._id,
              winner: auction.winner 

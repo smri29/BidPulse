@@ -12,8 +12,8 @@ const Home = () => {
     dispatch(getAllAuctions());
   }, [dispatch]);
 
-  // Separate Active and Closed auctions if you want, 
-  // for now, let's just show Active ones at the top.
+  // Filter: Show only 'active' auctions on the Home Page
+  // (Since the backend now sends all statuses)
   const activeAuctions = auctions.filter(a => a.status === 'active');
 
   return (
