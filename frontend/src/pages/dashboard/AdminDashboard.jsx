@@ -9,23 +9,37 @@ const AdminDashboard = () => {
   const { user } = useSelector((state) => state.auth);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null); // Add Error State
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        // Ensure port is correct (usually 5000 for backend)
         const { data } = await axios.get('http://localhost:5000/api/admin/stats', config);
         setStats(data);
         setLoading(false);
-      } catch (error) {
-        console.error(error);
+      } catch (err) {
+        console.error("Admin Stats Error:", err);
+        setError("Failed to load admin stats. Ensure backend is running and Admin Routes are registered.");
         setLoading(false);
       }
     };
-    fetchStats();
-  }, [user.token]);
+    
+    if (user) fetchStats();
+  }, [user]);
 
   if (loading) return <div className="p-10 text-center">Loading Admin Panel...</div>;
+  
+  // --- SAFETY CHECK ---
+  if (error) return (
+    <div className="p-10 text-center text-red-600 bg-red-50 m-10 rounded-xl border border-red-200">
+        <h3 className="font-bold text-lg">Error</h3>
+        <p>{error}</p>
+    </div>
+  );
+  if (!stats) return <div className="p-10 text-center">No data available.</div>;
+  // --------------------
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -41,10 +55,10 @@ const AdminDashboard = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <StatCard icon={<Users />} label="Total Users" value={stats.totalUsers} color="blue" />
-        <StatCard icon={<Briefcase />} label="Total Auctions" value={stats.totalAuctions} color="purple" />
-        <StatCard icon={<Activity />} label="Funds in Escrow" value={`$${stats.fundsInEscrow.toLocaleString()}`} color="orange" />
-        <StatCard icon={<DollarSign />} label="Net Revenue (8%)" value={`$${stats.totalCommission.toLocaleString()}`} color="green" />
+        <StatCard icon={<Users />} label="Total Users" value={stats.totalUsers || 0} color="blue" />
+        <StatCard icon={<Briefcase />} label="Total Auctions" value={stats.totalAuctions || 0} color="purple" />
+        <StatCard icon={<Activity />} label="Funds in Escrow" value={`$${(stats.fundsInEscrow || 0).toLocaleString()}`} color="orange" />
+        <StatCard icon={<DollarSign />} label="Net Revenue (8%)" value={`$${(stats.totalCommission || 0).toLocaleString()}`} color="green" />
       </div>
 
       {/* Financial Overview */}
@@ -55,7 +69,7 @@ const AdminDashboard = () => {
             <TrendingUp size={20} className="text-gray-500" /> Recent Completed Deals
           </h2>
           <div className="space-y-4">
-            {stats.recentTransactions.length > 0 ? (
+            {stats.recentTransactions && stats.recentTransactions.length > 0 ? (
               stats.recentTransactions.map((deal) => (
                 <div key={deal._id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <div>
@@ -64,7 +78,7 @@ const AdminDashboard = () => {
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-green-600">+${(deal.currentPrice * 0.08).toFixed(2)}</p>
-                    <p className="text-xs text-gray-400">Commision</p>
+                    <p className="text-xs text-gray-400">Commission</p>
                   </div>
                 </div>
               ))
@@ -80,11 +94,11 @@ const AdminDashboard = () => {
             <div className="space-y-6">
                 <div>
                     <div className="flex justify-between text-sm text-gray-400 mb-1">Total Volume Processed</div>
-                    <div className="text-3xl font-bold">${stats.totalVolume.toLocaleString()}</div>
+                    <div className="text-3xl font-bold">${(stats.totalVolume || 0).toLocaleString()}</div>
                 </div>
                 <div className="border-t border-gray-700 pt-4">
                      <div className="flex justify-between text-sm text-gray-400 mb-1">Total Payouts to Sellers</div>
-                    <div className="text-2xl font-bold text-gray-300">${stats.totalPayouts.toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-gray-300">${(stats.totalPayouts || 0).toLocaleString()}</div>
                 </div>
             </div>
         </div>

@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { login, reset } from '../redux/authSlice';
-import { Mail, Lock, LogIn, Shield } from 'lucide-react'; // <--- Added Shield
+import { Mail, Lock, LogIn, Shield } from 'lucide-react';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -23,14 +23,15 @@ const Login = () => {
     if (isError) {
       toast.error(message);
     }
-    // Redirect if logged in
-    if (user) {
-        if (user.role === 'admin') {
-            navigate('/admin/dashboard');
-        } else if (user.role === 'seller') {
-            navigate('/seller/dashboard');
+    
+    // Redirect logic matched to App.jsx routes
+    if (user || isSuccess) {
+        if (user?.role === 'admin') {
+            navigate('/dashboard/admin'); 
+        } else if (user?.role === 'seller') {
+            navigate('/dashboard/seller');
         } else {
-            navigate('/dashboard');
+            navigate('/dashboard/bidder'); 
         }
     }
     dispatch(reset());

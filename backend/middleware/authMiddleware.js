@@ -9,28 +9,42 @@ const protect = async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     try {
-      // Get token from header (Format: "Bearer <token>")
+      // Get token from header
       token = req.headers.authorization.split(' ')[1];
 
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Get user from the ID in the token
-      req.user = await User.findById(decoded.id);
+      // --- FIX: HANDLE STATIC ADMIN ---
+      if (decoded.id === 'static_admin_id_999') {
+         req.user = {
+             id: 'static_admin_id_999',
+             _id: 'static_admin_id_999',
+             name: 'Super Admin',
+             email: 'smrizvi.i29@gmail.com',
+             role: 'admin'
+         };
+         return next();
+      }
+      // -------------------------------
+
+      // Get user from the token
+      req.user = await User.findById(decoded.id).select('-password');
+
+      if (!req.user) {
+        return res.status(401).json({ message: 'Not authorized, user not found' });
+      }
 
       next();
     } catch (error) {
       console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      res.status(401).json({ message: 'Not authorized' });
     }
-  }
-
-  if (!token) {
+  } else {
     res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
 
-// Grant access to specific roles
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
