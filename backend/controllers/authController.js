@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const sendEmail = require('../utils/emailService'); // <--- Import Email Service
+const sendEmail = require('../utils/emailService'); // Import Email Service
 
 // Generate JWT
 const generateToken = (id) => {
@@ -24,6 +24,7 @@ exports.register = async (req, res) => {
     }
 
     // Create user
+    // The pre('save') hook in User.js will handle password hashing automatically
     const user = await User.create({
       name,
       email,
@@ -47,6 +48,7 @@ exports.register = async (req, res) => {
           `
         });
       } catch (err) {
+        // Log error but don't fail registration
         console.error("Welcome Email Failed:", err.message);
       }
       // -----------------------------
@@ -62,6 +64,7 @@ exports.register = async (req, res) => {
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
+    // Catch-all for server errors
     res.status(500).json({ message: error.message });
   }
 };
