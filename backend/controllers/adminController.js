@@ -33,3 +33,32 @@ exports.getAdminStats = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Get All Users (Admin)
+// @route   GET /api/admin/users
+// @access  Private/Admin
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete a User (Admin)
+// @route   DELETE /api/admin/users/:id
+// @access  Private/Admin
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (user) {
+      await user.deleteOne();
+      res.json({ message: 'User removed' });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

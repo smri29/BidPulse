@@ -5,9 +5,7 @@ const Auction = require('../models/Auction');
 // @access  Public
 exports.getAllAuctions = async (req, res) => {
   try {
-    // --- FIX ---
-    // Removed { status: 'active' }. Now it fetches everything.
-    // This prevents products from disappearing when the timer ends.
+    // Fetches everything so products don't disappear when timer ends
     const auctions = await Auction.find().sort({ createdAt: -1 });
     res.status(200).json(auctions);
   } catch (error) {
@@ -72,11 +70,14 @@ exports.deleteAuction = async (req, res) => {
       return res.status(404).json({ message: 'Auction not found' });
     }
 
+    // Check if user is owner OR admin
     if (auction.seller.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
-    if (auction.bids.length > 0) {
+    // Allow Admin to force delete even if bids exist (optional, but safer to block)
+    // For now, we keep the safety check:
+    if (auction.bids.length > 0 && req.user.role !== 'admin') {
       return res.status(400).json({ message: 'Cannot delete auction with active bids' });
     }
 

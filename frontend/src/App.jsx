@@ -1,10 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
+import { useSelector } from 'react-redux'; // Import useSelector for role checking
 import 'react-toastify/dist/ReactToastify.css';
 
 // Components (Layout & Security)
 import Navbar from './components/layout/Navbar'; 
+import AdminNavbar from './components/layout/AdminNavbar'; // Import AdminNavbar
 import Footer from './components/Footer'; 
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
@@ -26,17 +28,21 @@ import Privacy from './pages/Privacy';
 import BidderDashboard from './pages/dashboard/BidderDashboard';
 import SellerDashboard from './pages/dashboard/SellerDashboard';
 import AdminDashboard from './pages/dashboard/AdminDashboard';
+import AdminUsers from './pages/dashboard/AdminUsers';
 import CreateAuction from './pages/dashboard/CreateAuction'; 
 import EditAuction from './pages/dashboard/EditAuction';
 import PaymentSuccess from './pages/PaymentSuccess';
 
 function App() {
+  const { user } = useSelector((state) => state.auth);
+
   return (
     <Router>
       <div className="flex flex-col min-h-screen">
         <ToastContainer position="top-right" autoClose={3000} />
         
-        <Navbar />
+        {/* Conditional Navbar: Show AdminNavbar if admin, else standard Navbar */}
+        {user && user.role === 'admin' ? <AdminNavbar /> : <Navbar />}
         
         <main className="flex-grow bg-slate-50">
           <Routes>
@@ -103,6 +109,16 @@ function App() {
               element={
                 <AdminRoute>
                   <AdminDashboard />
+                </AdminRoute>
+              } 
+            />
+            
+            {/* NEW: Manage Users Route */}
+            <Route 
+              path="/admin/users" 
+              element={
+                <AdminRoute>
+                  <AdminUsers />
                 </AdminRoute>
               } 
             />
