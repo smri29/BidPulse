@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const sendEmail = require('../utils/emailService'); // <--- Import Email Service
 
 // Generate JWT
 const generateToken = (id) => {
@@ -31,6 +32,25 @@ exports.register = async (req, res) => {
     });
 
     if (user) {
+      // --- EMAIL TRIGGER: WELCOME ---
+      try {
+        await sendEmail({
+          email: user.email,
+          subject: 'Welcome to BidPulse! 🚀',
+          message: `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+              <h1 style="color: #6d28d9;">Welcome, ${user.name}!</h1>
+              <p>We are thrilled to have you join <b>BidPulse</b>, the premium real-time auction marketplace.</p>
+              <p>Your account has been successfully created as a <b>${user.role}</b>.</p>
+              <p>Get started now: <a href="${process.env.CLIENT_URL}" style="color: #6d28d9;">Go to BidPulse</a></p>
+            </div>
+          `
+        });
+      } catch (err) {
+        console.error("Welcome Email Failed:", err.message);
+      }
+      // -----------------------------
+
       res.status(201).json({
         _id: user._id,
         name: user.name,
@@ -65,7 +85,6 @@ exports.login = async (req, res) => {
     }
 
     // --- 2. Standard User Login (Database Check) ---
-    // Check for user
     const user = await User.findOne({ email }).select('+password');
 
     if (user && (await user.matchPassword(password))) {
@@ -88,7 +107,6 @@ exports.login = async (req, res) => {
 // @route   GET /api/auth/me
 // @access  Private
 exports.getMe = async (req, res) => {
-  // If it's the static admin, return static data
   if (req.user.id === 'static_admin_id_999') {
      return res.status(200).json({
         _id: 'static_admin_id_999',

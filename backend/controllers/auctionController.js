@@ -1,11 +1,11 @@
 const Auction = require('../models/Auction');
+const User = require('../models/User'); // Import User model
+const sendEmail = require('../utils/emailService'); // Import Email Service
 
-// @desc    Get all auctions (Active, Completed, Unsold)
+// @desc    Get all auctions
 // @route   GET /api/auctions
-// @access  Public
 exports.getAllAuctions = async (req, res) => {
   try {
-    // Fetches everything so products don't disappear when timer ends
     const auctions = await Auction.find().sort({ createdAt: -1 });
     res.status(200).json(auctions);
   } catch (error) {
@@ -15,7 +15,6 @@ exports.getAllAuctions = async (req, res) => {
 
 // @desc    Get single auction
 // @route   GET /api/auctions/:id
-// @access  Public
 exports.getAuctionById = async (req, res) => {
   try {
     const auction = await Auction.findById(req.params.id)
@@ -33,7 +32,6 @@ exports.getAuctionById = async (req, res) => {
 
 // @desc    Create a new auction
 // @route   POST /api/auctions
-// @access  Private (Seller only)
 exports.createAuction = async (req, res) => {
   const { title, description, category, startingPrice, endTime, images } = req.body;
 
@@ -53,6 +51,29 @@ exports.createAuction = async (req, res) => {
       seller: req.user._id,
     });
 
+    // --- EMAIL TRIGGER: LISTING SUCCESS ---
+    try {
+        const seller = await User.findById(req.user._id);
+        await sendEmail({
+            email: seller.email,
+            subject: `Listing Confirmed: ${title}`,
+            message: `
+                <div style="font-family: Arial, sans-serif;">
+                    <h1 style="color: #10b981;">Your Item is Live!</h1>
+                    <p>You have successfully listed <b>${title}</b> on BidPulse.</p>
+                    <ul>
+                        <li><b>Starting Price:</b> $${startingPrice}</li>
+                        <li><b>Ends At:</b> ${new Date(endTime).toLocaleString()}</li>
+                    </ul>
+                    <p>Good luck!</p>
+                </div>
+            `
+        });
+    } catch (err) {
+        console.error("Listing Email Failed:", err.message);
+    }
+    // -------------------------------------
+
     res.status(201).json(auction);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -61,7 +82,6 @@ exports.createAuction = async (req, res) => {
 
 // @desc    Delete auction
 // @route   DELETE /api/auctions/:id
-// @access  Private (Owner/Admin)
 exports.deleteAuction = async (req, res) => {
   try {
     const auction = await Auction.findById(req.params.id);
@@ -70,13 +90,10 @@ exports.deleteAuction = async (req, res) => {
       return res.status(404).json({ message: 'Auction not found' });
     }
 
-    // Check if user is owner OR admin
     if (auction.seller.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
-    // Allow Admin to force delete even if bids exist (optional, but safer to block)
-    // For now, we keep the safety check:
     if (auction.bids.length > 0 && req.user.role !== 'admin') {
       return res.status(400).json({ message: 'Cannot delete auction with active bids' });
     }
@@ -90,7 +107,6 @@ exports.deleteAuction = async (req, res) => {
 
 // @desc    Place a bid
 // @route   POST /api/auctions/:id/bid
-// @access  Private
 exports.placeBid = async (req, res) => {
   try {
     const { amount } = req.body;
@@ -100,20 +116,21 @@ exports.placeBid = async (req, res) => {
       return res.status(404).json({ message: 'Auction not found' });
     }
 
-    // 1. Validations
+    // Validations
     if (auction.status !== 'active') {
       return res.status(400).json({ message: 'Auction is closed' });
     }
-
     if (amount <= auction.currentPrice) {
       return res.status(400).json({ message: 'Bid must be higher than current price' });
     }
-
     if (auction.seller.toString() === req.user.id) {
       return res.status(400).json({ message: 'You cannot bid on your own auction' });
     }
 
-    // 2. Add Bid to Database
+    // --- CAPTURE PREVIOUS WINNER FOR OUTBID EMAIL ---
+    const previousWinnerId = auction.winner; 
+    // -----------------------------------------------
+
     const newBid = {
       bidder: req.user.id,
       amount: Number(amount),
@@ -126,12 +143,36 @@ exports.placeBid = async (req, res) => {
 
     await auction.save();
 
-    // 3. Populate names
+    // --- EMAIL TRIGGER: OUTBID ALERT ---
+    if (previousWinnerId) {
+        try {
+            const previousWinner = await User.findById(previousWinnerId);
+            // Ensure we don't email if user outbid themselves (rare but possible)
+            if (previousWinner && previousWinner._id.toString() !== req.user.id) {
+                await sendEmail({
+                    email: previousWinner.email,
+                    subject: `⚠️ You've been outbid on ${auction.title}`,
+                    message: `
+                        <div style="font-family: Arial, sans-serif;">
+                            <h2 style="color: #ef4444;">Act Fast!</h2>
+                            <p>Someone just bid <b>$${amount}</b> on <b>${auction.title}</b>.</p>
+                            <p>You are no longer the highest bidder.</p>
+                            <p><a href="${process.env.CLIENT_URL}/auction/${auction._id}" style="font-weight: bold; color: #6d28d9;">Bid Again Now</a></p>
+                        </div>
+                    `
+                });
+            }
+        } catch (err) {
+            console.error("Outbid Email Failed:", err.message);
+        }
+    }
+    // -----------------------------------
+
+    // Populate names & Emit
     const updatedAuction = await Auction.findById(req.params.id)
       .populate('seller', 'name')
       .populate('bids.bidder', 'name');
 
-    // 4. Emit Real-Time Update
     const io = req.app.get('io');
     io.to(req.params.id).emit('bidUpdated', updatedAuction);
 
