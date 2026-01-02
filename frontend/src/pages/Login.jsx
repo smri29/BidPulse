@@ -97,6 +97,17 @@ const Login = () => {
                 placeholder="Password"
               />
             </div>
+
+            {/* --- FORGOT PASSWORD LINK --- */}
+            <div className="flex items-center justify-end">
+              <Link 
+                to="/forgot-password" 
+                className="text-sm font-medium text-bid-purple hover:text-indigo-500 hover:underline"
+              >
+                Forgot your password?
+              </Link>
+            </div>
+            {/* --------------------------- */}
           </div>
 
           <div>

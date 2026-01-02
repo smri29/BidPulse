@@ -26,6 +26,8 @@ import Privacy from './pages/Privacy';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Pages (Dashboard & Protected)
 import BidderDashboard from './pages/dashboard/BidderDashboard';
@@ -61,6 +63,8 @@ function App() {
             <Route path="/help" element={<HelpCenter />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
             {/* --- User Account Routes --- */}
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />

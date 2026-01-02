@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto'); // <--- Import Crypto
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -19,24 +20,37 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a password'],
     minlength: 6,
-    select: false, // Don't return password by default in queries
+    select: false, 
   },
   role: {
     type: String,
-    // Updated Enum to support Unified 'user' role + legacy roles
     enum: ['user', 'bidder', 'seller', 'admin'], 
-    default: 'user', // Default to generic user who can do both
+    default: 'user', 
   },
-  // For Sellers: Who have they blocked?
+  // --- New Verification Fields (Matches Register.jsx) ---
+  dob: {
+    type: Date,
+  },
+  idType: {
+    type: String,
+    enum: ['nid', 'passport', 'birth_cert'],
+  },
+  idNumber: {
+    type: String,
+  },
+  // -----------------------------------------------------
   blockedUsers: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   }],
-  // For Sellers: Their Stripe Account ID to receive money
   stripeAccountId: {
     type: String,
     default: null, 
   },
+  // --- Password Reset Fields ---
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
+  // -----------------------------
   createdAt: {
     type: Date,
     default: Date.now,
@@ -44,21 +58,34 @@ const userSchema = new mongoose.Schema({
 });
 
 // Encrypt password using bcrypt before saving
-// FIXED: Removed 'next' parameter to use modern Async/Await Mongoose pattern
 userSchema.pre('save', async function () {
-  // If password is not modified, skip hashing
   if (!this.isModified('password')) {
     return;
   }
-
-  // Generate Salt and Hash
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Match user entered password to hashed password in database
+// Match user entered password to hashed password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// --- Generate Password Reset Token ---
+userSchema.methods.getResetPasswordToken = function () {
+  // Generate token
+  const resetToken = crypto.randomBytes(20).toString('hex');
+
+  // Hash token and set to resetPasswordToken field
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  // Set expire (10 minutes)
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
 };
 
 module.exports = mongoose.model('User', userSchema);
