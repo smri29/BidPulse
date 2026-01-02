@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../utils/axiosConfig';;
 import { toast } from 'react-toastify';
 import { Mail, ArrowLeft, KeyRound } from 'lucide-react';
 
@@ -14,7 +14,7 @@ const ForgotPassword = () => {
 
     try {
       // Direct call to backend API
-      const response = await axios.post('http://localhost:5000/api/auth/forgotpassword', { email });
+      const response = await axios.post('/auth/forgotpassword', { email });
       
       toast.success(response.data.message || 'Email sent! Check your inbox.');
       setEmail(''); // Clear field on success

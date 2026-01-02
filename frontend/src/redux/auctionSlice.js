@@ -1,7 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-const API_URL = 'http://localhost:5000/api/auctions';
+import axios from '../utils/axiosConfig'; // Using centralized config
 
 // Helper to get token
 const getConfig = (token) => {
@@ -18,7 +16,8 @@ export const createAuction = createAsyncThunk(
   async (auctionData, thunkAPI) => {
     try {
       const token = thunkAPI.getState().auth.user.token;
-      const response = await axios.post(API_URL, auctionData, getConfig(token));
+      // UPDATED: Use relative path '/auctions'
+      const response = await axios.post('/auctions', auctionData, getConfig(token));
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -32,7 +31,8 @@ export const getAllAuctions = createAsyncThunk(
   'auctions/getAll',
   async (_, thunkAPI) => {
     try {
-      const response = await axios.get(API_URL);
+      // UPDATED: Use relative path '/auctions'
+      const response = await axios.get('/auctions');
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
@@ -47,7 +47,8 @@ export const deleteAuction = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       const token = thunkAPI.getState().auth.user.token;
-      await axios.delete(`${API_URL}/${id}`, getConfig(token));
+      // UPDATED: Use relative path '/auctions/:id'
+      await axios.delete(`/auctions/${id}`, getConfig(token));
       return id; // Return ID to remove it from state
     } catch (error) {
       const message = error.response?.data?.message || error.message;

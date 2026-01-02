@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../utils/axiosConfig';;
 import { toast } from 'react-toastify';
 import { Lock, CheckCircle, KeyRound } from 'lucide-react';
 
@@ -26,7 +26,7 @@ const ResetPassword = () => {
     try {
       // Call the backend endpoint we just created
       const { data } = await axios.put(
-        `http://localhost:5000/api/auth/resetpassword/${resetToken}`,
+        `/auth/resetpassword/${resetToken}`,
         { password }
       );
 

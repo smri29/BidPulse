@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../../utils/axiosConfig';
 import { useSelector } from 'react-redux';
 import { 
   Shield, Users, DollarSign, Briefcase, Activity, TrendingUp, AlertCircle 
@@ -16,7 +16,7 @@ const AdminDashboard = () => {
       try {
         const config = { headers: { Authorization: `Bearer ${user.token}` } };
         // Assuming backend runs on port 5000
-        const { data } = await axios.get('http://localhost:5000/api/admin/stats', config);
+        const { data } = await axios.get('/admin/stats', config);
         setStats(data);
         setLoading(false);
       } catch (err) {

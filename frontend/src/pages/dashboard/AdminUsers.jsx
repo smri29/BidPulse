@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../../utils/axiosConfig';
 import { useSelector } from 'react-redux';
 import { Trash2, Shield, User, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -14,7 +14,7 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.get('http://localhost:5000/api/admin/users', config);
+      const { data } = await axios.get('/admin/users', config);
       setUsers(data);
       setLoading(false);
     } catch (error) {
@@ -33,7 +33,7 @@ const AdminUsers = () => {
     if (window.confirm('Are you sure? This will permanently delete the user and their data.')) {
       try {
         const config = { headers: { Authorization: `Bearer ${user.token}` } };
-        await axios.delete(`http://localhost:5000/api/admin/users/${userId}`, config);
+        await axios.delete(`/admin/users/${userId}`, config);
         toast.success('User removed successfully');
         setUsers(users.filter(u => u._id !== userId));
       } catch (error) {
