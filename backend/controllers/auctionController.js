@@ -1,6 +1,6 @@
 const Auction = require('../models/Auction');
-const User = require('../models/User'); // Import User model
-const sendEmail = require('../utils/emailService'); // Import Email Service
+const User = require('../models/User'); 
+const sendEmail = require('../utils/emailService'); 
 
 // @desc    Get all auctions
 // @route   GET /api/auctions
@@ -36,10 +36,10 @@ exports.createAuction = async (req, res) => {
   const { title, description, category, startingPrice, endTime, images } = req.body;
 
   try {
-    if (req.user.role === 'bidder') {
-        return res.status(403).json({ message: 'Only sellers can create auctions' });
-    }
-
+    // --- UPDATED: ALLOW ALL USERS TO CREATE AUCTIONS ---
+    // Previously, we blocked 'bidder' role here. 
+    // Now, any authenticated user can create an auction.
+    
     const auction = await Auction.create({
       title,
       description,
@@ -127,9 +127,8 @@ exports.placeBid = async (req, res) => {
       return res.status(400).json({ message: 'You cannot bid on your own auction' });
     }
 
-    // --- CAPTURE PREVIOUS WINNER FOR OUTBID EMAIL ---
+    // Capture Previous Winner
     const previousWinnerId = auction.winner; 
-    // -----------------------------------------------
 
     const newBid = {
       bidder: req.user.id,
@@ -147,7 +146,6 @@ exports.placeBid = async (req, res) => {
     if (previousWinnerId) {
         try {
             const previousWinner = await User.findById(previousWinnerId);
-            // Ensure we don't email if user outbid themselves (rare but possible)
             if (previousWinner && previousWinner._id.toString() !== req.user.id) {
                 await sendEmail({
                     email: previousWinner.email,
@@ -168,7 +166,6 @@ exports.placeBid = async (req, res) => {
     }
     // -----------------------------------
 
-    // Populate names & Emit
     const updatedAuction = await Auction.findById(req.params.id)
       .populate('seller', 'name')
       .populate('bids.bidder', 'name');

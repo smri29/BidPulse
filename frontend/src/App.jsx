@@ -23,6 +23,9 @@ import Safety from './pages/Safety';
 import HelpCenter from './pages/HelpCenter';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
+import Notifications from './pages/Notifications';
 
 // Pages (Dashboard & Protected)
 import BidderDashboard from './pages/dashboard/BidderDashboard';
@@ -58,6 +61,10 @@ function App() {
             <Route path="/help" element={<HelpCenter />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+            {/* --- User Account Routes --- */}
+            <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+            <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+            <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
 
             {/* --- Protected Bidder Routes --- */}
             <Route 

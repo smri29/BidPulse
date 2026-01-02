@@ -23,8 +23,9 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['bidder', 'seller', 'admin'],
-    default: 'bidder',
+    // Updated Enum to support Unified 'user' role + legacy roles
+    enum: ['user', 'bidder', 'seller', 'admin'], 
+    default: 'user', // Default to generic user who can do both
   },
   // For Sellers: Who have they blocked?
   blockedUsers: [{
@@ -43,7 +44,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Encrypt password using bcrypt before saving
-// UPDATED: Removed 'next' parameter to use modern Async/Await Mongoose pattern
+// FIXED: Removed 'next' parameter to use modern Async/Await Mongoose pattern
 userSchema.pre('save', async function () {
   // If password is not modified, skip hashing
   if (!this.isModified('password')) {

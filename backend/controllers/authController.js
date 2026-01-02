@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const sendEmail = require('../utils/emailService'); // Import Email Service
+const sendEmail = require('../utils/emailService'); 
 
 // Generate JWT
 const generateToken = (id) => {
@@ -13,7 +13,7 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @access  Public
 exports.register = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
 
   try {
     // Check if user exists
@@ -24,12 +24,12 @@ exports.register = async (req, res) => {
     }
 
     // Create user
-    // The pre('save') hook in User.js will handle password hashing automatically
+    // Note: We now default to 'user' role so they can Buy AND Sell
     const user = await User.create({
       name,
       email,
       password,
-      role: role || 'bidder', // Default to bidder if not specified
+      role: 'user', 
     });
 
     if (user) {
@@ -42,13 +42,12 @@ exports.register = async (req, res) => {
             <div style="font-family: Arial, sans-serif; color: #333;">
               <h1 style="color: #6d28d9;">Welcome, ${user.name}!</h1>
               <p>We are thrilled to have you join <b>BidPulse</b>, the premium real-time auction marketplace.</p>
-              <p>Your account has been successfully created as a <b>${user.role}</b>.</p>
+              <p>Your account has been successfully created. You can now both <b>Bid</b> on items and <b>Sell</b> your own!</p>
               <p>Get started now: <a href="${process.env.CLIENT_URL}" style="color: #6d28d9;">Go to BidPulse</a></p>
             </div>
           `
         });
       } catch (err) {
-        // Log error but don't fail registration
         console.error("Welcome Email Failed:", err.message);
       }
       // -----------------------------
@@ -58,13 +57,13 @@ exports.register = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        createdAt: user.createdAt, // <--- FIXED: Include Date
         token: generateToken(user._id),
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
-    // Catch-all for server errors
     res.status(500).json({ message: error.message });
   }
 };
@@ -83,6 +82,7 @@ exports.login = async (req, res) => {
             name: 'Super Admin',
             email: 'smrizvi.i29@gmail.com',
             role: 'admin',
+            createdAt: new Date(), // Admin gets current date
             token: generateToken('static_admin_id_999'),
         });
     }
@@ -96,6 +96,7 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        createdAt: user.createdAt, // <--- FIXED: Include Date
         token: generateToken(user._id),
       });
     } else {
