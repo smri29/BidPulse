@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getAllAuctions } from '../../redux/auctionSlice';
 import { Link } from 'react-router-dom';
 import { Package, CheckCircle, Clock, AlertCircle, DollarSign, ExternalLink } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../utils/axiosConfig';
 import { toast } from 'react-toastify';
 
 const BidderDashboard = () => {
@@ -32,7 +32,7 @@ const BidderDashboard = () => {
 
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.post(`http://localhost:5000/api/payment/release/${auctionId}`, {}, config);
+      await axios.post(`/payment/release/${auctionId}`, {}, config);
       toast.success("Funds Released! Transaction Closed.");
       dispatch(getAllAuctions()); // Refresh UI
     } catch (error) {

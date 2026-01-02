@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../utils/axiosConfig';
 import { useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
 import { Clock, DollarSign, User, ArrowLeft, Edit, CheckCircle, Package } from 'lucide-react';
@@ -20,7 +20,7 @@ const AuctionDetails = () => {
   useEffect(() => {
     const fetchAuction = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/auctions/${id}`);
+        const res = await axios.get(`/auctions/${id}`);
         setAuction(res.data);
         setBidAmount(res.data.currentPrice + 10);
         setLoading(false);
@@ -55,7 +55,7 @@ const AuctionDetails = () => {
       };
 
       await axios.post(
-        `http://localhost:5000/api/auctions/${id}/bid`, 
+        `/auctions/${id}/bid`, 
         { amount: bidAmount }, 
         config
       );
@@ -73,7 +73,7 @@ const AuctionDetails = () => {
 
       console.log("Requesting payment session...");
       const { data } = await axios.post(
-        `http://localhost:5000/api/payment/checkout/${id}`,
+        `/payment/checkout/${id}`,
         {}, 
         config
       );
@@ -99,7 +99,7 @@ const AuctionDetails = () => {
     
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.post(`http://localhost:5000/api/payment/release/${id}`, {}, config);
+      await axios.post(`/payment/release/${id}`, {}, config);
       
       toast.success("Transaction Complete! Funds released.");
       // Manually update state to 'closed'

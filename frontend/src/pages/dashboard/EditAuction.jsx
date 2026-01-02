@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../../utils/axiosConfig';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 
@@ -23,7 +23,7 @@ const EditAuction = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/auctions/${id}`);
+        const res = await axios.get(`/auctions/${id}`);
         const data = res.data;
         
         // Check ownership
@@ -67,7 +67,7 @@ const EditAuction = () => {
             images: [formData.imageUrl] 
         };
 
-        await axios.put(`http://localhost:5000/api/auctions/${id}`, updateData, config);
+        await axios.put(`/auctions/${id}`, updateData, config);
         toast.success("Auction Updated!");
         navigate('/dashboard/seller');
     } catch (error) {
