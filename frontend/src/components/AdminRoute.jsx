@@ -5,11 +5,18 @@ import { useSelector } from 'react-redux';
 const AdminRoute = ({ children }) => {
   const { user, isLoading } = useSelector((state) => state.auth);
 
-  if (isLoading) return <div className="p-10 text-center">Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
 
-  // If not logged in OR role is not admin, redirect to Login
+  // Security Check: Must be logged in AND have role 'admin'
   if (!user || user.role !== 'admin') {
-    return <Navigate to="/login" replace />;
+    // Redirect unauthorized users to the Admin Login page
+    return <Navigate to="/admin-login" replace />;
   }
 
   return children;

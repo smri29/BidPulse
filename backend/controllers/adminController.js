@@ -9,14 +9,19 @@ exports.getAdminStats = async (req, res) => {
     const totalUsers = await User.countDocuments();
     const totalAuctions = await Auction.countDocuments();
 
-    // Calculate Financials from 'closed' auctions
+    // 1. Calculate Financials from 'closed' (successfully sold) auctions
     const closedAuctions = await Auction.find({ status: 'closed' });
     
+    // Total money processed through the platform
     const totalVolume = closedAuctions.reduce((acc, item) => acc + item.currentPrice, 0);
-    const totalCommission = totalVolume * 0.08; // 8% Profit
-    const totalPayouts = totalVolume - totalCommission; // 92% Sent to Sellers
+    
+    // 8% Commission Revenue
+    const totalCommission = totalVolume * 0.08; 
+    
+    // 92% Payouts to Sellers
+    const totalPayouts = totalVolume - totalCommission; 
 
-    // Calculate Money currently held in Escrow
+    // 2. Calculate Money currently held in Escrow (Paid but not released)
     const escrowAuctions = await Auction.find({ status: 'paid_held_in_escrow' });
     const fundsInEscrow = escrowAuctions.reduce((acc, item) => acc + item.currentPrice, 0);
 
@@ -24,10 +29,11 @@ exports.getAdminStats = async (req, res) => {
       totalUsers,
       totalAuctions,
       totalVolume,
-      totalCommission, // Admin Profit
+      totalCommission,
       totalPayouts,
       fundsInEscrow,
-      recentTransactions: closedAuctions.slice(0, 5) // Last 5 finished deals
+      // Return the last 5 closed deals for the dashboard list
+      recentTransactions: closedAuctions.slice(0, 5) 
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -39,6 +45,7 @@ exports.getAdminStats = async (req, res) => {
 // @access  Private/Admin
 exports.getAllUsers = async (req, res) => {
   try {
+    // Return all users sorted by newest first, exclude passwords
     const users = await User.find({}).select('-password').sort({ createdAt: -1 });
     res.json(users);
   } catch (error) {

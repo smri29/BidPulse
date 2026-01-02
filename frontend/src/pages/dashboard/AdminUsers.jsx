@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
-import { Trash2, Shield, User, Mail, AlertCircle } from 'lucide-react';
+import { Trash2, Shield, User, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const AdminUsers = () => {
@@ -14,7 +14,6 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      // Make sure the port (5000) matches your backend
       const { data } = await axios.get('http://localhost:5000/api/admin/users', config);
       setUsers(data);
       setLoading(false);
@@ -31,11 +30,11 @@ const AdminUsers = () => {
 
   // Delete User Handler
   const handleDeleteUser = async (userId) => {
-    if (window.confirm('Are you sure? This will permanently delete the user.')) {
+    if (window.confirm('Are you sure? This will permanently delete the user and their data.')) {
       try {
         const config = { headers: { Authorization: `Bearer ${user.token}` } };
         await axios.delete(`http://localhost:5000/api/admin/users/${userId}`, config);
-        toast.success('User removed');
+        toast.success('User removed successfully');
         setUsers(users.filter(u => u._id !== userId));
       } catch (error) {
         toast.error('Failed to delete user');
@@ -43,7 +42,11 @@ const AdminUsers = () => {
     }
   };
 
-  if (loading) return <div className="p-10 text-center">Loading Users...</div>;
+  if (loading) return (
+      <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bid-purple"></div>
+      </div>
+  );
   
   if (error) return (
       <div className="p-10 text-center text-red-500 flex flex-col items-center gap-2">
@@ -61,12 +64,12 @@ const AdminUsers = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 text-gray-700 font-semibold border-b">
+            <thead className="bg-gray-50 text-gray-700 font-semibold border-b border-gray-200">
               <tr>
-                <th className="p-4">User</th>
+                <th className="p-4">User Details</th>
                 <th className="p-4">Role</th>
-                <th className="p-4">Email</th>
-                <th className="p-4">Joined</th>
+                <th className="p-4">Contact</th>
+                <th className="p-4">Joined Date</th>
                 <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
@@ -74,47 +77,72 @@ const AdminUsers = () => {
               {users.length > 0 ? (
                   users.map((u) => (
                     <tr key={u._id} className="hover:bg-gray-50 transition">
+                      {/* Name & ID */}
                       <td className="p-4">
-                        <div className="font-bold text-gray-900">{u.name}</div>
-                        <div className="text-xs text-gray-400">ID: {u._id}</div>
+                        <div className="font-bold text-gray-900 text-base">{u.name}</div>
+                        <div className="text-xs text-gray-400 font-mono">ID: {u._id}</div>
+                        {u.idType && (
+                            <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200 mt-1 inline-block">
+                                {u.idType.toUpperCase()}
+                            </span>
+                        )}
                       </td>
+
+                      {/* Role Badge */}
                       <td className="p-4">
                         {u.role === 'admin' ? (
-                          <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-bold flex w-fit items-center gap-1">
-                            <Shield size={10} /> Admin
+                          <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-bold flex w-fit items-center gap-1 border border-red-200">
+                            <Shield size={12} /> Admin
                           </span>
                         ) : u.role === 'seller' ? (
-                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">
-                            Seller
+                          <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold border border-orange-200">
+                            Legacy Seller
+                          </span>
+                        ) : u.role === 'bidder' ? (
+                           <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold border border-blue-200">
+                            Legacy Bidder
                           </span>
                         ) : (
-                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold">
-                            Bidder
+                          // Unified 'user' role
+                          <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold border border-green-200 flex w-fit items-center gap-1">
+                             <CheckCircle size={12} /> Standard User
                           </span>
                         )}
                       </td>
-                      <td className="p-4 flex items-center gap-2 text-gray-600">
-                        <Mail size={14} /> {u.email}
+
+                      {/* Email */}
+                      <td className="p-4 text-gray-600">
+                        <div className="flex items-center gap-2">
+                             <Mail size={14} className="text-gray-400" /> {u.email}
+                        </div>
                       </td>
+
+                      {/* Date */}
                       <td className="p-4 text-gray-500">
                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
+
+                      {/* Actions */}
                       <td className="p-4 text-center">
-                        {u.role !== 'admin' && (
+                        {u.role !== 'admin' ? (
                           <button 
                             onClick={() => handleDeleteUser(u._id)}
-                            className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition"
+                            className="text-red-400 hover:text-white hover:bg-red-500 p-2 rounded-lg transition duration-200"
                             title="Delete User"
                           >
                             <Trash2 size={18} />
                           </button>
+                        ) : (
+                           <span className="text-xs text-gray-300 select-none">Protected</span>
                         )}
                       </td>
                     </tr>
                   ))
               ) : (
                   <tr>
-                      <td colSpan="5" className="p-10 text-center text-gray-500">No users found in database.</td>
+                      <td colSpan="5" className="p-10 text-center text-gray-500">
+                          <p>No users found in database.</p>
+                      </td>
                   </tr>
               )}
             </tbody>

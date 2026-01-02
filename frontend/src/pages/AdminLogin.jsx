@@ -17,14 +17,18 @@ const AdminLogin = () => {
     if (isError) {
       toast.error(message);
     }
+    
     if (isSuccess || user) {
       if (user?.role === 'admin') {
-        navigate('/admin/dashboard');
+        // Success: Redirect to Admin Dashboard
+        navigate('/dashboard/admin');
       } else {
+        // Fail: Logic for non-admins trying to access admin panel
         toast.error("Access Denied: You are not an Admin.");
-        dispatch(reset()); // Clear state if a normal user tries to log in here
+        dispatch(reset()); 
       }
     }
+    
     dispatch(reset());
   }, [user, isError, isSuccess, message, navigate, dispatch]);
 
