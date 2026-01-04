@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/emailService'); 
-const crypto = require('crypto'); // <--- Import Crypto
+const crypto = require('crypto');
 
 // Generate JWT
 const generateToken = (id) => {
@@ -14,7 +14,6 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @access  Public
 exports.register = async (req, res) => {
-  // Destructure new fields
   const { name, email, password, dob, idType, idNumber } = req.body;
 
   try {
@@ -24,19 +23,17 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Create user with all fields
     const user = await User.create({
       name,
       email,
       password,
       role: 'user', 
-      dob,       // <--- Save DOB
-      idType,    // <--- Save ID Type
-      idNumber   // <--- Save ID Number
+      dob,
+      idType,
+      idNumber
     });
 
     if (user) {
-      // Welcome Email
       try {
         await sendEmail({
           email: user.email,
@@ -77,18 +74,23 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Admin Bypass
-    if (email === 'smrizvi.i29@gmail.com' && password === 'admin555@2026') {
+    // --- 1. SECURE ADMIN CHECK (Uses .env variables) ---
+    // Ensure you add ADMIN_EMAIL and ADMIN_PASS to your backend .env file
+    const adminEmail = process.env.ADMIN_EMAIL || 'smrizvi.i29@gmail.com'; // Fallback just in case, but prefer .env
+    const adminPass = process.env.ADMIN_PASS || 'admin555@2026';
+
+    if (email === adminEmail && password === adminPass) {
         return res.json({
             _id: 'static_admin_id_999',
             name: 'Super Admin',
-            email: 'smrizvi.i29@gmail.com',
+            email: adminEmail,
             role: 'admin',
             createdAt: new Date(),
             token: generateToken('static_admin_id_999'),
         });
     }
 
+    // --- 2. Standard User Login ---
     const user = await User.findOne({ email }).select('+password');
 
     if (user && (await user.matchPassword(password))) {
@@ -116,12 +118,64 @@ exports.getMe = async (req, res) => {
      return res.status(200).json({
         _id: 'static_admin_id_999',
         name: 'Super Admin',
-        email: 'smrizvi.i29@gmail.com',
+        email: process.env.ADMIN_EMAIL,
         role: 'admin'
      });
   }
   const user = await User.findById(req.user.id);
   res.status(200).json(user);
+};
+
+// @desc    Update User Details (Profile)
+// @route   PUT /api/auth/updatedetails
+// @access  Private
+exports.updateUserDetails = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (user) {
+      user.name = req.body.name || user.name;
+      user.email = req.body.email || user.email;
+      
+      // If user sends password, update it
+      if (req.body.password) {
+        user.password = req.body.password;
+      }
+
+      const updatedUser = await user.save();
+
+      res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        createdAt: updatedUser.createdAt,
+        token: generateToken(updatedUser._id),
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete User Account
+// @route   DELETE /api/auth/deleteaccount
+// @access  Private
+exports.deleteUserAccount = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if(user) {
+            await user.deleteOne();
+            res.json({ message: 'User removed successfully' });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 // @desc    Forgot Password
@@ -137,13 +191,9 @@ exports.forgotPassword = async (req, res) => {
       return res.status(404).json({ message: 'No user found with this email' });
     }
 
-    // Get reset token
     const resetToken = user.getResetPasswordToken();
-
-    // Save token to DB
     await user.save({ validateBeforeSave: false });
 
-    // Create reset URL
     const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
 
     const message = `
@@ -180,14 +230,12 @@ exports.forgotPassword = async (req, res) => {
 // @route   PUT /api/auth/resetpassword/:resetToken
 // @access  Public
 exports.resetPassword = async (req, res) => {
-  // Hash token from URL to match DB
   const resetPasswordToken = crypto
     .createHash('sha256')
     .update(req.params.resetToken)
     .digest('hex');
 
   try {
-    // Find user by token AND check expiration
     const user = await User.findOne({
       resetPasswordToken,
       resetPasswordExpire: { $gt: Date.now() },
@@ -197,10 +245,7 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Invalid token or token has expired' });
     }
 
-    // Set new password
     user.password = req.body.password;
-    
-    // Clear reset fields
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
@@ -209,7 +254,7 @@ exports.resetPassword = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Password updated successfully',
-      token: generateToken(user._id), // Auto login
+      token: generateToken(user._id),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

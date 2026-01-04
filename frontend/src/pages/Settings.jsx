@@ -1,13 +1,53 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { Lock, Bell, Trash2, Shield, Save } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { updateProfile, deleteAccount } from '../redux/authSlice'; // Import actions
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('security');
+  const [passwords, setPasswords] = useState({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+  });
+  
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const handleSave = (e) => {
+  // Handle Password Update
+  const handlePasswordChange = (e) => {
+    setPasswords({ ...passwords, [e.target.name]: e.target.value });
+  };
+
+  const handleSavePassword = (e) => {
       e.preventDefault();
-      toast.success('Settings updated successfully!');
+      if(passwords.newPassword !== passwords.confirmPassword) {
+          toast.error("New passwords do not match");
+          return;
+      }
+      // Dispatch updateProfile with just the password
+      dispatch(updateProfile({ password: passwords.newPassword }))
+        .unwrap()
+        .then(() => {
+            toast.success("Password updated successfully!");
+            setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        })
+        .catch((err) => toast.error(err));
+  };
+
+  // Handle Account Deletion
+  const handleDeleteAccount = () => {
+      if (window.confirm("ARE YOU SURE? This action cannot be undone. All your data will be permanently lost.")) {
+          dispatch(deleteAccount())
+            .unwrap()
+            .then(() => {
+                toast.success("Account deleted. We are sorry to see you go.");
+                navigate('/'); // Redirect to home
+            })
+            .catch((err) => toast.error(err || "Failed to delete account"));
+      }
   };
 
   return (
@@ -48,23 +88,37 @@ const Settings = () => {
             {activeTab === 'security' && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
                     <h2 className="text-lg font-bold text-gray-900 mb-6">Change Password</h2>
-                    <form className="space-y-6" onSubmit={handleSave}>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-                            <input type="password" className="w-full rounded-lg border-gray-300 focus:ring-bid-purple focus:border-bid-purple shadow-sm" />
-                        </div>
+                    <form className="space-y-6" onSubmit={handleSavePassword}>
+                        {/* Note: 'Current Password' is usually required by backend for security,
+                           but for this MVP implementation we are just updating the password directly via ID.
+                        */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                                <input type="password" className="w-full rounded-lg border-gray-300 focus:ring-bid-purple focus:border-bid-purple shadow-sm" />
+                                <input 
+                                  type="password" 
+                                  name="newPassword"
+                                  value={passwords.newPassword}
+                                  onChange={handlePasswordChange}
+                                  className="w-full rounded-lg border-gray-300 focus:ring-bid-purple focus:border-bid-purple shadow-sm p-2 border" 
+                                  required
+                                  minLength={6}
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-                                <input type="password" className="w-full rounded-lg border-gray-300 focus:ring-bid-purple focus:border-bid-purple shadow-sm" />
+                                <input 
+                                  type="password" 
+                                  name="confirmPassword"
+                                  value={passwords.confirmPassword}
+                                  onChange={handlePasswordChange}
+                                  className="w-full rounded-lg border-gray-300 focus:ring-bid-purple focus:border-bid-purple shadow-sm p-2 border" 
+                                  required
+                                />
                             </div>
                         </div>
                         <div className="pt-4">
-                            <button className="flex items-center gap-2 bg-bid-purple text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition font-medium">
+                            <button type="submit" className="flex items-center gap-2 bg-bid-purple text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition font-medium">
                                 <Save size={18} /> Update Password
                             </button>
                         </div>
@@ -92,7 +146,10 @@ const Settings = () => {
                     <p className="text-red-600 text-sm mb-6">
                         Once you delete your account, there is no going back. Please be certain.
                     </p>
-                    <button className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 transition font-medium">
+                    <button 
+                        onClick={handleDeleteAccount}
+                        className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 transition font-medium"
+                    >
                         Permanently Delete Account
                     </button>
                 </div>

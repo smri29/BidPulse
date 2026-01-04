@@ -1,11 +1,38 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { User, Mail, Shield, Calendar, FileText, MapPin, CheckCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { User, Mail, Shield, Calendar, FileText, MapPin, CheckCircle, Save, X } from 'lucide-react';
+import { updateProfile } from '../redux/authSlice';
+import { toast } from 'react-toastify';
 
 const Profile = () => {
-  const { user } = useSelector((state) => state.auth);
+  const { user, isLoading } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  
+  // Edit Mode State
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+  });
 
   if (!user) return <div className="p-10 text-center">Please log in.</div>;
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    dispatch(updateProfile(formData))
+      .unwrap()
+      .then(() => {
+        toast.success("Profile updated successfully!");
+        setIsEditing(false);
+      })
+      .catch((err) => {
+        toast.error(err || "Failed to update profile");
+      });
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -23,22 +50,69 @@ const Profile = () => {
             </div>
           </div>
           
-          {/* Info Section - FIXED: Added ml-32 to clear the avatar */}
+          {/* Info Section */}
           <div className="mt-14 ml-32 flex justify-between items-end">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                {user.name} 
-                <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                  <Shield size={12} /> Verified
-                </span>
-              </h1>
-              <p className="text-gray-500 flex items-center gap-2 mt-1">
-                 <Mail size={14} /> {user.email}
-              </p>
+              {/* EDIT MODE TOGGLE: Show Input or Text */}
+              {isEditing ? (
+                 <div className="flex flex-col gap-2">
+                    <input 
+                      type="text" 
+                      name="name" 
+                      value={formData.name} 
+                      onChange={handleChange}
+                      className="border border-gray-300 rounded px-2 py-1 text-sm font-bold"
+                    />
+                    <input 
+                      type="email" 
+                      name="email" 
+                      value={formData.email} 
+                      onChange={handleChange}
+                      className="border border-gray-300 rounded px-2 py-1 text-xs text-gray-600"
+                    />
+                 </div>
+              ) : (
+                 <>
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                      {user.name} 
+                      <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                        <Shield size={12} /> Verified
+                      </span>
+                    </h1>
+                    <p className="text-gray-500 flex items-center gap-2 mt-1">
+                      <Mail size={14} /> {user.email}
+                    </p>
+                 </>
+              )}
             </div>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
-              Edit Profile
-            </button>
+
+            {/* ACTION BUTTONS */}
+            <div>
+                {isEditing ? (
+                    <div className="flex gap-2">
+                        <button 
+                          onClick={handleSubmit} 
+                          disabled={isLoading}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition flex items-center gap-2"
+                        >
+                            <Save size={16} /> Save
+                        </button>
+                        <button 
+                          onClick={() => setIsEditing(false)} 
+                          className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition flex items-center gap-2"
+                        >
+                            <X size={16} /> Cancel
+                        </button>
+                    </div>
+                ) : (
+                    <button 
+                      onClick={() => setIsEditing(true)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                    >
+                      Edit Profile
+                    </button>
+                )}
+            </div>
           </div>
         </div>
       </div>
@@ -59,7 +133,6 @@ const Profile = () => {
                 <div>
                    <label className="text-xs text-gray-400 uppercase font-semibold">Joined Date</label>
                    <p className="text-gray-900 font-medium flex items-center gap-2">
-                     {/* FIXED: Added check for createdAt */}
                      <Calendar size={16} className="text-bid-purple" /> 
                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                    </p>
