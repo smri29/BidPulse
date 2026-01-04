@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../../utils/axiosConfig';
 import { useSelector } from 'react-redux';
-import { Trash2, Shield, User, Mail, AlertCircle, CheckCircle } from 'lucide-react';
+import { Trash2, Shield, User, Mail, AlertCircle, CheckCircle, Ban, Unlock } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const AdminUsers = () => {
@@ -28,7 +28,28 @@ const AdminUsers = () => {
     if(user) fetchUsers();
   }, [user]);
 
-  // Delete User Handler
+  // --- 1. BAN USER HANDLER ---
+  const handleBanUser = async (userId) => {
+    try {
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        // Call the API endpoint we created earlier
+        await axios.put(`/admin/users/ban/${userId}`, {}, config);
+        
+        // Update UI locally without reloading
+        setUsers(users.map(u => {
+            if (u._id === userId) {
+                const newStatus = !u.isBanned;
+                toast.info(newStatus ? `User ${u.name} has been Banned` : `User ${u.name} is Active`);
+                return { ...u, isBanned: newStatus };
+            }
+            return u;
+        }));
+    } catch (error) {
+        toast.error('Failed to update ban status');
+    }
+  };
+
+  // --- 2. DELETE USER HANDLER ---
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure? This will permanently delete the user and their data.')) {
       try {
@@ -69,17 +90,24 @@ const AdminUsers = () => {
                 <th className="p-4">User Details</th>
                 <th className="p-4">Role</th>
                 <th className="p-4">Contact</th>
-                <th className="p-4">Joined Date</th>
+                <th className="p-4">Status</th>
                 <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {users.length > 0 ? (
                   users.map((u) => (
-                    <tr key={u._id} className="hover:bg-gray-50 transition">
+                    <tr key={u._id} className={`transition ${u.isBanned ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
                       {/* Name & ID */}
                       <td className="p-4">
-                        <div className="font-bold text-gray-900 text-base">{u.name}</div>
+                        <div className="flex items-center gap-2">
+                            <div className="font-bold text-gray-900 text-base">{u.name}</div>
+                            {u.isBanned && (
+                                <span className="text-[10px] font-bold bg-red-600 text-white px-2 py-0.5 rounded-full">
+                                    BANNED
+                                </span>
+                            )}
+                        </div>
                         <div className="text-xs text-gray-400 font-mono">ID: {u._id}</div>
                         {u.idType && (
                             <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200 mt-1 inline-block">
@@ -103,7 +131,6 @@ const AdminUsers = () => {
                             Legacy Bidder
                           </span>
                         ) : (
-                          // Unified 'user' role
                           <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold border border-green-200 flex w-fit items-center gap-1">
                              <CheckCircle size={12} /> Standard User
                           </span>
@@ -117,21 +144,41 @@ const AdminUsers = () => {
                         </div>
                       </td>
 
-                      {/* Date */}
-                      <td className="p-4 text-gray-500">
-                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}
+                      {/* Status Indicator */}
+                      <td className="p-4">
+                        {u.isBanned ? (
+                            <span className="flex items-center gap-1 text-red-600 font-bold text-xs">
+                                <Ban size={14} /> Suspended
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-1 text-green-600 font-bold text-xs">
+                                <CheckCircle size={14} /> Active
+                            </span>
+                        )}
                       </td>
 
                       {/* Actions */}
                       <td className="p-4 text-center">
                         {u.role !== 'admin' ? (
-                          <button 
-                            onClick={() => handleDeleteUser(u._id)}
-                            className="text-red-400 hover:text-white hover:bg-red-500 p-2 rounded-lg transition duration-200"
-                            title="Delete User"
-                          >
-                            <Trash2 size={18} />
-                          </button>
+                          <div className="flex justify-center gap-2">
+                              {/* BAN TOGGLE BUTTON */}
+                              <button 
+                                onClick={() => handleBanUser(u._id)}
+                                className={`p-2 rounded-lg transition duration-200 text-white ${u.isBanned ? 'bg-green-500 hover:bg-green-600' : 'bg-orange-400 hover:bg-orange-500'}`}
+                                title={u.isBanned ? "Unban User" : "Ban User"}
+                              >
+                                {u.isBanned ? <Unlock size={18} /> : <Ban size={18} />}
+                              </button>
+
+                              {/* DELETE BUTTON */}
+                              <button 
+                                onClick={() => handleDeleteUser(u._id)}
+                                className="bg-red-100 text-red-600 hover:bg-red-600 hover:text-white p-2 rounded-lg transition duration-200 border border-red-200"
+                                title="Delete Permanently"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                          </div>
                         ) : (
                            <span className="text-xs text-gray-300 select-none">Protected</span>
                         )}

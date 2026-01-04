@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto'); // <--- Import Crypto
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'bidder', 'seller', 'admin'], 
     default: 'user', 
   },
-  // --- New Verification Fields (Matches Register.jsx) ---
+  // --- New Verification Fields ---
   dob: {
     type: Date,
   },
@@ -38,7 +38,12 @@ const userSchema = new mongoose.Schema({
   idNumber: {
     type: String,
   },
-  // -----------------------------------------------------
+  // --- Admin Ban Flag ---
+  isBanned: {
+    type: Boolean,
+    default: false,
+  },
+  // ----------------------
   blockedUsers: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

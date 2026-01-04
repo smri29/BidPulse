@@ -15,7 +15,7 @@ const AdminRoute = ({ children }) => {
 
   // Security Check: Must be logged in AND have role 'admin'
   if (!user || user.role !== 'admin') {
-    // Redirect unauthorized users to the Admin Login page
+    // Redirect unauthorized users to the Admin Login page (or home)
     return <Navigate to="/admin-login" replace />;
   }
 

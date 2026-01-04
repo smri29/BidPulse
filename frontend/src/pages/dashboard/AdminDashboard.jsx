@@ -107,7 +107,7 @@ const AdminDashboard = () => {
                     <div className="text-4xl font-bold tracking-tight">${(stats.totalVolume || 0).toLocaleString()}</div>
                 </div>
                 <div className="border-t border-slate-700 pt-6">
-                     <div className="flex justify-between text-sm text-slate-400 mb-1">Total Payouts to Sellers</div>
+                      <div className="flex justify-between text-sm text-slate-400 mb-1">Total Payouts to Sellers</div>
                     <div className="text-2xl font-bold text-slate-300">${(stats.totalPayouts || 0).toLocaleString()}</div>
                 </div>
             </div>

@@ -32,7 +32,6 @@ exports.getAdminStats = async (req, res) => {
       totalCommission,
       totalPayouts,
       fundsInEscrow,
-      // Return the last 5 closed deals for the dashboard list
       recentTransactions: closedAuctions.slice(0, 5) 
     });
   } catch (error) {
@@ -53,6 +52,25 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+// @desc    Ban or Unban a User
+// @route   PUT /api/admin/users/ban/:id
+// @access  Private/Admin
+exports.banUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (user) {
+            // Toggle the ban status
+            user.isBanned = !user.isBanned;
+            await user.save();
+            res.json({ message: `User ${user.isBanned ? 'Banned' : 'Active'}`, isBanned: user.isBanned });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Delete a User (Admin)
 // @route   DELETE /api/admin/users/:id
 // @access  Private/Admin
@@ -68,4 +86,36 @@ exports.deleteUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+// @desc    Get All Auctions (Admin View)
+// @route   GET /api/admin/auctions
+// @access  Private/Admin
+exports.getAllAuctionsAdmin = async (req, res) => {
+    try {
+        // Fetch ALL auctions, populate seller name/email
+        const auctions = await Auction.find({})
+            .populate('seller', 'name email')
+            .sort({ createdAt: -1 });
+        res.json(auctions);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Force Delete Any Auction
+// @route   DELETE /api/admin/auctions/:id
+// @access  Private/Admin
+exports.deleteAnyAuction = async (req, res) => {
+    try {
+        const auction = await Auction.findById(req.params.id);
+        if(auction) {
+            await auction.deleteOne();
+            res.json({ message: 'Auction removed by Admin' });
+        } else {
+            res.status(404).json({ message: 'Auction not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
