@@ -88,6 +88,53 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+// @desc    Get Specific User Activity Log
+// @route   GET /api/admin/users/:id/history
+// @access  Private/Admin
+exports.getUserHistory = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // 1. Get User Profile
+    const user = await User.findById(userId).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // 2. Get Auctions Created by this user (Seller History)
+    const auctionsCreated = await Auction.find({ seller: userId })
+      .select('title currentPrice status createdAt images')
+      .sort({ createdAt: -1 });
+
+    // 3. Get Auctions Won by this user (Buyer History)
+    const auctionsWon = await Auction.find({ winner: userId })
+      .select('title currentPrice status endTime images');
+
+    // 4. Calculate Financials
+    const totalEarned = auctionsCreated
+        .filter(a => a.status === 'closed' || a.status === 'paid_held_in_escrow')
+        .reduce((acc, item) => acc + (item.currentPrice * 0.92), 0); // 92% share
+
+    const totalSpent = auctionsWon
+        .reduce((acc, item) => acc + item.currentPrice, 0);
+
+    res.json({
+      profile: user,
+      stats: {
+        itemsListed: auctionsCreated.length,
+        itemsWon: auctionsWon.length,
+        totalEarned,
+        totalSpent
+      },
+      history: {
+        sales: auctionsCreated,
+        purchases: auctionsWon
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Get All Auctions (Admin View)
 // @route   GET /api/admin/auctions
 // @access  Private/Admin

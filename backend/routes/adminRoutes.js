@@ -4,9 +4,10 @@ const {
     getAdminStats, 
     getAllUsers, 
     deleteUser,
-    banUser,           // <--- New Import
-    getAllAuctionsAdmin, // <--- New Import
-    deleteAnyAuction     // <--- New Import
+    banUser,           
+    getAllAuctionsAdmin, 
+    deleteAnyAuction,
+    getUserHistory     // <--- New Import
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -19,6 +20,7 @@ router.get('/stats', protect, authorize('admin'), getAdminStats);
 router.get('/users', protect, authorize('admin'), getAllUsers);
 router.put('/users/ban/:id', protect, authorize('admin'), banUser); // Ban Toggle
 router.delete('/users/:id', protect, authorize('admin'), deleteUser);
+router.get('/users/:id/history', protect, authorize('admin'), getUserHistory); // <--- New Route
 
 // Auction Management (Global Control)
 router.get('/auctions', protect, authorize('admin'), getAllAuctionsAdmin);
