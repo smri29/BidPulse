@@ -3,9 +3,10 @@ const Auction = require('../models/Auction');
 const User = require('../models/User');
 const sendEmail = require('../utils/emailService'); 
 
-// @desc    Create Stripe Checkout Session
+// @desc    Create Stripe Checkout Session & Save Shipping Address
 exports.createCheckoutSession = async (req, res) => {
   console.log("1. Payment Request Received for Auction:", req.params.auctionId);
+  const { shippingAddress } = req.body; // <--- Extract Address
 
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -19,6 +20,13 @@ exports.createCheckoutSession = async (req, res) => {
       return res.status(403).json({ message: 'Only the winner can pay for this auction' });
     }
 
+    // 1. SAVE SHIPPING ADDRESS TO DB
+    if(shippingAddress) {
+        auction.shippingDetails = shippingAddress;
+        await auction.save();
+    }
+
+    // 2. Create Stripe Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -35,7 +43,7 @@ exports.createCheckoutSession = async (req, res) => {
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/payment/success?session_id={CHECKOUT_SESSION_ID}&auction_id=${auction._id}`,
       cancel_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/auction/${auction._id}`,
       metadata: {
         auctionId: auction._id.toString(),

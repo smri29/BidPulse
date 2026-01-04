@@ -58,8 +58,17 @@ const auctionSchema = new mongoose.Schema(
     ],
     status: {
       type: String,
-      enum: ['active', 'completed', 'unsold', 'paid_held_in_escrow', 'closed'], // <--- UPDATE THIS LINE
+      enum: ['active', 'completed', 'unsold', 'paid_held_in_escrow', 'closed'], 
       default: 'active',
+    },
+    // --- NEW: Shipping Details (Populated upon Checkout) ---
+    shippingDetails: {
+      name: String,
+      address: String,
+      city: String,
+      postalCode: String,
+      country: String,
+      phone: String,
     },
   },
   {
