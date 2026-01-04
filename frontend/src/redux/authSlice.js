@@ -147,9 +147,16 @@ const authSlice = createSlice({
         state.message = action.payload;
       })
       // Delete Account
+      .addCase(deleteAccount.pending, (state) => { state.isLoading = true; })
       .addCase(deleteAccount.fulfilled, (state) => {
+        state.isLoading = false;
         state.user = null;
         state.isSuccess = true;
+      })
+      .addCase(deleteAccount.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
       })
       // Logout
       .addCase(logout.fulfilled, (state) => {

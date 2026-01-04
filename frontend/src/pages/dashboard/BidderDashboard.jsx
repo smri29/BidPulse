@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllAuctions } from '../../redux/auctionSlice';
 import { Link } from 'react-router-dom';
-import { Package, CheckCircle, Clock, AlertCircle, DollarSign, ExternalLink } from 'lucide-react';
-import axios from '../../utils/axiosConfig';
+import { Package, CheckCircle, Clock, DollarSign, ExternalLink } from 'lucide-react';
+import axios from '../../utils/axiosConfig'; // Using centralized config
 import { toast } from 'react-toastify';
 
 const BidderDashboard = () => {
@@ -23,7 +23,7 @@ const BidderDashboard = () => {
 
   // 2. Active Bids (Status IS active, and I have placed at least one bid)
   const activeBids = auctions.filter(
-    (a) => a.status === 'active' && a.bids.some((b) => b.bidder === user._id)
+    (a) => a.status === 'active' && a.bids && a.bids.some((b) => b.bidder === user._id)
   );
 
   // --- HANDLER: RELEASE FUNDS (Directly from Dashboard) ---
@@ -40,7 +40,11 @@ const BidderDashboard = () => {
     }
   };
 
-  if (isLoading) return <div className="p-10 text-center">Loading Dashboard...</div>;
+  if (isLoading) return (
+      <div className="flex justify-center items-center h-screen text-bid-purple">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-bid-purple"></div>
+      </div>
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -137,9 +141,9 @@ const BidderDashboard = () => {
              {activeBids.map((auction) => {
                const isWinning = auction.winner === user._id;
                return (
-                 <div key={auction._id} className={`bg-white rounded-xl shadow-sm border p-5 ${isWinning ? 'border-green-200 ring-1 ring-green-100' : 'border-red-100'}`}>
+                 <div key={auction._id} className={`bg-white rounded-xl shadow-sm border p-5 transition hover:shadow-md ${isWinning ? 'border-green-200 ring-1 ring-green-100' : 'border-red-100'}`}>
                     <div className="flex justify-between items-start mb-4">
-                      <h3 className="font-bold text-gray-900 truncate pr-2">{auction.title}</h3>
+                      <h3 className="font-bold text-gray-900 truncate pr-2 flex-1">{auction.title}</h3>
                       {isWinning ? (
                         <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold">Winning</span>
                       ) : (
@@ -149,7 +153,7 @@ const BidderDashboard = () => {
                     
                     <div className="flex items-center justify-between text-sm mb-4">
                       <span className="text-gray-500">Current Price:</span>
-                      <span className="font-bold text-lg">${auction.currentPrice}</span>
+                      <span className="font-bold text-lg text-gray-900">${auction.currentPrice}</span>
                     </div>
 
                     <Link 
@@ -168,7 +172,7 @@ const BidderDashboard = () => {
            </div>
         ) : (
           <div className="bg-gray-50 rounded-lg p-8 text-center border border-dashed border-gray-300 text-gray-500">
-            You don't have any active bids. <Link to="/" className="text-bid-purple font-bold">Start exploring!</Link>
+            You don't have any active bids. <Link to="/" className="text-bid-purple font-bold hover:underline">Start exploring!</Link>
           </div>
         )}
       </div>

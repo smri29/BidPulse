@@ -6,7 +6,6 @@ import {
   Gavel, 
   LogOut, 
   User, 
-  PlusCircle, 
   LayoutDashboard, 
   Bell, 
   Settings, 
@@ -89,13 +88,13 @@ const Navbar = () => {
                   {isSellerMode ? "Switch to Buying" : "Switch to Selling"}
                 </button>
 
-                {/* --- B. NOTIFICATIONS (Crucial for Auctions) --- */}
+                {/* --- B. NOTIFICATIONS --- */}
                 <Link 
                   to="/notifications" 
                   className="relative p-2 text-gray-400 hover:text-bid-purple transition rounded-full hover:bg-gray-50"
                 >
                 <Bell size={20} />
-                {/* Notification Dot - You can make this conditional later based on unread count */}
+                {/* Notification Dot - (Can be made conditional based on unread count) */}
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full border border-white"></span>
                 </Link>
 
@@ -114,8 +113,8 @@ const Navbar = () => {
                     </div>
                     {/* Name & Chevron */}
                     <div className="hidden md:flex items-center gap-1">
-                       <span className="text-sm font-semibold text-gray-700 max-w-[100px] truncate">{user.name}</span>
-                       <ChevronDown size={14} className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                        <span className="text-sm font-semibold text-gray-700 max-w-[100px] truncate">{user.name}</span>
+                        <ChevronDown size={14} className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
 
