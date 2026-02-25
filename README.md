@@ -1,171 +1,319 @@
-Here is the updated `README.md` for BidPulse. It reflects the completed V1 status, including the deployment links (Vercel & Render), the unified user role system, and the updated tech stack details.
+# BidPulse
 
-### Updated `README.md`
+BidPulse is a full-stack, real-time auction platform focused on secure transactions, responsive bidding, and admin-grade operational control.
 
-```markdown
-# BidPulse ⚡
+Live app:
+- Frontend (Vercel): https://bid-pulse.vercel.app
+- Backend API (Render): https://bidpulse-qkd9.onrender.com
 
-**BidPulse** is a premium, real-time Bidding Management System (BMS) designed to facilitate secure, high-stakes auctions. It features a sophisticated "Anti-Sniping" mechanism, an Escrow financial model, and a unified interface for Bidders, Sellers, and Administrators.
+## 1. What Problem BidPulse Solves
+Traditional online auction flows fail in three areas:
+- Trust: buyers fear paying before delivery, sellers fear non-payment.
+- Fairness: end-of-auction bid sniping creates unfair outcomes.
+- Operations: weak moderation and support tooling create unresolved disputes.
 
-![Project Status](https://img.shields.io/badge/Status-Live-success)
-![License](https://img.shields.io/badge/License-MIT-blue)
-![Frontend](https://img.shields.io/badge/Frontend-Vercel-black)
-![Backend](https://img.shields.io/badge/Backend-Render-purple)
+BidPulse solves this with:
+- Escrow-based checkout and payout release.
+- Real-time anti-sniping bidding updates.
+- Admin operations dashboard for users, auctions, support, and financial visibility.
 
-## 🌐 Live Demo
-- **Frontend:** [https://bid-pulse.vercel.app](https://bid-pulse.vercel.app)
-- **Backend API:** [https://bidpulse-qkd9.onrender.com](https://bidpulse-qkd9.onrender.com)
+## 2. Core Product Features
 
----
+### Buyer
+- Browse live auctions with watchlist support.
+- Place real-time bids.
+- Pay through Stripe checkout.
+- Hold payment in escrow until item is received.
+- Confirm receipt to release payout.
 
-## 🌟 Key Features
+### Seller
+- Create/manage auction listings.
+- Track bids and outcomes.
+- View shipping details after payment.
+- Receive payout after buyer confirmation.
 
-### 🧠 Intelligent Bidding Engine
-* **Real-Time Updates:** Instant price updates across all connected clients using **Socket.io**. No page refreshes required.
-* **"Soft Close" Logic:** If a bid is placed in the last 5 minutes, the auction timer automatically extends by 5 minutes. This prevents "sniping" and mimics real-world auction dynamics.
-* **Smart Validation:** Prevents users from bidding on their own items or bidding below the increment threshold.
+### Admin
+- Platform-level financial stats and transaction summaries.
+- User moderation (ban/unban/delete + history view).
+- Global auction moderation (search/filter/delete).
+- Support desk:
+  - Ticket queue with status transitions.
+  - Live chat monitoring and responses.
+  - Test email trigger for SMTP health checks.
 
-### 🛡️ Trust & Safety
-* **Stripe Escrow Payments:** Winning bids are held in a secure platform account. Funds are only released to the Seller after the Buyer confirms receipt of the item.
-* **Identity Verification:** Users must provide NID/Passport details during registration.
-* **Admin Oversight:** Complete control to ban users, delete illegal auctions, and monitor platform health.
+## 3. Advanced UX Additions
+- Animated visual system (fade-up, float, pulse-glow, glass surfaces).
+- Refreshed visual direction with branded gradients, custom typography, and atmospheric backgrounds.
+- Upgraded home sections:
+  - Spotlight auctions.
+  - Personal watchlist.
+  - Live auction stream.
+- How-It-Works workflow cards with animated progression.
+- Help Center now includes:
+  - Ticket-based email support (backed by DB + mail notifications).
+  - Real-time live chat over Socket.io.
 
-### 📧 Automated Notification System
-The system handles communication automatically via email:
-1.  **Welcome Email:** Immediate confirmation upon registration.
-2.  **Password Reset:** Secure token-based password recovery.
-3.  **Auction Won:** Notifies Winner (Pay Now) and Seller (Item Sold).
-4.  **Payment Made:** Sends Invoice to Winner and "Ready to Ship" alert to Seller.
-5.  **Order Completed:** Releases funds and sends "Thank You" notes upon delivery confirmation.
+## 4. Tech Stack
+- Frontend: React + Vite + Redux Toolkit + Tailwind CSS + Socket.io client
+- Backend: Node.js + Express + Socket.io + Node-cron
+- Database: MongoDB Atlas + Mongoose
+- Payments: Stripe
+- Email: Nodemailer (SMTP/service-based transport)
+- Deployment: Vercel (frontend), Render (backend)
 
----
+## 5. System Architecture
 
-## 👥 User Roles & Workflows
-
-### 1. The Unified User (Standard Account)
-* **Dual Capabilities:** Every user can both **Buy** and **Sell**. No need for separate accounts.
-* **Bidder Mode:** Live dashboard tracking Winning, Outbid, and Completed auctions.
-* **Seller Mode:** Inventory management, order fulfillment tracking, and earnings reports.
-
-### 2. Admin (The Moderator) - *Restricted Access*
-* **Financial Control:** Automatically collects an **8% commission** on every sale.
-* **User Management:** View all users, delete accounts, and manage verify status.
-* **Platform Analytics:** Real-time stats on total volume, net revenue, and active auctions.
-
----
-
-## 🛠️ Technology Stack
-
-| Component | Technology | Description |
-| :--- | :--- | :--- |
-| **Frontend** | React + Vite | Fast, interactive UI with TailwindCSS & Redux Toolkit. |
-| **Backend** | Node.js + Express | RESTful API and Business Logic. |
-| **Database** | MongoDB Atlas | Cloud-hosted NoSQL database for scalable data. |
-| **Real-Time** | Socket.io | Bi-directional communication for timers/bids. |
-| **Payments** | Stripe Connect | Handling Escrow and Commission splits. |
-| **Email** | Nodemailer | Transactional email delivery (Gmail SMTP). |
-| **Deployment** | Vercel (FE) + Render (BE) | CI/CD pipeline for automated deployment. |
-
----
-
-## 📂 Architecture Overview
-
-### The "Soft Close" Algorithm
-```javascript
-IF (CurrentTime + 5 mins > AuctionEndTime) {
-    NewEndTime = CurrentTime + 5 mins;
-    Broadcast(NewEndTime);
-}
-
+```mermaid
+flowchart LR
+  U[Web Client] --> FE[React Frontend]
+  FE --> API[Express API]
+  API --> DB[(MongoDB Atlas)]
+  API --> STRIPE[Stripe]
+  API --> SMTP[SMTP Provider]
+  FE <--> WS[Socket.io]
+  API <--> WS
 ```
 
-### The Escrow Flow
+## 6. ERD (Entity Relationship Diagram)
 
-1. **Winner Pays** -> Funds move to Stripe Platform Account (Held).
-2. **Seller Ships** -> Funds remain Held.
-3. **Buyer Confirms** -> 92% transferred to Seller; 8% retained as Revenue.
+```mermaid
+erDiagram
+  USER ||--o{ AUCTION : creates
+  USER ||--o{ AUCTION : wins
+  AUCTION ||--o{ BID : contains
+  USER ||--o{ BID : places
+  USER ||--o{ SUPPORT_TICKET : submits
 
----
+  USER {
+    string _id
+    string name
+    string email
+    string password
+    string role
+    boolean isBanned
+    date createdAt
+  }
 
-## 🚀 Getting Started (Local Development)
+  AUCTION {
+    string _id
+    string title
+    string category
+    number startingPrice
+    number currentPrice
+    date endTime
+    string status
+    string seller
+    string winner
+    object shippingDetails
+  }
 
-### Prerequisites
+  BID {
+    string bidder
+    number amount
+    date time
+  }
 
-* Node.js (v18+)
-* MongoDB Atlas URI
-* Stripe Account (Test Mode)
-
-### Installation
-
-1. **Clone the repository**
-```bash
-git clone [https://github.com/smri29/BidPulse.git](https://github.com/smri29/BidPulse.git)
-cd BidPulse
-
+  SUPPORT_TICKET {
+    string _id
+    string name
+    string email
+    string subject
+    string message
+    string status
+    date createdAt
+  }
 ```
 
+## 7. Key Workflow Diagrams
 
-2. **Install Dependencies**
-```bash
-# Backend
-cd backend
-npm install
+### 7.1 Auction + Payment + Escrow
 
-# Frontend
-cd ../frontend
-npm install
-
+```mermaid
+flowchart TD
+  A[User places winning bid] --> B[Auction closes]
+  B --> C[Winner opens Stripe Checkout]
+  C --> D[Payment success webhook]
+  D --> E[Status: paid_held_in_escrow]
+  E --> F[Seller ships item]
+  F --> G[Buyer confirms receipt]
+  G --> H[Seller payout release]
+  H --> I[Status: closed]
 ```
 
+### 7.2 Support Ticket Flow
 
-3. **Environment Variables**
-Create a `.env` file in the `backend` directory:
+```mermaid
+flowchart TD
+  U[User submits help form] --> T[Ticket stored in MongoDB]
+  T --> N1[Support email notification]
+  T --> A[Admin Support Desk]
+  A --> S1[Open]
+  S1 --> S2[In Progress]
+  S2 --> S3[Resolved]
+```
+
+## 8. Performance and Reliability Issues We Faced
+
+### Issue A: Signup/Login felt slow
+Root cause:
+- SMTP email sends happened inline in request lifecycle.
+
+Fix:
+- Converted non-critical emails to async fire-and-log.
+- API responses are no longer blocked by mail transport latency.
+
+### Issue B: Emails not sending reliably
+Root cause:
+- Env naming mismatch (`EMAIL_USER` vs `EMAIL_USERNAME`, `EMAIL_PASS` vs `EMAIL_PASSWORD`).
+
+Fix:
+- Added fallback-compatible config resolution.
+- Added reusable transporter singleton.
+- Added startup transport verification log.
+- Added admin "Send Test Email" control.
+
+### Issue C: Production integration breaks (checkout/socket)
+Root cause:
+- Hardcoded local URLs and route mismatch.
+
+Fix:
+- Socket URL derived from env/API base.
+- Payment route compatibility added.
+- Frontend checkout endpoint corrected.
+
+### Issue D: Admin endpoints degraded with scale
+Root cause:
+- Full collection scans and in-memory reductions.
+
+Fix:
+- Added indexes.
+- Added aggregate-based stat computation.
+- Added pagination-ready list patterns and lean reads.
+
+## 9. Security and Operational Hardening
+- Removed hardcoded admin credential fallback.
+- Enforced banned-user login block.
+- Added stricter CORS + compression.
+- Added DB pool/timeouts and model indexes.
+
+## 10. API Highlights
+
+### Auth
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/forgotpassword`
+- `PUT /api/auth/resetpassword/:resetToken`
+
+### Auctions
+- `GET /api/auctions?status=active&includeBids=false&page=1&limit=100`
+- `GET /api/auctions/:id`
+- `POST /api/auctions/:id/bid`
+
+### Payment
+- `POST /api/payment/checkout/:auctionId`
+- `POST /api/payment/create-checkout-session/:auctionId` (compat alias)
+- `POST /api/payment/release/:auctionId`
+- `POST /api/webhook` (Stripe)
+
+### Admin
+- `GET /api/admin/stats`
+- `GET /api/admin/users`
+- `PUT /api/admin/users/ban/:id`
+- `DELETE /api/admin/users/:id`
+- `GET /api/admin/users/:id/history`
+- `GET /api/admin/auctions`
+- `DELETE /api/admin/auctions/:id`
+- `POST /api/admin/test-email`
+
+### Support
+- `POST /api/support/tickets`
+- `GET /api/support/tickets` (admin)
+- `PUT /api/support/tickets/:id` (admin)
+
+## 11. Environment Variables
+
+### Backend (`backend/.env`)
 ```env
-NODE_ENV=development
+NODE_ENV=production
 PORT=5000
-MONGO_URI=your_mongodb_atlas_uri
-JWT_SECRET=your_secret_key
+MONGO_URI=...
+JWT_SECRET=...
 JWT_EXPIRE=30d
 
-# Email
+CLIENT_URL=https://bid-pulse.vercel.app
+CORS_ORIGIN=https://bid-pulse.vercel.app
+CORS_ORIGINS=https://bid-pulse.vercel.app
+
+ADMIN_EMAIL=...
+ADMIN_PASS=...
+SUPPORT_EMAIL=...
+
+# Email (either naming style works)
 EMAIL_SERVICE=gmail
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_app_password
+EMAIL_USERNAME=...
+EMAIL_PASSWORD=...
+# OR
+EMAIL_USER=...
+EMAIL_PASS=...
 
-# Stripe
-STRIPE_SECRET_KEY=sk_test_...
-CLIENT_URL=http://localhost:5173
+# Optional SMTP mode
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_SECURE=false
 
+STRIPE_SECRET_KEY=...
+STRIPE_WEBHOOK_SECRET=...
+
+MONGO_MAX_POOL_SIZE=20
+MONGO_SERVER_SELECTION_TIMEOUT_MS=10000
+MONGO_SOCKET_TIMEOUT_MS=45000
 ```
 
-
-Create a `.env` file in the `frontend` directory:
+### Frontend (`frontend/.env`)
 ```env
-VITE_API_URL=http://localhost:5000/api
-
+VITE_API_URL=https://bidpulse-qkd9.onrender.com/api
+VITE_SOCKET_URL=https://bidpulse-qkd9.onrender.com
 ```
 
+## 12. Local Development
 
-4. **Run the App**
 ```bash
-# Terminal 1: Backend
+# backend
 cd backend
+npm install
 npm run dev
 
-# Terminal 2: Frontend
+# frontend
+cd ../frontend
+npm install
+npm run dev
+```
+
+Build frontend:
+```bash
 cd frontend
-npm run dev
-
+npm run build
 ```
 
+## 13. Deployment Notes
+- Render free-tier instances can sleep and cause first-request cold-start latency.
+- Vercel environment should always point to the deployed API URL.
+- Stripe webhook secret must match the exact deployed backend endpoint.
+- Configure support/admin emails in Render env before running production traffic.
 
+## 14. Current Admin Operating Checklist
+- Monitor platform stats from Admin Dashboard.
+- Moderate user behavior from Users panel.
+- Remove suspicious listings from Auctions panel.
+- Resolve customer issues from Support Desk.
+- Trigger test email from Support Desk after env changes.
 
----
+## 15. Future Roadmap
+- Persist live support chat transcripts.
+- Add role-based agent assignment for support tickets.
+- Add elastic search for auctions/tickets.
+- Add automated fraud/risk scoring.
+- Add Web Push notifications for outbid + support updates.
 
-## 📜 License
-
-This project is licensed under the MIT License.
-
-```
-
-```
+## 16. License
+MIT
