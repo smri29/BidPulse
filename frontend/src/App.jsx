@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { toast } from 'react-toastify';
@@ -47,9 +47,12 @@ import { fetchCurrentUser, forceLogout } from './redux/authSlice';
 function App() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const lastSessionCheckRef = useRef(0);
+  const SESSION_RECHECK_INTERVAL_MS = 3 * 60 * 1000;
 
   useEffect(() => {
     if (!user?.token) return;
+    lastSessionCheckRef.current = Date.now();
     dispatch(fetchCurrentUser());
   }, [dispatch, user?.token]);
 
@@ -57,9 +60,6 @@ function App() {
     const handleAuthExpired = () => {
       dispatch(forceLogout('Your session ended. Please log in again.'));
       toast.error('Your session ended. Please log in again.');
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/admin-login') {
-        window.location.assign('/login');
-      }
     };
 
     window.addEventListener('bidpulse:auth-expired', handleAuthExpired);
@@ -80,7 +80,11 @@ function App() {
 
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && user?.token) {
+      const now = Date.now();
+      const enoughTimePassed = now - lastSessionCheckRef.current > SESSION_RECHECK_INTERVAL_MS;
+
+      if (document.visibilityState === 'visible' && user?.token && enoughTimePassed) {
+        lastSessionCheckRef.current = now;
         dispatch(fetchCurrentUser());
       }
     };

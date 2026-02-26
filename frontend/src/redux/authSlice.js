@@ -7,7 +7,7 @@ const getTokenFromState = (thunkAPI) => thunkAPI.getState().auth.user?.token;
 export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async (_, thunkAPI) => {
   try {
     const token = getTokenFromState(thunkAPI);
-    if (!token) return thunkAPI.rejectWithValue('No active session');
+    if (!token) return thunkAPI.rejectWithValue({ message: 'No active session', shouldLogout: true });
     const response = await axios.get('/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -15,8 +15,24 @@ export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async 
     localStorage.setItem('user', JSON.stringify(currentUser));
     return currentUser;
   } catch (error) {
-    localStorage.removeItem('user');
-    return thunkAPI.rejectWithValue(getApiErrorMessage(error));
+    const status = error.response?.status;
+    const serverMessage = String(error.response?.data?.message || '').toLowerCase();
+    const shouldLogout =
+      status === 401 ||
+      (status === 403 &&
+        (serverMessage.includes('not authorized') ||
+          serverMessage.includes('token') ||
+          serverMessage.includes('jwt') ||
+          serverMessage.includes('user not found')));
+
+    if (shouldLogout) {
+      localStorage.removeItem('user');
+    }
+
+    return thunkAPI.rejectWithValue({
+      message: getApiErrorMessage(error),
+      shouldLogout,
+    });
   }
 });
 
@@ -209,9 +225,13 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.user = null;
-        state.isError = true;
-        state.message = action.payload || 'Session expired. Please log in again.';
+        if (action.payload?.shouldLogout) {
+          state.user = null;
+          state.isError = true;
+          state.message = action.payload?.message || 'Session expired. Please log in again.';
+        } else {
+          state.message = '';
+        }
       })
       .addCase(register.pending, (state) => {
         state.isLoading = true;

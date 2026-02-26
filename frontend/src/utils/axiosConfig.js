@@ -43,12 +43,18 @@ instance.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
     const serverMessage = String(error.response?.data?.message || '').toLowerCase();
+    const is401 = status === 401;
+    const isCritical403 =
+      status === 403 &&
+      (serverMessage.includes('not authorized') ||
+        serverMessage.includes('token') ||
+        serverMessage.includes('jwt') ||
+        serverMessage.includes('user not found'));
     const authFailure =
-      status === 401 ||
-      status === 403 ||
+      is401 ||
+      isCritical403 ||
       serverMessage.includes('not authorized') ||
-      serverMessage.includes('user not found') ||
-      serverMessage.includes('suspended');
+      serverMessage.includes('user not found');
 
     if (authFailure) {
       localStorage.removeItem('user');
