@@ -2,8 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, reset } from '../../redux/authSlice';
-import { 
-  Shield, 
+import {
   LayoutDashboard, 
   Users, 
   Package, 
@@ -45,12 +44,8 @@ const AdminNavbar = () => {
           
           {/* 1. Admin Logo (Links to Dashboard) */}
           <Link to="/dashboard/admin" className="flex items-center gap-2 group">
-            <div className="bg-red-600 p-1.5 rounded-lg group-hover:bg-red-500 transition">
-               <Shield size={20} className="text-white" />
-            </div>
-            <span className="text-xl font-extrabold tracking-tight text-white">
-              Admin<span className="text-red-500">Panel</span>
-            </span>
+            <img src="/BidPulse.svg" alt="BidPulse" className="h-8 w-auto" />
+            <span className="text-sm font-semibold text-red-400">Admin</span>
           </Link>
 
           {/* 2. Admin Controls */}

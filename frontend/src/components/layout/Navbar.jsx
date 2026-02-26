@@ -6,7 +6,6 @@ import { addNotification } from '../../redux/notificationSlice';
 import { io } from 'socket.io-client';
 import { socketUrl } from '../../utils/axiosConfig';
 import { 
-  Gavel, 
   LogOut, 
   User, 
   LayoutDashboard, 
@@ -100,10 +99,10 @@ const Navbar = () => {
           {/* 1. Logo Section */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2 text-bid-purple hover:text-indigo-700 transition">
-              <div className="bg-bid-purple p-1.5 rounded-lg shadow-sm">
-                 <Gavel size={20} className="text-white" />
-              </div>
-              <span className="text-xl font-extrabold tracking-tight text-gray-900">BidPulse</span>
+              <img src="/BidPulse.svg" alt="BidPulse" className="h-10 w-auto" />
+              <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-700 via-cyan-600 to-emerald-600 bg-[length:200%_100%] bg-clip-text text-transparent animate-brand-shimmer">
+                BidPulse
+              </span>
             </Link>
           </div>
 

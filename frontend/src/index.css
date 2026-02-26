@@ -54,6 +54,10 @@ h6 {
   animation: pulseGlow 2.4s ease-in-out infinite;
 }
 
+.animate-brand-shimmer {
+  animation: brandShimmer 4.5s ease-in-out infinite;
+}
+
 .glass-surface {
   background: var(--surface-overlay);
   backdrop-filter: blur(10px);
@@ -87,5 +91,17 @@ h6 {
   }
   50% {
     box-shadow: 0 0 24px rgba(15, 111, 255, 0.35);
+  }
+}
+
+@keyframes brandShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Gavel, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -12,10 +12,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           <div className="md:col-span-4 space-y-4">
             <Link to="/" className="inline-flex items-center gap-2 group">
-              <div className="bg-blue-600 p-1.5 rounded-lg group-hover:bg-blue-500 transition">
-                <Gavel className="text-white h-5 w-5" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-white">BidPulse</span>
+              <img src="/BidPulse.svg" alt="BidPulse" className="h-9 w-auto" />
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">A trust-first auction network with email-verified participants, escrow payments, and real-time bidding intelligence.</p>
             <div className="inline-flex items-center gap-2 text-xs bg-white/5 border border-white/10 px-3 py-1 rounded-full text-slate-300">
