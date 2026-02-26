@@ -22,7 +22,7 @@ export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async 
 
 export const register = createAsyncThunk('auth/register', async (userData, thunkAPI) => {
   try {
-    const response = await axios.post('/auth/register', userData);
+    const response = await axios.post('/auth/register', userData, { timeout: 70000 });
     if (response.data) {
       localStorage.setItem('user', JSON.stringify(response.data));
     }
@@ -69,6 +69,7 @@ export const sendVerificationOtp = createAsyncThunk('auth/sendVerificationOtp', 
     const token = getTokenFromState(thunkAPI);
     const response = await axios.post('/auth/send-verification-otp', {}, {
       headers: { Authorization: `Bearer ${token}` },
+      timeout: 70000,
     });
     return response.data;
   } catch (error) {

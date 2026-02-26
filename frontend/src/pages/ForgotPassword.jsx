@@ -14,7 +14,7 @@ const ForgotPassword = () => {
 
     try {
       // Direct call to backend API
-      const response = await axios.post('/auth/forgotpassword', { email });
+      const response = await axios.post('/auth/forgotpassword', { email }, { timeout: 70000 });
       
       toast.success(response.data.message || 'Email sent! Check your inbox.');
       setEmail(''); // Clear field on success
