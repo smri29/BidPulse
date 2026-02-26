@@ -2,6 +2,32 @@ const Auction = require('../models/Auction');
 const User = require('../models/User');
 const { sendEmailAsync } = require('../utils/emailService');
 const templates = require('../utils/emailTemplates');
+const cloudinary = require('../config/cloudinary');
+
+const uploadAuctionImages = async (files) => {
+  if (!files?.length) return [];
+
+  const folder = process.env.CLOUDINARY_FOLDER || 'bidpulse';
+  const uploads = files.map(
+    (file) =>
+      new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: `${folder}/auctions`,
+            resource_type: 'image',
+            transformation: [{ width: 1280, height: 1280, crop: 'limit', quality: 'auto:best' }],
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            return resolve(result.secure_url);
+          }
+        );
+        stream.end(file.buffer);
+      })
+  );
+
+  return Promise.all(uploads);
+};
 
 // @desc    Get all auctions
 // @route   GET /api/auctions
@@ -60,21 +86,31 @@ exports.getAuctionById = async (req, res) => {
 // @desc    Create a new auction
 // @route   POST /api/auctions
 exports.createAuction = async (req, res) => {
-  const { title, description, category, startingPrice, endTime, images } = req.body;
+  const { title, description, category, startingPrice, endTime } = req.body;
 
   try {
     if (!req.user.emailVerified) {
       return res.status(403).json({ message: 'Please verify your email before listing auctions.' });
     }
 
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return res.status(503).json({ message: 'Image upload service is not configured' });
+    }
+
+    if (!req.files?.length) {
+      return res.status(400).json({ message: 'Please upload at least 1 image (max 3)' });
+    }
+
+    const uploadedImages = await uploadAuctionImages(req.files);
+
     const auction = await Auction.create({
       title,
       description,
       category,
-      startingPrice,
-      currentPrice: startingPrice,
+      startingPrice: Number(startingPrice),
+      currentPrice: Number(startingPrice),
       endTime,
-      images,
+      images: uploadedImages,
       seller: req.user._id,
     });
 
@@ -89,6 +125,45 @@ exports.createAuction = async (req, res) => {
     }
 
     return res.status(201).json(auction);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update auction
+// @route   PUT /api/auctions/:id
+exports.updateAuction = async (req, res) => {
+  try {
+    const auction = await Auction.findById(req.params.id);
+    if (!auction) {
+      return res.status(404).json({ message: 'Auction not found' });
+    }
+
+    if (auction.seller.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    if (auction.status !== 'active' && req.user.role !== 'admin') {
+      return res.status(400).json({ message: 'Only active auctions can be edited' });
+    }
+
+    const { title, description, category, endTime } = req.body;
+    if (title) auction.title = title;
+    if (description) auction.description = description;
+    if (category) auction.category = category;
+    if (endTime) auction.endTime = endTime;
+
+    if (req.files?.length) {
+      if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        return res.status(503).json({ message: 'Image upload service is not configured' });
+      }
+
+      const uploadedImages = await uploadAuctionImages(req.files);
+      auction.images = uploadedImages;
+    }
+
+    await auction.save();
+    return res.status(200).json(auction);
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

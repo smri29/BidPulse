@@ -16,6 +16,9 @@ import {
   ChevronDown 
 } from 'lucide-react';
 
+const SELLER_MODE_PATHS = ['/dashboard/seller', '/create-auction', '/edit-auction'];
+const BIDDER_MODE_PATHS = ['/dashboard/bidder', '/auction'];
+
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation(); // To detect current page
@@ -64,16 +67,28 @@ const Navbar = () => {
     navigate('/');
   };
 
-  // --- SMART SWITCHING LOGIC ---
-  // Check if we are currently on a "Seller" related page
-  const isSellerMode = location.pathname.includes('/seller') || location.pathname.includes('/create-auction');
+  const getModeFromPath = (path) => {
+    if (SELLER_MODE_PATHS.some((sellerPath) => path.startsWith(sellerPath))) return 'seller';
+    if (BIDDER_MODE_PATHS.some((bidderPath) => path.startsWith(bidderPath))) return 'bidder';
+    return null;
+  };
+
+  const modeFromPath = getModeFromPath(location.pathname);
+  const preferredMode = localStorage.getItem('bidpulse_dashboard_mode') || 'bidder';
+  const activeMode = modeFromPath || preferredMode;
+  const isSellerMode = activeMode === 'seller';
+  const dashboardPath = isSellerMode ? '/dashboard/seller' : '/dashboard/bidder';
+
+  useEffect(() => {
+    if (modeFromPath) {
+      localStorage.setItem('bidpulse_dashboard_mode', modeFromPath);
+    }
+  }, [modeFromPath]);
 
   const handleSwitchMode = () => {
-    if (isSellerMode) {
-      navigate('/dashboard/bidder'); // Switch to Buying
-    } else {
-      navigate('/dashboard/seller'); // Switch to Selling
-    }
+    const nextMode = isSellerMode ? 'bidder' : 'seller';
+    localStorage.setItem('bidpulse_dashboard_mode', nextMode);
+    navigate(nextMode === 'seller' ? '/dashboard/seller' : '/dashboard/bidder');
     setIsDropdownOpen(false);
   };
 
@@ -178,7 +193,7 @@ const Navbar = () => {
                         </Link>
                         
                         <Link 
-                          to={isSellerMode ? "/dashboard/seller" : "/dashboard/bidder"} 
+                          to={dashboardPath} 
                           className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-bid-purple transition"
                           onClick={() => setIsDropdownOpen(false)}
                         >
