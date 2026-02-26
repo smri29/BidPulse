@@ -1,47 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { login, reset } from '../redux/authSlice';
-import { Mail, Lock, LogIn, Shield } from 'lucide-react';
+import { Mail, Lock, LogIn, Shield, ArrowRight } from 'lucide-react';
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const { email, password } = formData;
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  const { user, isLoading, isError, isSuccess, message } = useSelector(
-    (state) => state.auth
-  );
+  const { user, isLoading, isError, isSuccess, message } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (isError) {
-      toast.error(message);
-    }
-    
-    // Redirect logic matched to App.jsx routes
+    if (isError) toast.error(message);
+
     if (user || isSuccess) {
-        if (user?.role === 'admin') {
-            navigate('/dashboard/admin'); 
-        } else if (user?.role === 'seller') {
-            navigate('/dashboard/seller');
-        } else {
-            navigate('/dashboard/bidder'); 
-        }
+      if (user?.role === 'admin') navigate('/dashboard/admin');
+      else navigate('/dashboard/bidder');
     }
+
     dispatch(reset());
   }, [user, isError, isSuccess, message, navigate, dispatch]);
 
   const onChange = (e) => {
-    setFormData((prevState) => ({
-      ...prevState,
-      [e.target.name]: e.target.value,
-    }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const onSubmit = (e) => {
@@ -50,94 +34,56 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-        <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-bid-purple rounded-full flex items-center justify-center">
-            <LogIn className="h-6 w-6 text-white" />
+    <div className="min-h-[85vh] flex items-center justify-center py-10 px-4">
+      <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-2 rounded-3xl overflow-hidden border border-white/60 shadow-xl glass-surface animate-fade-up">
+        <div className="hidden lg:flex bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-700 text-white p-10 flex-col justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 text-xs font-bold tracking-wider bg-white/10 rounded-full px-3 py-1 mb-6">SECURE ACCESS</div>
+            <h1 className="text-4xl font-bold leading-tight">Welcome back to BidPulse</h1>
+            <p className="text-white/80 mt-4 text-sm">Live bidding intelligence, escrow confidence, and high-integrity auction flow.</p>
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Welcome Back
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Sign in to access your auctions
-          </p>
+          <div className="text-sm text-white/80">Need an account? <Link to="/register" className="font-bold text-white hover:underline">Create one now</Link></div>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={onSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
-            {/* Email */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="email"
-                name="email"
-                value={email}
-                onChange={onChange}
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-bid-purple focus:border-bid-purple sm:text-sm"
-                placeholder="Email Address"
-              />
+        <div className="bg-white p-8 md:p-10">
+          <div className="text-center mb-8">
+            <div className="mx-auto h-12 w-12 bg-bid-purple rounded-full flex items-center justify-center mb-4 animate-pulse-glow">
+              <LogIn className="h-6 w-6 text-white" />
             </div>
-
-            {/* Password */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="password"
-                name="password"
-                value={password}
-                onChange={onChange}
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-bid-purple focus:border-bid-purple sm:text-sm"
-                placeholder="Password"
-              />
-            </div>
-
-            {/* --- FORGOT PASSWORD LINK --- */}
-            <div className="flex items-center justify-end">
-              <Link 
-                to="/forgot-password" 
-                className="text-sm font-medium text-bid-purple hover:text-indigo-500 hover:underline"
-              >
-                Forgot your password?
-              </Link>
-            </div>
-            {/* --------------------------- */}
+            <h2 className="text-3xl font-bold text-gray-900">Sign In</h2>
+            <p className="mt-1 text-sm text-gray-600">Access your bidder, seller, or admin workflow</p>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-bid-purple hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bid-purple transition-colors"
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div className="relative">
+              <Mail className="h-5 w-5 text-gray-400 absolute left-3 top-3" />
+              <input type="email" name="email" value={email} onChange={onChange} required placeholder="Email Address" className="w-full rounded-xl border border-gray-300 pl-10 pr-3 py-2.5 focus:ring-2 focus:ring-bid-purple focus:outline-none" />
+            </div>
+            <div className="relative">
+              <Lock className="h-5 w-5 text-gray-400 absolute left-3 top-3" />
+              <input type="password" name="password" value={password} onChange={onChange} required placeholder="Password" className="w-full rounded-xl border border-gray-300 pl-10 pr-3 py-2.5 focus:ring-2 focus:ring-bid-purple focus:outline-none" />
+            </div>
+
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-sm font-medium text-bid-purple hover:underline">Forgot password?</Link>
+            </div>
+
+            <button type="submit" disabled={isLoading} className="w-full bg-bid-purple hover:bg-blue-700 text-white rounded-xl py-2.5 font-bold inline-flex items-center justify-center gap-2 transition disabled:opacity-70">
+              {isLoading ? 'Signing in...' : <>Sign In <ArrowRight size={16} /></>}
             </button>
-          </div>
-          
-          <div className="text-center text-sm">
-             <span className="text-gray-500">Don't have an account? </span>
-             <Link to="/register" className="font-medium text-bid-purple hover:text-indigo-500">
-               Sign up
-             </Link>
-          </div>
-          
-          {/* --- ADMIN LINK --- */}
-          <div className="pt-6 border-t border-gray-100 text-center">
-             <Link 
-               to="/admin-login" 
-               className="text-xs text-gray-400 hover:text-gray-600 transition flex items-center justify-center gap-1"
-             >
-               <Shield size={12} /> Admin Access
-             </Link>
+          </form>
+
+          <div className="text-center text-sm mt-6">
+            <span className="text-gray-500">New here? </span>
+            <Link to="/register" className="font-semibold text-bid-purple hover:underline">Create account</Link>
           </div>
 
-        </form>
+          <div className="pt-6 mt-6 border-t border-gray-100 text-center">
+            <Link to="/admin-login" className="text-xs text-gray-500 hover:text-gray-800 inline-flex items-center gap-1">
+              <Shield size={12} /> Admin Access
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
