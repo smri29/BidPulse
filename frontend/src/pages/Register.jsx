@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { register, reset } from '../redux/authSlice';
 import { User, Mail, Phone, Lock, FileText, Calendar, CheckSquare, RefreshCw, ShieldCheck, MapPin } from 'lucide-react';
+import { COUNTRIES } from '../constants/countries';
 
 const Register = () => {
   const [captcha, setCaptcha] = useState({
@@ -138,10 +139,23 @@ const Register = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold uppercase text-gray-500 mb-1 block">Location</label>
+                  <label className="text-xs font-semibold uppercase text-gray-500 mb-1 block">Country</label>
                   <div className="relative">
                     <MapPin className="h-5 w-5 text-gray-400 absolute left-3 top-3" />
-                    <input type="text" name="location" value={location} onChange={onChange} required placeholder="City, Country" className="w-full rounded-xl border border-gray-300 pl-10 pr-3 py-2.5" />
+                    <select
+                      name="location"
+                      value={location}
+                      onChange={onChange}
+                      required
+                      className="w-full rounded-xl border border-gray-300 pl-10 pr-3 py-2.5 bg-white"
+                    >
+                      <option value="">Select Country</option>
+                      {COUNTRIES.map((country) => (
+                        <option key={country} value={country}>
+                          {country}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>

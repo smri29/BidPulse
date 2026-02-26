@@ -49,6 +49,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'Not set',
   },
+  address: {
+    type: String,
+    default: '',
+  },
   idType: {
     type: String,
     enum: ['nid', 'passport', 'birth_cert'],

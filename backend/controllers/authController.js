@@ -24,6 +24,7 @@ const serializeUser = (user) => ({
   role: user.role,
   dob: user.dob,
   location: user.location,
+  address: user.address,
   idType: user.idType,
   idNumber: user.idNumber,
   emailVerified: user.emailVerified,
@@ -43,7 +44,7 @@ const sendVerificationEmail = async (user, otp) => {
 };
 
 exports.register = async (req, res) => {
-  const { name, email, mobile, password, dob, idType, idNumber, location } = req.body;
+  const { name, email, mobile, password, dob, idType, idNumber, location, address } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -62,6 +63,7 @@ exports.register = async (req, res) => {
       idType,
       idNumber,
       location: location || 'Not set',
+      address: address || '',
       emailVerified: false,
     });
 
@@ -202,6 +204,7 @@ exports.getMe = async (req, res) => {
       emailVerified: true,
         avatarEmoji: '\u{1F6E1}\u{FE0F}',
       location: 'Control Room',
+      address: '',
     });
   }
 
@@ -217,6 +220,7 @@ exports.updateUserDetails = async (req, res) => {
       user.name = req.body.name || user.name;
       user.mobile = req.body.mobile || user.mobile;
       user.location = req.body.location || user.location;
+      user.address = typeof req.body.address === 'string' ? req.body.address : user.address;
       user.socialLinks = {
         ...user.socialLinks,
         ...(req.body.socialLinks || {}),
