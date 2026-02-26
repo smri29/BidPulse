@@ -1,34 +1,23 @@
 import React from 'react';
-import { Bell, CheckCircle, AlertTriangle, DollarSign, Clock } from 'lucide-react';
+import { Bell, CheckCircle, AlertTriangle, DollarSign, Clock, Trash2 } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { markAllNotificationsRead, markNotificationRead, clearNotifications } from '../redux/notificationSlice';
 
 const Notifications = () => {
-  // Mock Data (Since we don't have a database for this yet)
-  const notifications = [
-    {
-      id: 1,
-      type: 'success',
-      title: 'Auction Won!',
-      message: 'You won the "Vintage Camera" auction. Please proceed to payment.',
-      time: '2 hours ago',
-      read: false,
-    },
-    {
-      id: 2,
-      type: 'warning',
-      title: 'You have been outbid',
-      message: 'Someone bid higher on "Gaming Laptop". Bid again now!',
-      time: '5 hours ago',
-      read: true,
-    },
-    {
-      id: 3,
-      type: 'info',
-      title: 'Payment Received',
-      message: 'Your payment for "Mechanical Keyboard" is held in Escrow.',
-      time: '1 day ago',
-      read: true,
-    }
-  ];
+  const dispatch = useDispatch();
+  const notifications = useSelector((state) => state.notifications.items);
+
+  const iconForType = (type) => {
+    if (type === 'success') return <CheckCircle size={20} />;
+    if (type === 'warning') return <AlertTriangle size={20} />;
+    return <DollarSign size={20} />;
+  };
+
+  const toneForType = (type) => {
+    if (type === 'success') return 'bg-green-100 text-green-600';
+    if (type === 'warning') return 'bg-red-100 text-red-600';
+    return 'bg-blue-100 text-blue-600';
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -36,27 +25,23 @@ const Notifications = () => {
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <Bell className="text-bid-purple" /> Notifications
         </h1>
-        <button className="text-sm text-bid-purple hover:text-indigo-700 font-medium">
-          Mark all as read
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => dispatch(markAllNotificationsRead())} className="text-sm text-bid-purple hover:text-indigo-700 font-medium">Mark all as read</button>
+          <button onClick={() => dispatch(clearNotifications())} className="text-sm text-red-500 hover:text-red-700 font-medium inline-flex items-center gap-1"><Trash2 size={14} /> Clear</button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {notifications.length > 0 ? (
           <div className="divide-y divide-gray-50">
             {notifications.map((item) => (
-              <div 
-                key={item.id} 
-                className={`p-6 flex gap-4 hover:bg-slate-50 transition ${!item.read ? 'bg-indigo-50/30' : ''}`}
+              <button
+                key={item.id}
+                onClick={() => dispatch(markNotificationRead(item.id))}
+                className={`w-full text-left p-6 flex gap-4 hover:bg-slate-50 transition ${!item.read ? 'bg-indigo-50/30' : ''}`}
               >
-                {/* Icon Logic */}
-                <div className={`mt-1 flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center 
-                  ${item.type === 'success' ? 'bg-green-100 text-green-600' : 
-                    item.type === 'warning' ? 'bg-red-100 text-red-600' : 
-                    'bg-blue-100 text-blue-600'}`}>
-                  {item.type === 'success' && <CheckCircle size={20} />}
-                  {item.type === 'warning' && <AlertTriangle size={20} />}
-                  {item.type === 'info' && <DollarSign size={20} />}
+                <div className={`mt-1 flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${toneForType(item.type)}`}>
+                  {iconForType(item.type)}
                 </div>
 
                 <div className="flex-1">
@@ -65,12 +50,12 @@ const Notifications = () => {
                       {item.title}
                     </h3>
                     <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <Clock size={12} /> {item.time}
+                      <Clock size={12} /> {new Date(item.createdAt).toLocaleString()}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 mt-1">{item.message}</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         ) : (
