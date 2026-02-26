@@ -1,22 +1,17 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from '../utils/axiosConfig'; // Using centralized config
+import axios from '../utils/axiosConfig';
 
-// Helper to get token
-const getConfig = (token) => {
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-};
+const getConfig = (token) => ({
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+});
 
-// 1. Create Auction
 export const createAuction = createAsyncThunk(
   'auctions/create',
   async (auctionData, thunkAPI) => {
     try {
       const token = thunkAPI.getState().auth.user.token;
-      // UPDATED: Use relative path '/auctions'
       const response = await axios.post('/auctions', auctionData, getConfig(token));
       return response.data;
     } catch (error) {
@@ -26,30 +21,37 @@ export const createAuction = createAsyncThunk(
   }
 );
 
-// 2. Get All Auctions (Public)
 export const getAllAuctions = createAsyncThunk(
   'auctions/getAll',
-  async (_, thunkAPI) => {
+  async (params = {}, thunkAPI) => {
     try {
-      // UPDATED: Use relative path '/auctions'
-      const response = await axios.get('/auctions');
+      const response = await axios.get('/auctions', { params });
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue(message);
     }
+  },
+  {
+    condition: (params = {}, { getState }) => {
+      if (params.force) return true;
+
+      const { isLoading, lastFetchedAt } = getState().auction;
+      if (isLoading) return false;
+
+      const ttlMs = 30 * 1000;
+      return Date.now() - lastFetchedAt > ttlMs;
+    },
   }
 );
 
-// 3. Delete Auction (Seller/Admin)
 export const deleteAuction = createAsyncThunk(
   'auctions/delete',
   async (id, thunkAPI) => {
     try {
       const token = thunkAPI.getState().auth.user.token;
-      // UPDATED: Use relative path '/auctions/:id'
       await axios.delete(`/auctions/${id}`, getConfig(token));
-      return id; // Return ID to remove it from state
+      return id;
     } catch (error) {
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue(message);
@@ -61,11 +63,12 @@ const auctionSlice = createSlice({
   name: 'auction',
   initialState: {
     auctions: [],
-    auction: null, // Single auction details
+    auction: null,
     isError: false,
     isSuccess: false,
     isLoading: false,
     message: '',
+    lastFetchedAt: 0,
   },
   reducers: {
     reset: (state) => {
@@ -77,21 +80,31 @@ const auctionSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(createAuction.pending, (state) => { state.isLoading = true; })
+      .addCase(createAuction.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(createAuction.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.auctions.push(action.payload);
+        state.auctions.unshift(action.payload);
       })
       .addCase(createAuction.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
       })
-      .addCase(getAllAuctions.pending, (state) => { state.isLoading = true; })
+      .addCase(getAllAuctions.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(getAllAuctions.fulfilled, (state, action) => {
         state.isLoading = false;
         state.auctions = action.payload;
+        state.lastFetchedAt = Date.now();
+      })
+      .addCase(getAllAuctions.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
       })
       .addCase(deleteAuction.fulfilled, (state, action) => {
         state.auctions = state.auctions.filter((a) => a._id !== action.payload);

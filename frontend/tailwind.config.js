@@ -7,9 +7,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        'bid-purple': '#6366f1', // Indigo-500 (Bidder Primary)
-        'bid-green': '#10b981',  // Emerald-500 (Seller Primary)
-        'bid-dark': '#0f172a',   // Slate-900 (Admin/Footer)
+        'bid-purple': '#0f6fff',
+        'bid-green': '#059669',
+        'bid-dark': '#0b1220',
       }
     },
   },

@@ -9,7 +9,7 @@ export const getAllUsers = createAsyncThunk(
       const token = thunkAPI.getState().auth.user.token;
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const response = await axios.get('/admin/users', config);
-      return response.data;
+      return response.data.users || [];
     } catch (error) {
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue(message);
