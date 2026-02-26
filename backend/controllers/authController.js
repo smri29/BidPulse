@@ -34,8 +34,8 @@ const serializeUser = (user) => ({
   token: generateToken(user._id),
 });
 
-const sendVerificationEmail = (user, otp) => {
-  sendEmailAsync({
+const sendVerificationEmail = async (user, otp) => {
+  await sendEmail({
     email: user.email,
     subject: 'BidPulse Email Verification OTP',
     message: templates.emailOtp({ otp }),
@@ -71,9 +71,16 @@ exports.register = async (req, res) => {
 
     const otp = user.generateEmailVerificationOTP();
     await user.save();
-    sendVerificationEmail(user, otp);
-
-    return res.status(201).json(serializeUser(user));
+    try {
+      await sendVerificationEmail(user, otp);
+      return res.status(201).json(serializeUser(user));
+    } catch (emailError) {
+      return res.status(201).json({
+        ...serializeUser(user),
+        warning: `Account created, but verification email failed to send. ${emailError.message}`,
+        emailDeliveryFailed: true,
+      });
+    }
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -93,7 +100,7 @@ exports.login = async (req, res) => {
         email: adminEmail,
         role: 'admin',
         emailVerified: true,
-        avatarEmoji: '???',
+        avatarEmoji: '\u{1F6E1}\u{FE0F}',
         createdAt: new Date(),
         token: generateToken('static_admin_id_999'),
       });
@@ -128,7 +135,13 @@ exports.sendVerificationOTP = async (req, res) => {
 
     const otp = user.generateEmailVerificationOTP();
     await user.save();
-    sendVerificationEmail(user, otp);
+    try {
+      await sendVerificationEmail(user, otp);
+    } catch (emailError) {
+      return res.status(503).json({
+        message: `Unable to send verification OTP right now. ${emailError.message}`,
+      });
+    }
 
     return res.json({ message: 'Verification OTP sent to your email' });
   } catch (error) {
@@ -187,7 +200,7 @@ exports.getMe = async (req, res) => {
       email: process.env.ADMIN_EMAIL,
       role: 'admin',
       emailVerified: true,
-      avatarEmoji: '???',
+        avatarEmoji: '\u{1F6E1}\u{FE0F}',
       location: 'Control Room',
     });
   }
@@ -230,6 +243,10 @@ exports.uploadAvatar = async (req, res) => {
       return res.status(400).json({ message: 'Please upload an image file' });
     }
 
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return res.status(503).json({ message: 'Avatar upload service is not configured in production' });
+    }
+
     const folder = process.env.CLOUDINARY_FOLDER || 'bidpulse';
 
     const uploadResult = await new Promise((resolve, reject) => {
@@ -264,12 +281,14 @@ exports.uploadAvatar = async (req, res) => {
 exports.setEmojiAvatar = async (req, res) => {
   try {
     const { emoji } = req.body;
-    if (!emoji) return res.status(400).json({ message: 'Emoji is required' });
+    const normalizedEmoji = typeof emoji === 'string' ? emoji.trim() : '';
+    if (!normalizedEmoji) return res.status(400).json({ message: 'Emoji is required' });
+    if (normalizedEmoji.length > 16) return res.status(400).json({ message: 'Invalid emoji value' });
 
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.avatarEmoji = emoji;
+    user.avatarEmoji = normalizedEmoji;
     user.avatarUrl = '';
     await user.save();
 

@@ -19,6 +19,15 @@ const { protect } = require('../middleware/authMiddleware');
 const { imageUpload } = require('../middleware/uploadMiddleware');
 
 const router = express.Router();
+const handleAvatarUpload = (req, res, next) => {
+  imageUpload.single('avatar')(req, res, (err) => {
+    if (!err) return next();
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ message: 'Avatar file is too large. Max size is 5MB.' });
+    }
+    return res.status(400).json({ message: err.message || 'Invalid avatar upload' });
+  });
+};
 
 router.post('/register', register);
 router.post('/login', login);
@@ -29,7 +38,7 @@ router.put('/updatedetails', protect, updateUserDetails);
 router.delete('/deleteaccount', protect, deleteUserAccount);
 router.post('/send-verification-otp', protect, sendVerificationOTP);
 router.post('/verify-email-otp', protect, verifyEmailOTP);
-router.post('/avatar/upload', protect, imageUpload.single('avatar'), uploadAvatar);
+router.post('/avatar/upload', protect, handleAvatarUpload, uploadAvatar);
 router.post('/avatar/emoji', protect, setEmojiAvatar);
 router.get('/export-data', protect, exportUserDataZip);
 

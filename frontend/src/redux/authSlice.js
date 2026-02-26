@@ -1,5 +1,24 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from '../utils/axiosConfig';
+import { getApiErrorMessage } from '../utils/axiosConfig';
+
+const getTokenFromState = (thunkAPI) => thunkAPI.getState().auth.user?.token;
+
+export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async (_, thunkAPI) => {
+  try {
+    const token = getTokenFromState(thunkAPI);
+    if (!token) return thunkAPI.rejectWithValue('No active session');
+    const response = await axios.get('/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const currentUser = { ...response.data, token };
+    localStorage.setItem('user', JSON.stringify(currentUser));
+    return currentUser;
+  } catch (error) {
+    localStorage.removeItem('user');
+    return thunkAPI.rejectWithValue(getApiErrorMessage(error));
+  }
+});
 
 export const register = createAsyncThunk('auth/register', async (userData, thunkAPI) => {
   try {
@@ -9,7 +28,7 @@ export const register = createAsyncThunk('auth/register', async (userData, thunk
     }
     return response.data;
   } catch (error) {
-    const message = error.response?.data?.message || error.message;
+    const message = getApiErrorMessage(error);
     return thunkAPI.rejectWithValue(message);
   }
 });
@@ -22,14 +41,14 @@ export const login = createAsyncThunk('auth/login', async (userData, thunkAPI) =
     }
     return response.data;
   } catch (error) {
-    const message = error.response?.data?.message || error.message;
+    const message = getApiErrorMessage(error);
     return thunkAPI.rejectWithValue(message);
   }
 });
 
 export const updateProfile = createAsyncThunk('auth/updateProfile', async (userData, thunkAPI) => {
   try {
-    const token = thunkAPI.getState().auth.user.token;
+    const token = getTokenFromState(thunkAPI);
     const response = await axios.put('/auth/updatedetails', userData, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -40,27 +59,27 @@ export const updateProfile = createAsyncThunk('auth/updateProfile', async (userD
 
     return response.data;
   } catch (error) {
-    const message = error.response?.data?.message || error.message;
+    const message = getApiErrorMessage(error);
     return thunkAPI.rejectWithValue(message);
   }
 });
 
 export const sendVerificationOtp = createAsyncThunk('auth/sendVerificationOtp', async (_, thunkAPI) => {
   try {
-    const token = thunkAPI.getState().auth.user.token;
+    const token = getTokenFromState(thunkAPI);
     const response = await axios.post('/auth/send-verification-otp', {}, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   } catch (error) {
-    const message = error.response?.data?.message || error.message;
+    const message = getApiErrorMessage(error);
     return thunkAPI.rejectWithValue(message);
   }
 });
 
 export const verifyEmailOtp = createAsyncThunk('auth/verifyEmailOtp', async (otp, thunkAPI) => {
   try {
-    const token = thunkAPI.getState().auth.user.token;
+    const token = getTokenFromState(thunkAPI);
     const response = await axios.post('/auth/verify-email-otp', { otp }, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -71,14 +90,14 @@ export const verifyEmailOtp = createAsyncThunk('auth/verifyEmailOtp', async (otp
 
     return response.data;
   } catch (error) {
-    const message = error.response?.data?.message || error.message;
+    const message = getApiErrorMessage(error);
     return thunkAPI.rejectWithValue(message);
   }
 });
 
 export const uploadAvatar = createAsyncThunk('auth/uploadAvatar', async (file, thunkAPI) => {
   try {
-    const token = thunkAPI.getState().auth.user.token;
+    const token = getTokenFromState(thunkAPI);
     const formData = new FormData();
     formData.append('avatar', file);
     const response = await axios.post('/auth/avatar/upload', formData, {
@@ -91,14 +110,14 @@ export const uploadAvatar = createAsyncThunk('auth/uploadAvatar', async (file, t
 
     return response.data;
   } catch (error) {
-    const message = error.response?.data?.message || error.message;
+    const message = getApiErrorMessage(error);
     return thunkAPI.rejectWithValue(message);
   }
 });
 
 export const setEmojiAvatar = createAsyncThunk('auth/setEmojiAvatar', async (emoji, thunkAPI) => {
   try {
-    const token = thunkAPI.getState().auth.user.token;
+    const token = getTokenFromState(thunkAPI);
     const response = await axios.post('/auth/avatar/emoji', { emoji }, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -109,33 +128,33 @@ export const setEmojiAvatar = createAsyncThunk('auth/setEmojiAvatar', async (emo
 
     return response.data;
   } catch (error) {
-    const message = error.response?.data?.message || error.message;
+    const message = getApiErrorMessage(error);
     return thunkAPI.rejectWithValue(message);
   }
 });
 
 export const getMyActivity = createAsyncThunk('auth/getMyActivity', async (_, thunkAPI) => {
   try {
-    const token = thunkAPI.getState().auth.user.token;
+    const token = getTokenFromState(thunkAPI);
     const response = await axios.get('/auth/activity', {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   } catch (error) {
-    const message = error.response?.data?.message || error.message;
+    const message = getApiErrorMessage(error);
     return thunkAPI.rejectWithValue(message);
   }
 });
 
 export const deleteAccount = createAsyncThunk('auth/deleteAccount', async (_, thunkAPI) => {
   try {
-    const token = thunkAPI.getState().auth.user.token;
+    const token = getTokenFromState(thunkAPI);
     await axios.delete('/auth/deleteaccount', {
       headers: { Authorization: `Bearer ${token}` },
     });
     localStorage.removeItem('user');
   } catch (error) {
-    const message = error.response?.data?.message || error.message;
+    const message = getApiErrorMessage(error);
     return thunkAPI.rejectWithValue(message);
   }
 });
@@ -144,7 +163,12 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   localStorage.removeItem('user');
 });
 
-const user = JSON.parse(localStorage.getItem('user'));
+let user = null;
+try {
+  user = JSON.parse(localStorage.getItem('user'));
+} catch (_error) {
+  user = null;
+}
 
 const authSlice = createSlice({
   name: 'auth',
@@ -163,9 +187,31 @@ const authSlice = createSlice({
       state.isError = false;
       state.message = '';
     },
+    forceLogout: (state, action) => {
+      localStorage.removeItem('user');
+      state.user = null;
+      state.activity = null;
+      state.isLoading = false;
+      state.isSuccess = false;
+      state.isError = !!action?.payload;
+      state.message = action?.payload || '';
+    },
   },
   extraReducers: (builder) => {
     builder
+      .addCase(fetchCurrentUser.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+      })
+      .addCase(fetchCurrentUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.user = null;
+        state.isError = true;
+        state.message = action.payload || 'Session expired. Please log in again.';
+      })
       .addCase(register.pending, (state) => {
         state.isLoading = true;
       })
@@ -173,6 +219,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.user = action.payload;
+        state.message = action.payload?.warning || '';
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
@@ -256,4 +303,5 @@ const authSlice = createSlice({
 });
 
 export const { reset } = authSlice.actions;
+export const { forceLogout } = authSlice.actions;
 export default authSlice.reducer;

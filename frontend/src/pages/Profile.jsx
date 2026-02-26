@@ -42,7 +42,22 @@ const LOCATIONS = [
   'Custom',
 ];
 
-const EMOJI_SET = ['??', '??', '??', '??', '??', '??', '???', '??', '??', '?'];
+const EMOJI_SET = [
+  '\u{1F600}',
+  '\u{1F60E}',
+  '\u{1F525}',
+  '\u{1F680}',
+  '\u{1F389}',
+  '\u{1F4AF}',
+  '\u{1F4A1}',
+  '\u{1F64C}',
+  '\u{1F3AF}',
+  '\u{1F31F}',
+];
+
+const emojiFontStyle = {
+  fontFamily: '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif',
+};
 
 const Profile = () => {
   const { user, isLoading, activity, isError, message, isSuccess } = useSelector((state) => state.auth);
@@ -147,7 +162,10 @@ const Profile = () => {
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.name} className="h-full w-full rounded-full object-cover" />
               ) : (
-                <div className="h-full w-full bg-slate-100 rounded-full flex items-center justify-center text-3xl font-bold text-gray-500">
+                <div
+                  className="h-full w-full bg-slate-100 rounded-full flex items-center justify-center text-3xl font-bold text-gray-500"
+                  style={emojiFontStyle}
+                >
                   {user.avatarEmoji || user.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -217,6 +235,7 @@ const Profile = () => {
                         .catch((err) => toast.error(err))
                     }
                     className="w-8 h-8 rounded-full border border-gray-200 hover:bg-gray-50"
+                    style={emojiFontStyle}
                   >
                     {emoji}
                   </button>

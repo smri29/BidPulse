@@ -6,6 +6,7 @@ dotenv.config();
 const cors = require('cors');
 const compression = require('compression');
 const morgan = require('morgan');
+const helmet = require('helmet');
 const http = require('http');
 const { Server } = require('socket.io');
 const cron = require('node-cron');
@@ -118,6 +119,7 @@ app.use(cors({
   },
   credentials: true,
 }));
+app.use(helmet());
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));
 
@@ -133,6 +135,19 @@ app.use('/api/support', supportRoutes);
 
 app.get('/', (_req, res) => {
   res.send('BidPulse API is running...');
+});
+
+app.use('/api', (req, res) => {
+  res.status(404).json({ message: `Route not found: ${req.originalUrl}` });
+});
+
+app.use((err, _req, res, _next) => {
+  console.error('Unhandled server error:', err.message);
+  const statusCode = err.statusCode || res.statusCode || 500;
+  if (res.headersSent) return;
+  res.status(statusCode >= 400 ? statusCode : 500).json({
+    message: err.message || 'Internal server error',
+  });
 });
 
 io.on('connection', (socket) => {

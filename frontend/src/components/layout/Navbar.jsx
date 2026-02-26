@@ -146,7 +146,10 @@ const Navbar = () => {
                     {user.avatarUrl ? (
                       <img src={user.avatarUrl} alt={user.name} className="h-8 w-8 rounded-full object-cover border border-indigo-200" />
                     ) : (
-                      <div className="h-8 w-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm border border-indigo-200">
+                      <div
+                        className="h-8 w-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm border border-indigo-200"
+                        style={{ fontFamily: '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif' }}
+                      >
                         {user.avatarEmoji || user.name.charAt(0).toUpperCase()}
                       </div>
                     )}

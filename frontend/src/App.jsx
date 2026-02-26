@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-import { useSelector } from 'react-redux'; // Import useSelector for role checking
+import { toast } from 'react-toastify';
+import { useDispatch, useSelector } from 'react-redux';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Components (Layout & Security)
@@ -40,9 +41,53 @@ import AdminProfile from './pages/dashboard/AdminProfile';
 import CreateAuction from './pages/dashboard/CreateAuction'; 
 import EditAuction from './pages/dashboard/EditAuction';
 import PaymentSuccess from './pages/PaymentSuccess';
+import NotFound from './pages/NotFound';
+import { fetchCurrentUser, forceLogout } from './redux/authSlice';
 
 function App() {
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (!user?.token) return;
+    dispatch(fetchCurrentUser());
+  }, [dispatch, user?.token]);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      dispatch(forceLogout('Your session ended. Please log in again.'));
+      toast.error('Your session ended. Please log in again.');
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/admin-login') {
+        window.location.assign('/login');
+      }
+    };
+
+    window.addEventListener('bidpulse:auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('bidpulse:auth-expired', handleAuthExpired);
+  }, [dispatch]);
+
+  useEffect(() => {
+    const handleOnline = () => toast.success('Back online');
+    const handleOffline = () => toast.error('You are offline. Some actions may fail.');
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && user?.token) {
+        dispatch(fetchCurrentUser());
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [dispatch, user?.token]);
 
   return (
     <Router>
@@ -162,7 +207,7 @@ function App() {
             />
 
             {/* --- 404 Fallback --- */}
-            <Route path="*" element={<div className="p-10 text-center text-gray-500">404 - Page Not Found</div>} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
 
