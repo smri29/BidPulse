@@ -11,6 +11,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cron = require('node-cron');
 const stripe = require('stripe');
+const mongoose = require('mongoose');
 
 const connectDB = require('./config/db.js');
 const Auction = require('./models/Auction');
@@ -137,6 +138,29 @@ app.get('/', (_req, res) => {
   res.send('BidPulse API is running...');
 });
 
+app.get('/api/health', (_req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    uptime: Math.round(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/api/ready', (_req, res) => {
+  const dbReady = mongoose.connection.readyState === 1;
+  if (!dbReady) {
+    return res.status(503).json({
+      status: 'degraded',
+      dependencies: { db: 'down' },
+    });
+  }
+
+  return res.status(200).json({
+    status: 'ready',
+    dependencies: { db: 'up' },
+  });
+});
+
 app.use('/api', (req, res) => {
   res.status(404).json({ message: `Route not found: ${req.originalUrl}` });
 });
@@ -240,3 +264,25 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
+
+const shutdown = async (signal) => {
+  console.log(`Received ${signal}. Starting graceful shutdown...`);
+  server.close(async () => {
+    try {
+      await mongoose.connection.close(false);
+      console.log('Graceful shutdown completed.');
+      process.exit(0);
+    } catch (error) {
+      console.error('Error during shutdown:', error.message);
+      process.exit(1);
+    }
+  });
+
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout.');
+    process.exit(1);
+  }, 10000).unref();
+};
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));

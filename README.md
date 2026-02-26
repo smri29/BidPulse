@@ -32,6 +32,7 @@ Live deployments:
 23. Known Gaps
 24. Roadmap
 25. License
+26. Full Audit and Upgrade Log (Latest)
 
 ## 1. Project Vision
 Online auctions often fail in three ways:
@@ -495,3 +496,96 @@ BidPulse/
 
 ## 25. License
 MIT
+
+## 26. Full Audit and Upgrade Log (Latest)
+
+### 26.1 Audit Findings
+The latest full-project pass identified these high-priority gaps:
+- Legacy emoji-avatar backend/frontend code still present after UI removal.
+- Duplicate email index warning from Mongoose schema definition.
+- No API health/readiness endpoints for deployment monitoring.
+- No graceful shutdown path for process restarts.
+- No basic abuse control on high-risk auth/OTP/password endpoints.
+- Frontend lint command was broken due missing ESLint flat config.
+- Session refresh behavior previously over-aggressive on visibility changes and some API failures.
+
+### 26.2 What Was Implemented
+
+#### A. Session and refresh stabilization (frontend)
+- Auth invalidation only on stronger token/session failure signals.
+- Visibility-triggered `/auth/me` checks throttled to reduce frequent refresh behavior.
+- Removed hard redirect reload behavior on auth-expired event.
+
+Files:
+- `frontend/src/App.jsx`
+- `frontend/src/utils/axiosConfig.js`
+- `frontend/src/redux/authSlice.js`
+
+#### B. Legacy cleanup
+- Removed emoji-avatar API endpoint and thunk remnants.
+- Kept avatar upload as the profile image strategy.
+
+Files:
+- `backend/controllers/authController.js`
+- `backend/routes/authRoutes.js`
+- `frontend/src/redux/authSlice.js`
+
+#### C. Backend operational hardening
+- Added in-memory rate limiter middleware and applied to:
+  - register/login
+  - send/verify OTP
+  - forgot/reset password
+- Added:
+  - `GET /api/health`
+  - `GET /api/ready`
+- Added graceful shutdown handlers for `SIGINT`/`SIGTERM` with DB close.
+
+Files:
+- `backend/middleware/rateLimitMiddleware.js`
+- `backend/routes/authRoutes.js`
+- `backend/server.js`
+
+#### D. Database/model cleanup
+- Removed duplicate schema index declaration to avoid startup warnings.
+
+File:
+- `backend/models/User.js`
+
+#### E. Logging cleanup
+- Removed noisy debug log formatting and normalized Stripe error logging.
+
+File:
+- `backend/controllers/paymentController.js`
+
+#### F. Tooling improvement
+- Added ESLint v9 flat config so `npm run lint` works consistently.
+- Current lint status: runs successfully with warnings (no errors).
+
+File:
+- `frontend/eslint.config.js`
+
+### 26.3 Validation Results
+- Backend syntax checks passed on updated files.
+- Frontend production build passed.
+- Frontend lint runs successfully (warnings remain; no blocking errors).
+
+### 26.4 Remaining Roadmap (Prioritized)
+
+#### Priority 1 (next iteration)
+- Introduce structured server logger (request ID + JSON logs).
+- Add centralized validation layer (Joi/Zod/express-validator) for all mutable routes.
+- Add backend integration tests for auth, auctions, payment release flow.
+
+#### Priority 2
+- Add refresh token strategy (short-lived access token + rotating refresh token).
+- Add optimistic UI rollback patterns for high-frequency bidding interactions.
+- Add stronger server-side anti-bid-spam controls per auction/user pair.
+
+#### Priority 3
+- Split large frontend bundle via route-level lazy loading.
+- Add Sentry/monitoring integration for backend and frontend.
+- Add full admin audit trail and exportable activity logs.
+
+### 26.5 Scope Note
+The phrase “implement everything” is practically unbounded for a living system.  
+This pass executed the highest-impact stability, security, operability, and maintainability upgrades that could be completed safely in one cycle without disrupting existing feature behavior.

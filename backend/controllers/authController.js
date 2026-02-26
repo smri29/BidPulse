@@ -282,26 +282,6 @@ exports.uploadAvatar = async (req, res) => {
   }
 };
 
-exports.setEmojiAvatar = async (req, res) => {
-  try {
-    const { emoji } = req.body;
-    const normalizedEmoji = typeof emoji === 'string' ? emoji.trim() : '';
-    if (!normalizedEmoji) return res.status(400).json({ message: 'Emoji is required' });
-    if (normalizedEmoji.length > 16) return res.status(400).json({ message: 'Invalid emoji value' });
-
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    user.avatarEmoji = normalizedEmoji;
-    user.avatarUrl = '';
-    await user.save();
-
-    return res.json({ message: 'Emoji avatar updated', user: serializeUser(user) });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
-};
-
 exports.getUserActivity = async (req, res) => {
   try {
     const userId = req.user.id;

@@ -5,8 +5,7 @@ const templates = require('../utils/emailTemplates');
 
 // @desc    Create Stripe Checkout Session & Save Shipping Address
 exports.createCheckoutSession = async (req, res) => {
-  console.log("1. Payment Request Received for Auction:", req.params.auctionId);
-  const { shippingAddress } = req.body; // <--- Extract Address
+  const { shippingAddress } = req.body;
 
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -20,13 +19,11 @@ exports.createCheckoutSession = async (req, res) => {
       return res.status(403).json({ message: 'Only the winner can pay for this auction' });
     }
 
-    // 1. SAVE SHIPPING ADDRESS TO DB
-    if(shippingAddress) {
-        auction.shippingDetails = shippingAddress;
-        await auction.save();
+    if (shippingAddress) {
+      auction.shippingDetails = shippingAddress;
+      await auction.save();
     }
 
-    // 2. Create Stripe Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -53,8 +50,8 @@ exports.createCheckoutSession = async (req, res) => {
 
     res.status(200).json({ id: session.id, url: session.url });
   } catch (error) {
-    console.error("Stripe Error:", error);
-    res.status(500).json({ message: error.message || "Payment Processing Failed" });
+    console.error('Stripe Error:', error.message);
+    res.status(500).json({ message: error.message || 'Payment Processing Failed' });
   }
 };
 
@@ -103,7 +100,7 @@ exports.releaseFunds = async (req, res) => {
     res.status(200).json({ message: 'Funds released to seller. Transaction complete.' });
 
   } catch (error) {
-    console.error("RELEASE FUNDS ERROR:", error);
+    console.error('RELEASE FUNDS ERROR:', error.message);
     res.status(500).json({ message: error.message });
   }
 };

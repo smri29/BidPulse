@@ -132,24 +132,6 @@ export const uploadAvatar = createAsyncThunk('auth/uploadAvatar', async (file, t
   }
 });
 
-export const setEmojiAvatar = createAsyncThunk('auth/setEmojiAvatar', async (emoji, thunkAPI) => {
-  try {
-    const token = getTokenFromState(thunkAPI);
-    const response = await axios.post('/auth/avatar/emoji', { emoji }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (response.data?.user) {
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-    }
-
-    return response.data;
-  } catch (error) {
-    const message = getApiErrorMessage(error);
-    return thunkAPI.rejectWithValue(message);
-  }
-});
-
 export const getMyActivity = createAsyncThunk('auth/getMyActivity', async (_, thunkAPI) => {
   try {
     const token = getTokenFromState(thunkAPI);
@@ -296,9 +278,6 @@ const authSlice = createSlice({
         state.message = action.payload;
       })
       .addCase(uploadAvatar.fulfilled, (state, action) => {
-        state.user = action.payload.user;
-      })
-      .addCase(setEmojiAvatar.fulfilled, (state, action) => {
         state.user = action.payload.user;
       })
       .addCase(getMyActivity.fulfilled, (state, action) => {

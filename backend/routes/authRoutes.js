@@ -11,14 +11,17 @@ const {
   verifyEmailOTP,
   getUserActivity,
   uploadAvatar,
-  setEmojiAvatar,
   exportUserDataZip,
 } = require('../controllers/authController');
 
 const { protect } = require('../middleware/authMiddleware');
 const { imageUpload } = require('../middleware/uploadMiddleware');
+const { createRateLimiter } = require('../middleware/rateLimitMiddleware');
 
 const router = express.Router();
+const authLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 60, keyPrefix: 'auth' });
+const otpLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10, keyPrefix: 'otp' });
+const passwordLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10, keyPrefix: 'password' });
 const handleAvatarUpload = (req, res, next) => {
   imageUpload.single('avatar')(req, res, (err) => {
     if (!err) return next();
@@ -29,20 +32,19 @@ const handleAvatarUpload = (req, res, next) => {
   });
 };
 
-router.post('/register', register);
-router.post('/login', login);
+router.post('/register', authLimiter, register);
+router.post('/login', authLimiter, login);
 router.get('/me', protect, getMe);
 router.get('/activity', protect, getUserActivity);
 
 router.put('/updatedetails', protect, updateUserDetails);
 router.delete('/deleteaccount', protect, deleteUserAccount);
-router.post('/send-verification-otp', protect, sendVerificationOTP);
-router.post('/verify-email-otp', protect, verifyEmailOTP);
+router.post('/send-verification-otp', protect, otpLimiter, sendVerificationOTP);
+router.post('/verify-email-otp', protect, otpLimiter, verifyEmailOTP);
 router.post('/avatar/upload', protect, handleAvatarUpload, uploadAvatar);
-router.post('/avatar/emoji', protect, setEmojiAvatar);
 router.get('/export-data', protect, exportUserDataZip);
 
-router.post('/forgotpassword', forgotPassword);
-router.put('/resetpassword/:resetToken', resetPassword);
+router.post('/forgotpassword', passwordLimiter, forgotPassword);
+router.put('/resetpassword/:resetToken', passwordLimiter, resetPassword);
 
 module.exports = router;
