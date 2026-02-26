@@ -2,6 +2,17 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
+const socialLinksSchema = new mongoose.Schema(
+  {
+    facebook: { type: String, default: '' },
+    instagram: { type: String, default: '' },
+    x: { type: String, default: '' },
+    threads: { type: String, default: '' },
+    youtube: { type: String, default: '' },
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -16,20 +27,27 @@ const userSchema = new mongoose.Schema({
       'Please add a valid email',
     ],
   },
+  mobile: {
+    type: String,
+    default: '',
+  },
   password: {
     type: String,
     required: [true, 'Please add a password'],
     minlength: 6,
-    select: false, 
+    select: false,
   },
   role: {
     type: String,
-    enum: ['user', 'bidder', 'seller', 'admin'], 
-    default: 'user', 
+    enum: ['user', 'bidder', 'seller', 'admin'],
+    default: 'user',
   },
-  // --- New Verification Fields ---
   dob: {
     type: Date,
+  },
+  location: {
+    type: String,
+    default: 'Not set',
   },
   idType: {
     type: String,
@@ -38,31 +56,51 @@ const userSchema = new mongoose.Schema({
   idNumber: {
     type: String,
   },
-  // --- Admin Ban Flag ---
+  emailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  emailVerificationOTP: String,
+  emailVerificationOTPExpire: Date,
   isBanned: {
     type: Boolean,
     default: false,
   },
-  // ----------------------
-  blockedUsers: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  }],
+  blockedUsers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
+  socialLinks: {
+    type: socialLinksSchema,
+    default: () => ({}),
+  },
+  avatarUrl: {
+    type: String,
+    default: '',
+  },
+  avatarEmoji: {
+    type: String,
+    default: '',
+  },
   stripeAccountId: {
     type: String,
-    default: null, 
+    default: null,
   },
-  // --- Password Reset Fields ---
   resetPasswordToken: String,
   resetPasswordExpire: Date,
-  // -----------------------------
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
 
-// Encrypt password using bcrypt before saving
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ role: 1 });
+userSchema.index({ isBanned: 1 });
+userSchema.index({ emailVerified: 1 });
+
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) {
     return;
@@ -71,26 +109,24 @@ userSchema.pre('save', async function () {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Match user entered password to hashed password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// --- Generate Password Reset Token ---
 userSchema.methods.getResetPasswordToken = function () {
-  // Generate token
   const resetToken = crypto.randomBytes(20).toString('hex');
 
-  // Hash token and set to resetPasswordToken field
-  this.resetPasswordToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
-
-  // Set expire (10 minutes)
+  this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
   this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
 
   return resetToken;
+};
+
+userSchema.methods.generateEmailVerificationOTP = function () {
+  const otp = `${Math.floor(100000 + Math.random() * 900000)}`;
+  this.emailVerificationOTP = crypto.createHash('sha256').update(otp).digest('hex');
+  this.emailVerificationOTPExpire = Date.now() + 5 * 60 * 1000;
+  return otp;
 };
 
 module.exports = mongoose.model('User', userSchema);

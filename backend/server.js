@@ -1,220 +1,227 @@
 const express = require('express');
 const dotenv = require('dotenv');
 
-// 1. Load Config (MUST BE FIRST)
-dotenv.config(); 
+dotenv.config();
 
 const cors = require('cors');
-const http = require('http'); 
+const compression = require('compression');
+const morgan = require('morgan');
+const http = require('http');
 const { Server } = require('socket.io');
-const connectDB = require('./config/db.js');
 const cron = require('node-cron');
 const stripe = require('stripe');
 
-// Import Models
-const Auction = require('./models/Auction'); 
-const User = require('./models/User'); // <--- ADDED: Needed for finding email addresses
+const connectDB = require('./config/db.js');
+const Auction = require('./models/Auction');
+const User = require('./models/User');
+const { sendEmailAsync, verifyEmailTransport } = require('./utils/emailService');
+const templates = require('./utils/emailTemplates');
 
-// Import Utilities
-const sendEmail = require('./utils/emailService'); // <--- ADDED: Email Service
-
-// Import Routes
 const authRoutes = require('./routes/authRoutes');
 const auctionRoutes = require('./routes/auctionRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
-const adminRoutes = require('./routes/adminRoutes'); // Admin Routes
+const adminRoutes = require('./routes/adminRoutes');
+const supportRoutes = require('./routes/supportRoutes');
 
-// Initialize Stripe Client
-const stripeClient = process.env.STRIPE_SECRET_KEY 
-  ? stripe(process.env.STRIPE_SECRET_KEY) 
-  : null;
+const stripeClient = process.env.STRIPE_SECRET_KEY ? stripe(process.env.STRIPE_SECRET_KEY) : null;
 
-// 2. Connect to Database
+const parseAllowedOrigins = () => {
+  const baseOrigins = [process.env.CLIENT_URL, process.env.CORS_ORIGIN]
+    .filter(Boolean)
+    .map((origin) => origin.trim());
+
+  const fromList = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return Array.from(new Set([...baseOrigins, ...fromList]));
+};
+
+const allowedOrigins = parseAllowedOrigins();
+
 connectDB();
+verifyEmailTransport();
 
-// 3. Initialize App & Socket
 const app = express();
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: '*', // In production, replace with your frontend URL
+    origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
   },
 });
 
-// Make io accessible in controllers
 app.set('io', io);
 
-// 4. STRIPE WEBHOOK (Must be before express.json)
+// Stripe webhook must run before express.json middleware.
 app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  if (!stripeClient) return res.status(500).send('Stripe not configured');
+  if (!stripeClient || !process.env.STRIPE_WEBHOOK_SECRET) {
+    return res.status(500).send('Stripe webhook is not configured');
+  }
 
   const sig = req.headers['stripe-signature'];
   let event;
 
   try {
-    event = stripeClient.webhooks.constructEvent(
-      req.body, 
-      sig, 
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    event = stripeClient.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error(`Webhook Error: ${err.message}`);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Handle the event
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    const auctionId = session.metadata.auctionId;
-    const winnerId = session.metadata.winnerId;
+    const auctionId = session.metadata?.auctionId;
+    const winnerId = session.metadata?.winnerId;
 
     try {
-      const auction = await Auction.findById(auctionId);
-      const winner = await User.findById(winnerId); // Find the buyer
+      const [auction, winner] = await Promise.all([
+        Auction.findById(auctionId),
+        User.findById(winnerId).select('email').lean(),
+      ]);
 
-      if (auction && winner) {
+      if (auction && winner?.email) {
         auction.status = 'paid_held_in_escrow';
         await auction.save();
-        console.log(`Payment received for Auction ${auctionId}. Funds held in escrow.`);
-        
-        // --- EMAIL TRIGGER: PAYMENT RECEIPT (BIDDER) ---
-        try {
-            await sendEmail({
-                email: winner.email, 
-                subject: `Payment Receipt: ${auction.title}`,
-                message: `
-                    <div style="font-family: Arial, sans-serif; color: #333;">
-                        <h1 style="color: #6d28d9;">Payment Successful!</h1>
-                        <p>You have successfully paid <b>$${auction.currentPrice}</b> for <b>${auction.title}</b>.</p>
-                        <p>Your funds are now held securely in Escrow.</p>
-                        <p><b>Next Step:</b> Once you receive the item, please confirm receipt on your dashboard to complete the transaction.</p>
-                    </div>
-                `
-            });
-            console.log(`📧 Receipt email sent to ${winner.email}`);
-        } catch (emailErr) {
-            console.error("Receipt email failed:", emailErr.message);
-        }
-        // -----------------------------------------------
+
+        sendEmailAsync({
+          email: winner.email,
+          subject: `Payment Receipt: ${auction.title}`,
+          message: templates.paymentReceipt({
+            title: auction.title,
+            amount: auction.currentPrice,
+          }),
+        });
 
         io.emit('notification', {
-            message: `Auction "${auction.title}" has been paid for!`,
-            auctionId: auctionId
+          message: `Auction "${auction.title}" has been paid for!`,
+          auctionId,
         });
       }
     } catch (err) {
-      console.error('Error updating auction status:', err);
+      console.error('Error updating auction status:', err.message);
     }
   }
 
-  res.json({ received: true });
+  return res.json({ received: true });
 });
 
-// 5. Standard Middleware
-app.use(cors());
-app.use(express.json()); 
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-// 6. Register Routes
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
+app.use(compression());
+app.use(express.json({ limit: '1mb' }));
+
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'));
+}
+
 app.use('/api/auth', authRoutes);
 app.use('/api/auctions', auctionRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/support', supportRoutes);
 
-// 7. Test Route
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.send('BidPulse API is running...');
 });
 
-// 8. Socket.io Connection Logic
 io.on('connection', (socket) => {
-  console.log('New client connected:', socket.id);
-
   socket.on('joinAuction', (auctionId) => {
     socket.join(auctionId);
-    console.log(`User ${socket.id} joined room: ${auctionId}`);
   });
 
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+  socket.on('support:join', ({ name, role }) => {
+    socket.join('support-room');
+    io.to('support-room').emit('support:system', {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      message: `${name || 'Guest'} joined support chat`,
+      role: role || 'user',
+      createdAt: new Date().toISOString(),
+    });
+  });
+
+  socket.on('support:message', ({ name, message, role }) => {
+    if (!message) return;
+    io.to('support-room').emit('support:message', {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      name: name || 'Guest',
+      message,
+      role: role || 'user',
+      createdAt: new Date().toISOString(),
+    });
   });
 });
 
-// 9. Cron Job (Checks for expired auctions every minute)
 cron.schedule('* * * * *', async () => {
   try {
     const now = new Date();
-    const expiredAuctions = await Auction.find({ 
-      status: 'active', 
-      endTime: { $lt: now } 
-    });
+
+    const expiredAuctions = await Auction.find({
+      status: 'active',
+      endTime: { $lt: now },
+    }).select('_id title currentPrice seller bids status endTime');
 
     for (const auction of expiredAuctions) {
-      if (auction.bids.length > 0) {
-        auction.status = 'completed';
-        // Set winner to the last person who bid
-        const lastBid = auction.bids[auction.bids.length - 1];
-        auction.winner = lastBid.bidder;
-        await auction.save();
-
-        // --- EMAIL TRIGGERS: WINNER & SELLER ---
-        try {
-            const winner = await User.findById(auction.winner);
-            const seller = await User.findById(auction.seller);
-
-            // 1. Email Winner
-            if (winner) {
-                await sendEmail({
-                    email: winner.email,
-                    subject: '🎉 You Won! ' + auction.title,
-                    message: `
-                        <div style="font-family: Arial, sans-serif; color: #333;">
-                            <h1 style="color: #6d28d9;">Congratulations!</h1>
-                            <p>You won the auction for <b>${auction.title}</b> with a final bid of <b>$${auction.currentPrice}</b>.</p>
-                            <p><a href="${process.env.CLIENT_URL}/dashboard/bidder" style="font-weight: bold; color: #10b981;">Pay Now to Secure Your Item</a></p>
-                        </div>
-                    `
-                });
-            }
-
-            // 2. Email Seller
-            if (seller) {
-                await sendEmail({
-                    email: seller.email,
-                    subject: 'Item Sold: ' + auction.title,
-                    message: `
-                        <div style="font-family: Arial, sans-serif; color: #333;">
-                            <h1 style="color: #10b981;">Item Sold!</h1>
-                            <p>Your auction for <b>${auction.title}</b> has ended at <b>$${auction.currentPrice}</b>.</p>
-                            <p>We are waiting for the buyer to process the payment. You will be notified once funds are secured in Escrow.</p>
-                        </div>
-                    `
-                });
-            }
-        } catch (err) {
-            console.error("Cron Job Emails Failed:", err.message);
-        }
-        // --------------------------------------
-
-        io.to(auction._id.toString()).emit('auction_ended', {
-             auctionId: auction._id,
-             winner: auction.winner 
-        });
-      } else {
+      if (auction.bids.length === 0) {
         auction.status = 'unsold';
         await auction.save();
-        console.log(`Auction ${auction._id} marked as unsold.`);
+        continue;
       }
-      console.log(`Auction ${auction._id} closed.`);
+
+      const lastBid = auction.bids[auction.bids.length - 1];
+      auction.status = 'completed';
+      auction.winner = lastBid.bidder;
+      await auction.save();
+
+      const [winner, seller] = await Promise.all([
+        User.findById(auction.winner).select('email').lean(),
+        User.findById(auction.seller).select('email').lean(),
+      ]);
+
+      if (winner?.email) {
+        sendEmailAsync({
+          email: winner.email,
+          subject: `You Won! ${auction.title}`,
+          message: templates.auctionWon({
+            title: auction.title,
+            currentPrice: auction.currentPrice,
+            link: `${process.env.CLIENT_URL}/dashboard/bidder`,
+          }),
+        });
+      }
+
+      if (seller?.email) {
+        sendEmailAsync({
+          email: seller.email,
+          subject: `Item Sold: ${auction.title}`,
+          message: templates.itemSold({
+            title: auction.title,
+            currentPrice: auction.currentPrice,
+          }),
+        });
+      }
+
+      io.to(auction._id.toString()).emit('auction_ended', {
+        auctionId: auction._id,
+        winner: auction.winner,
+      });
     }
   } catch (error) {
-    console.error('Cron job error:', error);
+    console.error('Cron job error:', error.message);
   }
 });
 
-// 10. Start Server
 const PORT = process.env.PORT || 5000;
-
 server.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });

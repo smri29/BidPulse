@@ -21,7 +21,7 @@ const protect = async (req, res, next) => {
              id: 'static_admin_id_999',
              _id: 'static_admin_id_999',
              name: 'Super Admin',
-             email: 'smrizvi.i29@gmail.com',
+             email: process.env.ADMIN_EMAIL || 'admin@bidpulse.local',
              role: 'admin'
          };
          return next();

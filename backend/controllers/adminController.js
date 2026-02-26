@@ -1,41 +1,57 @@
 const Auction = require('../models/Auction');
 const User = require('../models/User');
+const { sendEmailAsync } = require('../utils/emailService');
+const templates = require('../utils/emailTemplates');
 
 // @desc    Get Platform Stats (Admin Only)
 // @route   GET /api/admin/stats
 // @access  Private/Admin
-exports.getAdminStats = async (req, res) => {
+exports.getAdminStats = async (_req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalAuctions = await Auction.countDocuments();
+    const [totalUsers, totalAuctions, financialSummary, escrowSummary, recentTransactions] = await Promise.all([
+      User.countDocuments(),
+      Auction.countDocuments(),
+      Auction.aggregate([
+        { $match: { status: 'closed' } },
+        {
+          $group: {
+            _id: null,
+            totalVolume: { $sum: '$currentPrice' },
+          },
+        },
+      ]),
+      Auction.aggregate([
+        { $match: { status: 'paid_held_in_escrow' } },
+        {
+          $group: {
+            _id: null,
+            fundsInEscrow: { $sum: '$currentPrice' },
+          },
+        },
+      ]),
+      Auction.find({ status: 'closed' })
+        .select('title winner currentPrice createdAt')
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean(),
+    ]);
 
-    // 1. Calculate Financials from 'closed' (successfully sold) auctions
-    const closedAuctions = await Auction.find({ status: 'closed' });
-    
-    // Total money processed through the platform
-    const totalVolume = closedAuctions.reduce((acc, item) => acc + item.currentPrice, 0);
-    
-    // 8% Commission Revenue
-    const totalCommission = totalVolume * 0.08; 
-    
-    // 92% Payouts to Sellers
-    const totalPayouts = totalVolume - totalCommission; 
+    const totalVolume = financialSummary[0]?.totalVolume || 0;
+    const totalCommission = totalVolume * 0.08;
+    const totalPayouts = totalVolume - totalCommission;
+    const fundsInEscrow = escrowSummary[0]?.fundsInEscrow || 0;
 
-    // 2. Calculate Money currently held in Escrow (Paid but not released)
-    const escrowAuctions = await Auction.find({ status: 'paid_held_in_escrow' });
-    const fundsInEscrow = escrowAuctions.reduce((acc, item) => acc + item.currentPrice, 0);
-
-    res.status(200).json({
+    return res.status(200).json({
       totalUsers,
       totalAuctions,
       totalVolume,
       totalCommission,
       totalPayouts,
       fundsInEscrow,
-      recentTransactions: closedAuctions.slice(0, 5) 
+      recentTransactions,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -44,11 +60,26 @@ exports.getAdminStats = async (req, res) => {
 // @access  Private/Admin
 exports.getAllUsers = async (req, res) => {
   try {
-    // Return all users sorted by newest first, exclude passwords
-    const users = await User.find({}).select('-password').sort({ createdAt: -1 });
-    res.json(users);
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      User.find({}).select('-password').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      User.countDocuments(),
+    ]);
+
+    return res.json({
+      users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -56,19 +87,18 @@ exports.getAllUsers = async (req, res) => {
 // @route   PUT /api/admin/users/ban/:id
 // @access  Private/Admin
 exports.banUser = async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-        if (user) {
-            // Toggle the ban status
-            user.isBanned = !user.isBanned;
-            await user.save();
-            res.json({ message: `User ${user.isBanned ? 'Banned' : 'Active'}`, isBanned: user.isBanned });
-        } else {
-            res.status(404).json({ message: 'User not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const user = await User.findById(req.params.id);
+    if (user) {
+      user.isBanned = !user.isBanned;
+      await user.save();
+      return res.json({ message: `User ${user.isBanned ? 'Banned' : 'Active'}`, isBanned: user.isBanned });
     }
+
+    return res.status(404).json({ message: 'User not found' });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
 };
 
 // @desc    Delete a User (Admin)
@@ -79,12 +109,12 @@ exports.deleteUser = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (user) {
       await user.deleteOne();
-      res.json({ message: 'User removed' });
-    } else {
-      res.status(404).json({ message: 'User not found' });
+      return res.json({ message: 'User removed' });
     }
+
+    return res.status(404).json({ message: 'User not found' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -95,43 +125,41 @@ exports.getUserHistory = async (req, res) => {
   try {
     const userId = req.params.id;
 
-    // 1. Get User Profile
-    const user = await User.findById(userId).select('-password');
+    const user = await User.findById(userId).select('-password').lean();
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // 2. Get Auctions Created by this user (Seller History)
-    const auctionsCreated = await Auction.find({ seller: userId })
-      .select('title currentPrice status createdAt images')
-      .sort({ createdAt: -1 });
+    const [auctionsCreated, auctionsWon] = await Promise.all([
+      Auction.find({ seller: userId })
+        .select('title currentPrice status createdAt images')
+        .sort({ createdAt: -1 })
+        .lean(),
+      Auction.find({ winner: userId })
+        .select('title currentPrice status endTime images')
+        .sort({ endTime: -1 })
+        .lean(),
+    ]);
 
-    // 3. Get Auctions Won by this user (Buyer History)
-    const auctionsWon = await Auction.find({ winner: userId })
-      .select('title currentPrice status endTime images');
-
-    // 4. Calculate Financials
     const totalEarned = auctionsCreated
-        .filter(a => a.status === 'closed' || a.status === 'paid_held_in_escrow')
-        .reduce((acc, item) => acc + (item.currentPrice * 0.92), 0); // 92% share
+      .filter((a) => a.status === 'closed' || a.status === 'paid_held_in_escrow')
+      .reduce((acc, item) => acc + item.currentPrice * 0.92, 0);
 
-    const totalSpent = auctionsWon
-        .reduce((acc, item) => acc + item.currentPrice, 0);
+    const totalSpent = auctionsWon.reduce((acc, item) => acc + item.currentPrice, 0);
 
-    res.json({
+    return res.json({
       profile: user,
       stats: {
         itemsListed: auctionsCreated.length,
         itemsWon: auctionsWon.length,
         totalEarned,
-        totalSpent
+        totalSpent,
       },
       history: {
         sales: auctionsCreated,
-        purchases: auctionsWon
-      }
+        purchases: auctionsWon,
+      },
     });
-
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -139,30 +167,67 @@ exports.getUserHistory = async (req, res) => {
 // @route   GET /api/admin/auctions
 // @access  Private/Admin
 exports.getAllAuctionsAdmin = async (req, res) => {
-    try {
-        // Fetch ALL auctions, populate seller name/email
-        const auctions = await Auction.find({})
-            .populate('seller', 'name email')
-            .sort({ createdAt: -1 });
-        res.json(auctions);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  try {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
+    const skip = (page - 1) * limit;
+
+    const [auctions, total] = await Promise.all([
+      Auction.find({})
+        .populate('seller', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Auction.countDocuments(),
+    ]);
+
+    return res.json({
+      auctions,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
 };
 
 // @desc    Force Delete Any Auction
 // @route   DELETE /api/admin/auctions/:id
 // @access  Private/Admin
 exports.deleteAnyAuction = async (req, res) => {
-    try {
-        const auction = await Auction.findById(req.params.id);
-        if(auction) {
-            await auction.deleteOne();
-            res.json({ message: 'Auction removed by Admin' });
-        } else {
-            res.status(404).json({ message: 'Auction not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const auction = await Auction.findById(req.params.id);
+    if (auction) {
+      await auction.deleteOne();
+      return res.json({ message: 'Auction removed by Admin' });
     }
+
+    return res.status(404).json({ message: 'Auction not found' });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Send admin test email
+// @route   POST /api/admin/test-email
+// @access  Private/Admin
+exports.sendTestEmail = async (_req, res) => {
+  const targetEmail = process.env.ADMIN_EMAIL || process.env.SUPPORT_EMAIL || process.env.EMAIL_USERNAME || process.env.EMAIL_USER;
+
+  if (!targetEmail) {
+    return res.status(400).json({ message: 'No target email configured. Set ADMIN_EMAIL or SUPPORT_EMAIL.' });
+  }
+
+  sendEmailAsync({
+    email: targetEmail,
+    subject: 'BidPulse Email Health Check',
+    message: templates.welcome({ name: 'Admin', clientUrl: process.env.CLIENT_URL }),
+  });
+
+  return res.json({ message: `Test email queued for ${targetEmail}` });
 };

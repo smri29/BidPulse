@@ -7,7 +7,8 @@ const {
     banUser,           
     getAllAuctionsAdmin, 
     deleteAnyAuction,
-    getUserHistory     // <--- New Import
+    getUserHistory,
+    sendTestEmail
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -25,5 +26,6 @@ router.get('/users/:id/history', protect, authorize('admin'), getUserHistory); /
 // Auction Management (Global Control)
 router.get('/auctions', protect, authorize('admin'), getAllAuctionsAdmin);
 router.delete('/auctions/:id', protect, authorize('admin'), deleteAnyAuction);
+router.post('/test-email', protect, authorize('admin'), sendTestEmail);
 
 module.exports = router;

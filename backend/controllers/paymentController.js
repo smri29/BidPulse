@@ -1,7 +1,7 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Auction = require('../models/Auction');
-const User = require('../models/User');
-const sendEmail = require('../utils/emailService'); 
+const { sendEmailAsync } = require('../utils/emailService');
+const templates = require('../utils/emailTemplates');
 
 // @desc    Create Stripe Checkout Session & Save Shipping Address
 exports.createCheckoutSession = async (req, res) => {
@@ -89,24 +89,15 @@ exports.releaseFunds = async (req, res) => {
     auction.status = 'closed'; 
     await auction.save();
 
-    // --- EMAIL TRIGGER: FUNDS RELEASED (SELLER) ---
-    try {
-        await sendEmail({
-            email: auction.seller.email,
-            subject: `Funds Released: ${auction.title}`,
-            message: `
-                <div style="font-family: Arial, sans-serif;">
-                    <h1 style="color: #10b981;">Great News!</h1>
-                    <p>The buyer has confirmed receipt of <b>${auction.title}</b>.</p>
-                    <p><b>$${sellerPayout.toFixed(2)}</b> has been released to your Stripe account.</p>
-                    <p>Thank you for using BidPulse!</p>
-                </div>
-            `
-        });
-        console.log("Email notification sent to seller.");
-    } catch (emailError) {
-        console.error("Email failed:", emailError);
-    }
+    // Do not block payout completion on email transport.
+    sendEmailAsync({
+      email: auction.seller.email,
+      subject: `Funds Released: ${auction.title}`,
+      message: templates.fundsReleased({
+        title: auction.title,
+        sellerPayout: sellerPayout.toFixed(2),
+      }),
+    });
     // ---------------------------------------------
 
     res.status(200).json({ message: 'Funds released to seller. Transaction complete.' });
