@@ -34,6 +34,9 @@ import BidderDashboard from './pages/dashboard/BidderDashboard';
 import SellerDashboard from './pages/dashboard/SellerDashboard';
 import AdminDashboard from './pages/dashboard/AdminDashboard';
 import AdminUsers from './pages/dashboard/AdminUsers';
+import AdminAuctions from './pages/dashboard/AdminAuctions';
+import AdminSupport from './pages/dashboard/AdminSupport';
+import AdminProfile from './pages/dashboard/AdminProfile';
 import CreateAuction from './pages/dashboard/CreateAuction'; 
 import EditAuction from './pages/dashboard/EditAuction';
 import PaymentSuccess from './pages/PaymentSuccess';
@@ -49,7 +52,7 @@ function App() {
         {/* Conditional Navbar: Show AdminNavbar if admin, else standard Navbar */}
         {user && user.role === 'admin' ? <AdminNavbar /> : <Navbar />}
         
-        <main className="flex-grow bg-slate-50">
+        <main className="flex-grow bg-white/50 backdrop-blur-[1px]">
           <Routes>
             {/* --- Public Routes --- */}
             <Route path="/" element={<Home />} />
@@ -130,6 +133,30 @@ function App() {
               element={
                 <AdminRoute>
                   <AdminUsers />
+                </AdminRoute>
+              } 
+            />
+            <Route 
+              path="/admin/auctions" 
+              element={
+                <AdminRoute>
+                  <AdminAuctions />
+                </AdminRoute>
+              } 
+            />
+            <Route 
+              path="/admin/support" 
+              element={
+                <AdminRoute>
+                  <AdminSupport />
+                </AdminRoute>
+              } 
+            />
+            <Route 
+              path="/admin/profile" 
+              element={
+                <AdminRoute>
+                  <AdminProfile />
                 </AdminRoute>
               } 
             />

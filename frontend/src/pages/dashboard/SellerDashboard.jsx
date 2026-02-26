@@ -13,8 +13,10 @@ const SellerDashboard = () => {
   const [shippingModalData, setShippingModalData] = useState(null);
 
   useEffect(() => {
-    dispatch(getAllAuctions());
-  }, [dispatch]);
+    if (user?._id) {
+      dispatch(getAllAuctions({ seller: user._id, includeBids: false, force: true }));
+    }
+  }, [dispatch, user?._id]);
 
   // Filter only THIS seller's auctions
   const myAuctions = auctions.filter((a) => a.seller._id === user._id || a.seller === user._id);

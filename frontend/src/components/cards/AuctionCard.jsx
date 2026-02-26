@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, DollarSign } from 'lucide-react';
+import { Clock, DollarSign, Star } from 'lucide-react';
 
-const AuctionCard = ({ auction }) => {
+const AuctionCard = ({ auction, watched = false, onToggleWatch }) => {
   return (
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 overflow-hidden group">
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 overflow-hidden group animate-fade-up">
       {/* Image Container */}
       <div className="relative h-48 overflow-hidden bg-gray-100">
         <img 
@@ -20,6 +20,16 @@ const AuctionCard = ({ auction }) => {
         }`}>
           {auction.status}
         </div>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            if (onToggleWatch) onToggleWatch(auction._id);
+          }}
+          className={`absolute bottom-3 right-3 p-2 rounded-full border shadow-sm transition ${watched ? 'bg-yellow-300 text-yellow-900 border-yellow-400' : 'bg-white/90 text-gray-600 border-white hover:bg-white'}`}
+          title={watched ? 'Remove from watchlist' : 'Add to watchlist'}
+        >
+          <Star size={14} fill={watched ? 'currentColor' : 'none'} />
+        </button>
       </div>
 
       {/* Content */}

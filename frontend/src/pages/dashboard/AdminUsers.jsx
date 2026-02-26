@@ -19,7 +19,7 @@ const AdminUsers = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       const { data } = await axios.get('/admin/users', config);
-      setUsers(data);
+      setUsers(data.users || []);
       setLoading(false);
     } catch (error) {
       console.error("User Fetch Error:", error);

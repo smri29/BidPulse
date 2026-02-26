@@ -12,7 +12,7 @@ const BidderDashboard = () => {
   const { auctions, isLoading } = useSelector((state) => state.auction);
 
   useEffect(() => {
-    dispatch(getAllAuctions());
+    dispatch(getAllAuctions({ includeBids: true, force: true }));
   }, [dispatch]);
 
   // --- FILTERING LOGIC ---

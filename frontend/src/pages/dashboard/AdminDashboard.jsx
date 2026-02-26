@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../../utils/axiosConfig';
 import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { 
-  Shield, Users, DollarSign, Briefcase, Activity, TrendingUp, AlertCircle 
+  Shield, Users, DollarSign, Briefcase, Activity, TrendingUp, AlertCircle, ArrowRight
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -113,9 +114,22 @@ const AdminDashboard = () => {
             </div>
         </div>
       </div>
+
+      <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <QuickControl title="Manage Users" to="/admin/users" />
+        <QuickControl title="Manage Auctions" to="/admin/auctions" />
+        <QuickControl title="Support Desk" to="/admin/support" />
+      </div>
     </div>
   );
 };
+
+const QuickControl = ({ title, to }) => (
+  <Link to={to} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition flex items-center justify-between">
+    <span className="font-semibold text-gray-900">{title}</span>
+    <ArrowRight size={16} className="text-gray-400" />
+  </Link>
+);
 
 // Helper Component for Cards
 const StatCard = ({ icon, label, value, color }) => {

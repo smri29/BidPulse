@@ -7,6 +7,7 @@ import {
   LayoutDashboard, 
   Users, 
   Package, 
+  MessageCircle,
   LogOut, 
   User, 
   ChevronDown 
@@ -38,7 +39,7 @@ const AdminNavbar = () => {
   };
 
   return (
-    <nav className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 text-slate-200">
+    <nav className="bg-slate-900/95 backdrop-blur-lg border-b border-slate-800 sticky top-0 z-50 text-slate-200 animate-fade-up">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           
@@ -60,6 +61,14 @@ const AdminNavbar = () => {
 
             <Link to="/admin/users" className="hover:text-white flex items-center gap-2 text-sm font-medium transition">
               <Users size={18} /> Users
+            </Link>
+
+            <Link to="/admin/auctions" className="hover:text-white flex items-center gap-2 text-sm font-medium transition">
+              <Package size={18} /> Auctions
+            </Link>
+
+            <Link to="/admin/support" className="hover:text-white flex items-center gap-2 text-sm font-medium transition">
+              <MessageCircle size={18} /> Support
             </Link>
 
             <Link to="/" className="hover:text-white flex items-center gap-2 text-sm font-medium transition">
@@ -88,7 +97,7 @@ const AdminNavbar = () => {
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-xl ring-1 ring-black ring-opacity-5 py-1 border border-slate-700 z-50">
                    <Link 
-                     to="/profile" 
+                     to="/admin/profile" 
                      className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition"
                      onClick={() => setIsDropdownOpen(false)}
                    >
