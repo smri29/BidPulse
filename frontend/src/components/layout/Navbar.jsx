@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, reset } from '../../redux/authSlice';
+import { addNotification } from '../../redux/notificationSlice';
+import { io } from 'socket.io-client';
+import { socketUrl } from '../../utils/axiosConfig';
 import { 
   Gavel, 
   LogOut, 
@@ -18,6 +21,8 @@ const Navbar = () => {
   const location = useLocation(); // To detect current page
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const notifications = useSelector((state) => state.notifications.items);
+  const unreadCount = notifications.filter((item) => !item.read).length;
   
   // Dropdown State
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -33,6 +38,24 @@ const Navbar = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+
+    socket.on('notification', (payload) => {
+      dispatch(addNotification({
+        title: 'Live Update',
+        message: payload?.message || 'New platform activity detected',
+        type: 'info',
+      }));
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [dispatch, user]);
 
   const onLogout = () => {
     dispatch(logout());
@@ -55,7 +78,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+    <nav className="bg-white/90 backdrop-blur-lg shadow-sm border-b border-gray-100 sticky top-0 z-50 animate-fade-up">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           
@@ -79,6 +102,15 @@ const Navbar = () => {
 
             {user ? (
               <>
+                {!user.emailVerified && user.role !== 'admin' && (
+                  <Link
+                    to="/profile"
+                    className="hidden lg:inline-flex items-center gap-1 text-xs font-bold bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full animate-pulse-glow"
+                  >
+                    Verify Email
+                  </Link>
+                )}
+
                 {/* --- A. SWITCHING SYSTEM (The "Fiverr" Toggle) --- */}
                 <button 
                   onClick={handleSwitchMode}
@@ -94,8 +126,11 @@ const Navbar = () => {
                   className="relative p-2 text-gray-400 hover:text-bid-purple transition rounded-full hover:bg-gray-50"
                 >
                 <Bell size={20} />
-                {/* Notification Dot - (Can be made conditional based on unread count) */}
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full border border-white"></span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-white">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
                 </Link>
 
                 {/* Separator */}
@@ -108,9 +143,13 @@ const Navbar = () => {
                     className="flex items-center gap-3 p-1 rounded-full hover:bg-gray-50 transition border border-transparent hover:border-gray-200"
                   >
                     {/* Avatar Circle */}
-                    <div className="h-8 w-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm border border-indigo-200">
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user.name} className="h-8 w-8 rounded-full object-cover border border-indigo-200" />
+                    ) : (
+                      <div className="h-8 w-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm border border-indigo-200">
+                        {user.avatarEmoji || user.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     {/* Name & Chevron */}
                     <div className="hidden md:flex items-center gap-1">
                         <span className="text-sm font-semibold text-gray-700 max-w-[100px] truncate">{user.name}</span>
