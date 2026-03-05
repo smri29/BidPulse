@@ -2,13 +2,14 @@ const Auction = require('../models/Auction');
 const User = require('../models/User');
 const { sendEmailAsync } = require('../utils/emailService');
 const templates = require('../utils/emailTemplates');
+const { sendMonthlyPromotionalEmails } = require('../utils/promotionalCampaignService');
 
 // @desc    Get Platform Stats (Admin Only)
 // @route   GET /api/admin/stats
 // @access  Private/Admin
 exports.getAdminStats = async (_req, res) => {
   try {
-    const [totalUsers, totalAuctions, financialSummary, escrowSummary, recentTransactions] = await Promise.all([
+    const [totalUsers, totalAuctions, financialSummary, shippingPendingSummary, recentTransactions] = await Promise.all([
       User.countDocuments(),
       Auction.countDocuments(),
       Auction.aggregate([
@@ -21,11 +22,11 @@ exports.getAdminStats = async (_req, res) => {
         },
       ]),
       Auction.aggregate([
-        { $match: { status: 'paid_held_in_escrow' } },
+        { $match: { status: 'paid_shipping_pending' } },
         {
           $group: {
             _id: null,
-            fundsInEscrow: { $sum: '$currentPrice' },
+            fundsInShippingFlow: { $sum: '$currentPrice' },
           },
         },
       ]),
@@ -37,9 +38,9 @@ exports.getAdminStats = async (_req, res) => {
     ]);
 
     const totalVolume = financialSummary[0]?.totalVolume || 0;
-    const totalCommission = totalVolume * 0.08;
+    const totalCommission = totalVolume * 0.05;
     const totalPayouts = totalVolume - totalCommission;
-    const fundsInEscrow = escrowSummary[0]?.fundsInEscrow || 0;
+    const fundsInEscrow = shippingPendingSummary[0]?.fundsInShippingFlow || 0;
 
     return res.status(200).json({
       totalUsers,
@@ -134,14 +135,14 @@ exports.getUserHistory = async (req, res) => {
         .sort({ createdAt: -1 })
         .lean(),
       Auction.find({ winner: userId })
-        .select('title currentPrice status endTime images')
-        .sort({ endTime: -1 })
+        .select('title currentPrice status registrationEndAt images')
+        .sort({ createdAt: -1 })
         .lean(),
     ]);
 
     const totalEarned = auctionsCreated
-      .filter((a) => a.status === 'closed' || a.status === 'paid_held_in_escrow')
-      .reduce((acc, item) => acc + item.currentPrice * 0.92, 0);
+      .filter((a) => a.status === 'closed' || a.status === 'paid_shipping_pending' || a.status === 'paid_held_in_escrow')
+      .reduce((acc, item) => acc + item.currentPrice * 0.95, 0);
 
     const totalSpent = auctionsWon.reduce((acc, item) => acc + item.currentPrice, 0);
 
@@ -225,9 +226,47 @@ exports.sendTestEmail = async (_req, res) => {
 
   sendEmailAsync({
     email: targetEmail,
-    subject: 'BidPulse Email Health Check',
+    subject: 'RiZBiD Email Health Check',
     message: templates.welcome({ name: 'Admin', clientUrl: process.env.CLIENT_URL }),
   });
 
   return res.json({ message: `Test email queued for ${targetEmail}` });
 };
+
+// @desc    Trigger promotional campaign manually (admin)
+// @route   POST /api/admin/promotional/trigger
+// @access  Private/Admin
+exports.triggerPromotionalCampaign = async (req, res) => {
+  try {
+    const { month, year, dryRun = false, forceSend = false } = req.body || {};
+
+    if (month !== undefined) {
+      const parsedMonth = Number(month);
+      if (!Number.isInteger(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
+        return res.status(400).json({ message: 'month must be an integer between 1 and 12' });
+      }
+    }
+
+    if (year !== undefined) {
+      const parsedYear = Number(year);
+      if (!Number.isInteger(parsedYear) || parsedYear < 2000 || parsedYear > 3000) {
+        return res.status(400).json({ message: 'year must be an integer between 2000 and 3000' });
+      }
+    }
+
+    const stats = await sendMonthlyPromotionalEmails({
+      month,
+      year,
+      dryRun: Boolean(dryRun),
+      forceSend: Boolean(forceSend),
+    });
+
+    return res.status(200).json({
+      message: 'Promotional campaign trigger completed',
+      stats,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || 'Failed to trigger promotional campaign' });
+  }
+};
+
