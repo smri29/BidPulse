@@ -19,6 +19,31 @@ const parseStoredUser = () => {
   }
 };
 
+const emitGlobalNotification = (detail) => {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent('rizbid:notify', {
+      detail: {
+        id: detail.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        title: detail.title || 'Update',
+        message: detail.message || '',
+        type: detail.type || 'info',
+        createdAt: detail.createdAt || new Date().toISOString(),
+      },
+    })
+  );
+};
+
+const getNotificationTitle = (method, url, isError = false) => {
+  if (isError) return 'Action Failed';
+  if (url.includes('/auctions')) return method === 'delete' ? 'Listing Removed' : 'Listing Updated';
+  if (url.includes('/support')) return 'Support Update';
+  if (url.includes('/payment')) return 'Payment & Delivery Update';
+  if (url.includes('/admin')) return 'Admin Update';
+  if (url.includes('/auth')) return 'Account Activity';
+  return 'Action Update';
+};
+
 export const getApiErrorMessage = (error, fallback = 'Something went wrong. Please try again.') => {
   if (!error) return fallback;
   if (error.response?.data?.message) return error.response.data.message;
@@ -39,8 +64,25 @@ instance.interceptors.request.use((config) => {
 });
 
 instance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const method = String(response.config?.method || 'get').toLowerCase();
+    const requestUrl = String(response.config?.url || '');
+    const isAuthEndpoint = requestUrl.includes('/auth/');
+    const shouldNotify = ['post', 'put', 'patch', 'delete'].includes(method);
+    if (shouldNotify && response.data?.message && !isAuthEndpoint) {
+      emitGlobalNotification({
+        title: getNotificationTitle(method, requestUrl, false),
+        message: response.data.message,
+        type: 'success',
+      });
+    }
+    return response;
+  },
   (error) => {
+    const requestUrl = String(error.config?.url || '');
+    const isAuthAction =
+      requestUrl.includes('/auth/');
+
     const status = error.response?.status;
     const serverMessage = String(error.response?.data?.message || '').toLowerCase();
     const is401 = status === 401;
@@ -56,9 +98,22 @@ instance.interceptors.response.use(
       serverMessage.includes('not authorized') ||
       serverMessage.includes('user not found');
 
-    if (authFailure) {
+    if (authFailure && !isAuthAction) {
       localStorage.removeItem('user');
-      window.dispatchEvent(new CustomEvent('bidpulse:auth-expired'));
+      const now = Date.now();
+      const lastEventAt = Number(sessionStorage.getItem('rizbid_auth_expired_at') || 0);
+      if (now - lastEventAt > 2000) {
+        sessionStorage.setItem('rizbid_auth_expired_at', String(now));
+        window.dispatchEvent(new CustomEvent('RiZBiD:auth-expired'));
+      }
+    }
+
+    if (!authFailure && !isAuthAction) {
+      emitGlobalNotification({
+        title: getNotificationTitle(String(error.config?.method || 'get').toLowerCase(), requestUrl, true),
+        message: getApiErrorMessage(error),
+        type: 'warning',
+      });
     }
 
     return Promise.reject(error);
@@ -66,3 +121,4 @@ instance.interceptors.response.use(
 );
 
 export default instance;
+

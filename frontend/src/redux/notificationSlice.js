@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const STORAGE_KEY = 'bidpulse_notifications';
+const STORAGE_KEY = 'RiZBiD_notifications';
 
 const loadNotifications = () => {
   try {
@@ -29,8 +29,19 @@ const notificationSlice = createSlice({
         createdAt: action.payload.createdAt || new Date().toISOString(),
         read: false,
       };
+
+      const last = state.items[0];
+      if (
+        last &&
+        last.title === payload.title &&
+        last.message === payload.message &&
+        Math.abs(new Date(payload.createdAt).getTime() - new Date(last.createdAt).getTime()) < 2000
+      ) {
+        return;
+      }
+
       state.items.unshift(payload);
-      state.items = state.items.slice(0, 100);
+      state.items = state.items.slice(0, 500);
       persistNotifications(state.items);
     },
     markNotificationRead: (state, action) => {
@@ -58,3 +69,4 @@ export const {
 } = notificationSlice.actions;
 
 export default notificationSlice.reducer;
+

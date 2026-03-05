@@ -12,10 +12,16 @@ export const createAuction = createAsyncThunk(
   async (auctionData, thunkAPI) => {
     try {
       const token = thunkAPI.getState().auth.user.token;
-      const response = await axios.post('/auctions', auctionData, getConfig(token));
+      const response = await axios.post('/auctions', auctionData, {
+        ...getConfig(token),
+        timeout: 90000,
+      });
       return response.data;
     } catch (error) {
-      const message = error.response?.data?.message || error.message;
+      const message =
+        error.code === 'ECONNABORTED'
+          ? 'Upload is taking longer than expected. Please check your seller dashboard before retrying.'
+          : error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue(message);
     }
   }
@@ -31,17 +37,6 @@ export const getAllAuctions = createAsyncThunk(
       const message = error.response?.data?.message || error.message;
       return thunkAPI.rejectWithValue(message);
     }
-  },
-  {
-    condition: (params = {}, { getState }) => {
-      if (params.force) return true;
-
-      const { isLoading, lastFetchedAt } = getState().auction;
-      if (isLoading) return false;
-
-      const ttlMs = 30 * 1000;
-      return Date.now() - lastFetchedAt > ttlMs;
-    },
   }
 );
 
