@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { ImagePlus, Info, Sparkles, UploadCloud, XCircle } from 'lucide-react';
+import { Info, Sparkles, UploadCloud, XCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { createAuction, reset } from '../../redux/auctionSlice';
+import { addNotification } from '../../redux/notificationSlice';
 
 const CATEGORY_OPTIONS = [
   'Electronics',
@@ -15,16 +16,9 @@ const CATEGORY_OPTIONS = [
   'Luxury Watches',
   'Jewelry',
   'Art & Collectibles',
-  'Trading Cards',
-  'Books & Manuscripts',
-  'Music Instruments',
   'Automotive',
-  'Motorcycles',
   'Home & Decor',
-  'Antiques',
-  'Real Estate',
   'Industrial Equipment',
-  'Sports Memorabilia',
   'Other',
 ];
 
@@ -36,7 +30,8 @@ const CreateAuction = () => {
     description: '',
     category: 'Electronics',
     startingPrice: '',
-    endTime: '',
+    registrationWindowDays: '1',
+    registrationTestMinutes: '',
   });
   const [imageFiles, setImageFiles] = useState([]);
 
@@ -55,7 +50,16 @@ const CreateAuction = () => {
   );
 
   const onChange = (event) => {
-    setFormData((prev) => ({ ...prev, [event.target.name]: event.target.value }));
+    const { name, value } = event.target;
+    if (name === 'registrationWindowDays') {
+      if (value === 'test') {
+        setFormData((prev) => ({ ...prev, registrationWindowDays: '1', registrationTestMinutes: '5' }));
+        return;
+      }
+      setFormData((prev) => ({ ...prev, registrationWindowDays: value, registrationTestMinutes: '' }));
+      return;
+    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const onSelectImages = (event) => {
@@ -70,9 +74,6 @@ const CreateAuction = () => {
     }
 
     setImageFiles(validTypes);
-    if (selectedFiles.length > MAX_IMAGES) {
-      toast.info(`Only first ${MAX_IMAGES} images were selected.`);
-    }
   };
 
   const removeImage = (indexToRemove) => {
@@ -83,7 +84,7 @@ const CreateAuction = () => {
     event.preventDefault();
 
     if (!user?.emailVerified) {
-      toast.error('Verify your email from Profile before creating an auction.');
+      toast.error('Verify your email from Profile before submitting a listing.');
       return;
     }
 
@@ -97,17 +98,34 @@ const CreateAuction = () => {
     payload.append('description', formData.description.trim());
     payload.append('category', formData.category);
     payload.append('startingPrice', String(formData.startingPrice));
-    payload.append('endTime', formData.endTime);
+    if (formData.registrationTestMinutes) {
+      payload.append('registrationWindowMinutes', String(formData.registrationTestMinutes));
+    } else {
+      payload.append('registrationWindowDays', String(formData.registrationWindowDays));
+    }
     imageFiles.forEach((file) => payload.append('images', file));
 
     dispatch(createAuction(payload))
       .unwrap()
       .then(() => {
-        toast.success('Auction launched successfully');
+        toast.success('Listing submitted for verification');
+        dispatch(addNotification({
+          title: 'Listing Submitted',
+          message: 'Your product was submitted for verification.',
+          type: 'success',
+        }));
         dispatch(reset());
         navigate('/dashboard/seller');
       })
-      .catch((error) => toast.error(error || 'Failed to create auction'));
+      .catch((error) => {
+        const msg = error || 'Failed to submit listing';
+        toast.error(msg);
+        dispatch(addNotification({
+          title: 'Listing Submission Failed',
+          message: msg,
+          type: 'warning',
+        }));
+      });
   };
 
   return (
@@ -116,21 +134,17 @@ const CreateAuction = () => {
         <div className="bg-white rounded-2xl border border-emerald-100 shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-emerald-700 to-teal-700 px-6 py-5 text-white">
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Sparkles size={20} /> Create Auction Listing
+              <Sparkles size={20} /> Submit Product Listing
             </h1>
-            <p className="text-sm text-emerald-100 mt-1">Professional listings convert better and attract stronger bids.</p>
+            <p className="text-sm text-emerald-100 mt-1">
+              RiZBiD will inspect and verify this product before publishing it in Future Bids.
+            </p>
           </div>
 
           <div className="p-6 sm:p-8">
-            {!user?.emailVerified && (
-              <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                Email verification required before publishing auctions.
-              </div>
-            )}
-
             <form onSubmit={onSubmit} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Item Title" required>
+                <Field label="Product Title" required>
                   <input
                     type="text"
                     name="title"
@@ -138,7 +152,6 @@ const CreateAuction = () => {
                     required
                     onChange={onChange}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2.5"
-                    placeholder="e.g. Sony WH-1000XM5 Headphones"
                   />
                 </Field>
 
@@ -166,12 +179,12 @@ const CreateAuction = () => {
                   rows={5}
                   onChange={onChange}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2.5"
-                  placeholder="Describe condition, usage, defects, accessories included, and shipping expectations."
+                  placeholder="Include physical condition, accessories, and known issues."
                 />
               </Field>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Starting Price (USD)" required>
+                <Field label="Starting Bid (USD)" required>
                   <input
                     type="number"
                     name="startingPrice"
@@ -183,15 +196,21 @@ const CreateAuction = () => {
                     className="w-full rounded-lg border border-gray-300 px-3 py-2.5"
                   />
                 </Field>
-                <Field label="End Date & Time" required>
-                  <input
-                    type="datetime-local"
-                    name="endTime"
-                    value={formData.endTime}
-                    required
+                <Field label="Registration Period" required>
+                  <select
+                    name="registrationWindowDays"
+                    value={formData.registrationTestMinutes ? 'test' : formData.registrationWindowDays}
                     onChange={onChange}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5"
-                  />
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-white"
+                  >
+                    <option value="test">5 minutes (test mode)</option>
+                    <option value="1">1 day</option>
+                    <option value="5">5 days</option>
+                    <option value="8">8 days</option>
+                    <option value="10">10 days</option>
+                    <option value="15">15 days</option>
+                    <option value="20">20 days</option>
+                  </select>
                 </Field>
               </div>
 
@@ -223,7 +242,7 @@ const CreateAuction = () => {
 
               <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800 flex items-start gap-2">
                 <Info size={14} className="mt-0.5 shrink-0" />
-                First image is treated as the primary thumbnail across listings.
+                If your product is verified and sold, RiZBiD charges a 5% commission on the winning amount.
               </div>
 
               <button
@@ -231,7 +250,7 @@ const CreateAuction = () => {
                 disabled={isLoading || !user?.emailVerified}
                 className="w-full rounded-lg bg-emerald-700 text-white font-semibold py-3 hover:bg-emerald-800 disabled:opacity-60"
               >
-                {isLoading ? 'Publishing...' : 'Publish Auction'}
+                {isLoading ? 'Submitting...' : 'Submit for Verification'}
               </button>
             </form>
           </div>

@@ -15,16 +15,9 @@ const CATEGORY_OPTIONS = [
   'Luxury Watches',
   'Jewelry',
   'Art & Collectibles',
-  'Trading Cards',
-  'Books & Manuscripts',
-  'Music Instruments',
   'Automotive',
-  'Motorcycles',
   'Home & Decor',
-  'Antiques',
-  'Real Estate',
   'Industrial Equipment',
-  'Sports Memorabilia',
   'Other',
 ];
 
@@ -43,7 +36,9 @@ const EditAuction = () => {
     title: '',
     description: '',
     category: 'Electronics',
-    endTime: '',
+    startingPrice: '',
+    registrationWindowDays: '1',
+    registrationTestMinutes: '',
   });
 
   const previews = useMemo(() => newImageFiles.map((file) => URL.createObjectURL(file)), [newImageFiles]);
@@ -71,11 +66,13 @@ const EditAuction = () => {
           title: auction.title || '',
           description: auction.description || '',
           category: auction.category || 'Electronics',
-          endTime: auction.endTime ? new Date(auction.endTime).toISOString().slice(0, 16) : '',
+          startingPrice: String(auction.startingPrice || ''),
+          registrationWindowDays: String(Math.round((auction.registrationWindowHours || 24) / 24)),
+          registrationTestMinutes: (auction.registrationWindowHours || 24) < 1 ? '5' : '',
         });
         setExistingImages(auction.images || []);
       } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to load auction');
+        toast.error(error.response?.data?.message || 'Failed to load listing');
       } finally {
         setLoading(false);
       }
@@ -85,7 +82,16 @@ const EditAuction = () => {
   }, [id, navigate, user?._id]);
 
   const onChange = (event) => {
-    setFormData((prev) => ({ ...prev, [event.target.name]: event.target.value }));
+    const { name, value } = event.target;
+    if (name === 'registrationWindowDays') {
+      if (value === 'test') {
+        setFormData((prev) => ({ ...prev, registrationWindowDays: '1', registrationTestMinutes: '5' }));
+        return;
+      }
+      setFormData((prev) => ({ ...prev, registrationWindowDays: value, registrationTestMinutes: '' }));
+      return;
+    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const onSelectImages = (event) => {
@@ -110,14 +116,19 @@ const EditAuction = () => {
       payload.append('title', formData.title.trim());
       payload.append('description', formData.description.trim());
       payload.append('category', formData.category);
-      payload.append('endTime', formData.endTime);
+      payload.append('startingPrice', formData.startingPrice);
+      if (formData.registrationTestMinutes) {
+        payload.append('registrationWindowMinutes', formData.registrationTestMinutes);
+      } else {
+        payload.append('registrationWindowDays', formData.registrationWindowDays);
+      }
       newImageFiles.forEach((file) => payload.append('images', file));
 
       await axios.put(`/auctions/${id}`, payload, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
-      toast.success('Auction updated');
+      toast.success('Listing updated');
       navigate('/dashboard/seller');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Update failed');
@@ -134,10 +145,10 @@ const EditAuction = () => {
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 py-10">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         <div className="bg-white rounded-2xl border border-emerald-100 shadow-xl p-6 sm:p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Auction Listing</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Listing</h1>
 
           <form onSubmit={onSubmit} className="space-y-5">
-            <Field label="Item Title">
+            <Field label="Product Title">
               <input
                 name="title"
                 value={formData.title}
@@ -173,11 +184,12 @@ const EditAuction = () => {
                   ))}
                 </select>
               </Field>
-              <Field label="End Date & Time">
+              <Field label="Starting Bid (USD)">
                 <input
-                  type="datetime-local"
-                  name="endTime"
-                  value={formData.endTime}
+                  type="number"
+                  name="startingPrice"
+                  min={1}
+                  value={formData.startingPrice}
                   onChange={onChange}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2.5"
                   required
@@ -185,12 +197,34 @@ const EditAuction = () => {
               </Field>
             </div>
 
+            <Field label="Registration Period">
+              <select
+                name="registrationWindowDays"
+                value={formData.registrationTestMinutes ? 'test' : formData.registrationWindowDays}
+                onChange={onChange}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-white"
+              >
+                <option value="test">5 minutes (test mode)</option>
+                <option value="1">1 day</option>
+                <option value="5">5 days</option>
+                <option value="8">8 days</option>
+                <option value="10">10 days</option>
+                <option value="15">15 days</option>
+                <option value="20">20 days</option>
+              </select>
+            </Field>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Images</label>
               <div className="grid grid-cols-3 gap-3">
                 {existingImages.length ? (
                   existingImages.slice(0, MAX_IMAGES).map((src, index) => (
-                    <img key={`${src}-${index}`} src={src} alt={`current-${index + 1}`} className="h-24 w-full object-cover rounded-lg border border-gray-200" />
+                    <img
+                      key={`${src}-${index}`}
+                      src={src}
+                      alt={`current-${index + 1}`}
+                      className="h-24 w-full object-cover rounded-lg border border-gray-200"
+                    />
                   ))
                 ) : (
                   <div className="col-span-3 text-sm text-gray-500">No existing images.</div>
@@ -199,7 +233,7 @@ const EditAuction = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Replace Images (Optional, max 3)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Replace Images (Optional)</label>
               <label className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-5 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition">
                 <ImagePlus size={24} className="text-emerald-700 mb-2" />
                 <span className="text-sm font-medium text-gray-800">Upload replacement images</span>

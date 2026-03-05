@@ -2,9 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, reset } from '../../redux/authSlice';
-import { addNotification } from '../../redux/notificationSlice';
-import { io } from 'socket.io-client';
-import { socketUrl } from '../../utils/axiosConfig';
 import { 
   LogOut, 
   User, 
@@ -41,24 +38,6 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (!user) return;
-
-    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
-
-    socket.on('notification', (payload) => {
-      dispatch(addNotification({
-        title: 'Live Update',
-        message: payload?.message || 'New platform activity detected',
-        type: 'info',
-      }));
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [dispatch, user]);
-
   const onLogout = () => {
     dispatch(logout());
     dispatch(reset());
@@ -73,20 +52,20 @@ const Navbar = () => {
   };
 
   const modeFromPath = getModeFromPath(location.pathname);
-  const preferredMode = localStorage.getItem('bidpulse_dashboard_mode') || 'bidder';
+  const preferredMode = localStorage.getItem('RiZBiD_dashboard_mode') || 'bidder';
   const activeMode = modeFromPath || preferredMode;
   const isSellerMode = activeMode === 'seller';
   const dashboardPath = isSellerMode ? '/dashboard/seller' : '/dashboard/bidder';
 
   useEffect(() => {
     if (modeFromPath) {
-      localStorage.setItem('bidpulse_dashboard_mode', modeFromPath);
+      localStorage.setItem('RiZBiD_dashboard_mode', modeFromPath);
     }
   }, [modeFromPath]);
 
   const handleSwitchMode = () => {
     const nextMode = isSellerMode ? 'bidder' : 'seller';
-    localStorage.setItem('bidpulse_dashboard_mode', nextMode);
+    localStorage.setItem('RiZBiD_dashboard_mode', nextMode);
     navigate(nextMode === 'seller' ? '/dashboard/seller' : '/dashboard/bidder');
     setIsDropdownOpen(false);
   };
@@ -99,9 +78,9 @@ const Navbar = () => {
           {/* 1. Logo Section */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2 text-bid-purple hover:text-indigo-700 transition">
-              <img src="/BidPulse.svg" alt="BidPulse" className="h-10 w-auto" />
+              <img src="/RiZBiD.svg" alt="RiZBiD" className="h-10 w-auto" />
               <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-700 via-cyan-600 to-emerald-600 bg-[length:200%_100%] bg-clip-text text-transparent animate-brand-shimmer">
-                BidPulse
+                RiZBiD
               </span>
             </Link>
           </div>
@@ -254,3 +233,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

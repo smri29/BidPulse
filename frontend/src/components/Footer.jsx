@@ -12,9 +12,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           <div className="md:col-span-4 space-y-4">
             <Link to="/" className="inline-flex items-center gap-2 group">
-              <img src="/BidPulse.svg" alt="BidPulse" className="h-9 w-auto" />
+              <img src="/RiZBiD.svg" alt="RiZBiD" className="h-9 w-auto" />
             </Link>
-            <p className="text-sm text-slate-400 leading-relaxed max-w-xs">A trust-first auction network with email-verified participants, escrow payments, and real-time bidding intelligence.</p>
+            <p className="text-sm text-slate-400 leading-relaxed max-w-xs">A trust-first auction network with email-verified participants, office-verified products, and real-time bidding intelligence.</p>
             <div className="inline-flex items-center gap-2 text-xs bg-white/5 border border-white/10 px-3 py-1 rounded-full text-slate-300">
               <Sparkles size={12} /> Secure, verified, and live
             </div>
@@ -42,7 +42,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-slate-800 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-          <p>&copy; {new Date().getFullYear()} BidPulse Inc. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} RiZBiD Inc. All rights reserved.</p>
           <p className="text-slate-400">Built for transparent digital commerce.</p>
         </div>
       </div>
@@ -51,3 +51,4 @@ const Footer = () => {
 };
 
 export default Footer;
+

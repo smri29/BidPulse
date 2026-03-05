@@ -7,6 +7,7 @@ import {
   Users, 
   Package, 
   MessageCircle,
+  Bell,
   LogOut, 
   User, 
   ChevronDown 
@@ -16,6 +17,8 @@ const AdminNavbar = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const notifications = useSelector((state) => state.notifications.items);
+  const unreadCount = notifications.filter((item) => !item.read).length;
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -44,7 +47,7 @@ const AdminNavbar = () => {
           
           {/* 1. Admin Logo (Links to Dashboard) */}
           <Link to="/dashboard/admin" className="flex items-center gap-2 group">
-            <img src="/BidPulse.svg" alt="BidPulse" className="h-8 w-auto" />
+            <img src="/RiZBiD.svg" alt="RiZBiD" className="h-8 w-auto" />
             <span className="text-sm font-semibold text-red-400">Admin</span>
           </Link>
 
@@ -64,6 +67,15 @@ const AdminNavbar = () => {
 
             <Link to="/admin/support" className="hover:text-white flex items-center gap-2 text-sm font-medium transition">
               <MessageCircle size={18} /> Support
+            </Link>
+
+            <Link to="/notifications" className="relative hover:text-white flex items-center gap-2 text-sm font-medium transition">
+              <Bell size={18} /> Notifications
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-3 min-w-5 h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-slate-900">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </Link>
 
             <Link to="/" className="hover:text-white flex items-center gap-2 text-sm font-medium transition">
@@ -116,3 +128,4 @@ const AdminNavbar = () => {
 };
 
 export default AdminNavbar;
+
