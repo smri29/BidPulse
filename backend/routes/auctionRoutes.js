@@ -5,7 +5,10 @@ const {
   createAuction,
   updateAuction,
   deleteAuction,
-  placeBid // <--- Added this import
+  placeBid,
+  registerForAuction,
+  giveUpBid,
+  handleNoRegistrationDecision,
 } = require('../controllers/auctionController');
 const { protect } = require('../middleware/authMiddleware');
 const { auctionImageUpload } = require('../middleware/uploadMiddleware');
@@ -33,7 +36,9 @@ router.post('/', protect, handleAuctionImageUpload, createAuction);
 router.put('/:id', protect, handleAuctionImageUpload, updateAuction);
 router.delete('/:id', protect, deleteAuction);
 
-// Bidding Route (Added)
+router.post('/:id/register', protect, registerForAuction);
 router.post('/:id/bid', protect, placeBid);
+router.post('/:id/give-up', protect, giveUpBid);
+router.post('/:id/no-registration-decision', protect, handleNoRegistrationDecision);
 
 module.exports = router;

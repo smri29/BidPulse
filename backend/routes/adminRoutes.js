@@ -8,8 +8,10 @@ const {
     getAllAuctionsAdmin, 
     deleteAnyAuction,
     getUserHistory,
-    sendTestEmail
+    sendTestEmail,
+    triggerPromotionalCampaign
 } = require('../controllers/adminController');
+const { adminApproveAuction, adminDisapproveAuction } = require('../controllers/auctionController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // Protect all routes: Must be Logged In + Role must be 'admin'
@@ -26,6 +28,9 @@ router.get('/users/:id/history', protect, authorize('admin'), getUserHistory); /
 // Auction Management (Global Control)
 router.get('/auctions', protect, authorize('admin'), getAllAuctionsAdmin);
 router.delete('/auctions/:id', protect, authorize('admin'), deleteAnyAuction);
+router.put('/auctions/:id/approve', protect, authorize('admin'), adminApproveAuction);
+router.put('/auctions/:id/disapprove', protect, authorize('admin'), adminDisapproveAuction);
 router.post('/test-email', protect, authorize('admin'), sendTestEmail);
+router.post('/promotional/trigger', protect, authorize('admin'), triggerPromotionalCampaign);
 
 module.exports = router;
