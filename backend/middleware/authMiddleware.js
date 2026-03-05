@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const STATIC_ADMIN_DB_ID = '000000000000000000000999';
 
 const protect = async (req, res, next) => {
   let token;
@@ -18,12 +19,15 @@ const protect = async (req, res, next) => {
       // --- FIX: HANDLE STATIC ADMIN ---
       if (decoded.id === 'static_admin_id_999') {
          req.user = {
-             id: 'static_admin_id_999',
-             _id: 'static_admin_id_999',
+             id: STATIC_ADMIN_DB_ID,
+             _id: STATIC_ADMIN_DB_ID,
+             legacyId: 'static_admin_id_999',
+             isStaticAdmin: true,
              name: 'Super Admin',
-             email: process.env.ADMIN_EMAIL || 'admin@bidpulse.local',
-             role: 'admin'
-         };
+             email: process.env.ADMIN_EMAIL || 'admin@rizbid.local',
+             role: 'admin',
+             emailVerified: true,
+          };
          return next();
       }
       // -------------------------------
@@ -57,3 +61,4 @@ const authorize = (...roles) => {
 };
 
 module.exports = { protect, authorize };
+

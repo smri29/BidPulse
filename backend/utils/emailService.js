@@ -13,7 +13,7 @@ const hasResendConfig = () => Boolean(process.env.RESEND_API_KEY);
 const sendWithBrevo = async (options) => {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.EMAIL_USERNAME || process.env.EMAIL_USER;
-  const senderName = process.env.BREVO_SENDER_NAME || 'BidPulse Support';
+  const senderName = process.env.BREVO_SENDER_NAME || 'RiZBiD Support';
   const apiUrl = process.env.BREVO_API_URL || 'https://api.brevo.com/v3/smtp/email';
   const timeoutMs = Number(process.env.BREVO_TIMEOUT_MS || 15000);
 
@@ -204,7 +204,7 @@ const sendEmail = async (options) => {
     try {
       const activeTransporter = getTransporter(config);
       await activeTransporter.sendMail({
-        from: `BidPulse Support <${fromUser}>`,
+        from: `RiZBiD Support <${fromUser}>`,
         to: options.email,
         subject: options.subject,
         html: options.message,
@@ -314,3 +314,4 @@ const verifyEmailTransport = async () => {
 module.exports = sendEmail;
 module.exports.sendEmailAsync = sendEmailAsync;
 module.exports.verifyEmailTransport = verifyEmailTransport;
+

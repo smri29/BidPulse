@@ -1,0 +1,112 @@
+const User = require('../models/User');
+const PromotionalEmailLog = require('../models/PromotionalEmailLog');
+const templates = require('./emailTemplates');
+const { sendEmailAsync } = require('./emailService');
+
+const normalizeMonth = (value) => {
+  const month = Number(value);
+  if (!Number.isInteger(month) || month < 1 || month > 12) return null;
+  return month;
+};
+
+const normalizeYear = (value) => {
+  if (value === undefined || value === null || value === '') return null;
+  const year = Number(value);
+  if (!Number.isInteger(year) || year < 2000 || year > 3000) return null;
+  return year;
+};
+
+const sendMonthlyPromotionalEmails = async ({
+  month,
+  year,
+  clientUrl,
+  forceSend = false,
+  dryRun = false,
+} = {}) => {
+  const now = new Date();
+  const effectiveMonth = normalizeMonth(month) || now.getMonth() + 1;
+  const effectiveYear = normalizeYear(year) || now.getFullYear();
+  const effectiveClientUrl = clientUrl || process.env.CLIENT_URL || 'http://localhost:5173';
+
+  const recipients = await User.find({
+    isBanned: { $ne: true },
+    emailVerified: true,
+    email: { $exists: true, $ne: '' },
+  })
+    .select('_id name email')
+    .lean();
+
+  if (!recipients.length) {
+    return { month: effectiveMonth, year: effectiveYear, total: 0, sent: 0, skipped: 0, dryRun };
+  }
+
+  const existingLogs = await PromotionalEmailLog.find({
+    year: effectiveYear,
+    month: effectiveMonth,
+    user: { $in: recipients.map((r) => r._id) },
+  })
+    .select('user')
+    .lean();
+  const alreadySent = new Set(existingLogs.map((log) => String(log.user)));
+
+  let sent = 0;
+  let skipped = 0;
+
+  for (const recipient of recipients) {
+    const campaign = templates.promotionalCampaign({
+      month: effectiveMonth,
+      name: recipient.name,
+      clientUrl: effectiveClientUrl,
+    });
+
+    const wasSent = alreadySent.has(String(recipient._id));
+    if (!forceSend && wasSent) {
+      skipped += 1;
+      continue;
+    }
+
+    if (dryRun) {
+      sent += 1;
+      continue;
+    }
+
+    sendEmailAsync({
+      email: recipient.email,
+      subject: campaign.subject,
+      message: campaign.html,
+    });
+
+    await PromotionalEmailLog.updateOne(
+      { user: recipient._id, year: effectiveYear, month: effectiveMonth },
+      {
+        $set: {
+          campaignSubject: campaign.subject,
+          sentAt: new Date(),
+        },
+        $setOnInsert: {
+          user: recipient._id,
+          year: effectiveYear,
+          month: effectiveMonth,
+        },
+      },
+      { upsert: true }
+    );
+
+    sent += 1;
+  }
+
+  return {
+    month: effectiveMonth,
+    year: effectiveYear,
+    total: recipients.length,
+    sent,
+    skipped,
+    dryRun,
+    forceSend,
+  };
+};
+
+module.exports = {
+  sendMonthlyPromotionalEmails,
+};
+
