@@ -16,8 +16,8 @@ const Safety = () => {
         <div className="space-y-8">
             <SafetyCard 
                 icon={<Lock className="text-blue-500" />}
-                title="Escrow Protection"
-                desc="We never send money directly to the seller instantly. When you pay, your funds are held in a secure Escrow account. The seller is only paid after YOU confirm that you have received the item."
+                title="Managed Settlement"
+                desc="When you pay, RiZBiD immediately settles the seller's final amount and takes over shipping responsibility for the verified product."
             />
             <SafetyCard 
                 icon={<Eye className="text-purple-500" />}
@@ -27,7 +27,7 @@ const Safety = () => {
             <SafetyCard 
                 icon={<AlertTriangle className="text-orange-500" />}
                 title="Dispute Resolution"
-                desc="If an item never arrives or isn't as described, our support team steps in. Since we hold the funds, we can refund you if the deal goes wrong."
+                desc="If an item never arrives or isn't as described, our support team investigates delivery and verification records and resolves the case."
             />
         </div>
       </div>

@@ -16,7 +16,7 @@ const HelpCenter = () => {
     {
       id: 'welcome',
       role: 'system',
-      name: 'BidPulse Bot',
+      name: 'RiZBiD Bot',
       message: 'Welcome to live support. An admin can join this chat shortly.',
       createdAt: new Date().toISOString(),
     },
@@ -57,7 +57,7 @@ const HelpCenter = () => {
       },
       {
         q: 'Is there a fee for selling?',
-        a: 'BidPulse charges a flat 8% commission on completed sales. There are no listing fees.',
+        a: 'RiZBiD charges 5% commission on completed sales. If no one registers, withdrawal fee is $9.99 or relisting fee is $14.99.',
       },
       {
         q: 'Can I cancel a bid?',
@@ -216,3 +216,4 @@ const FAQItem = ({ q, a }) => (
 );
 
 export default HelpCenter;
+

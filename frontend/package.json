@@ -13,6 +13,7 @@
     "@reduxjs/toolkit": "^2.11.1",
     "@stripe/stripe-js": "^8.5.3",
     "axios": "^1.13.2",
+    "jspdf": "^4.2.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.560.0",
     "react": "^19.2.0",

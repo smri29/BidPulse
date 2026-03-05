@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { register, reset } from '../redux/authSlice';
+import { addNotification } from '../redux/notificationSlice';
 import { User, Mail, Phone, Lock, FileText, Calendar, CheckSquare, RefreshCw, ShieldCheck, MapPin } from 'lucide-react';
 import { COUNTRIES } from '../constants/countries';
 
@@ -33,10 +34,15 @@ const Register = () => {
   const { user, isLoading, isError, isSuccess, message } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (isError) toast.error(message);
+    if (isError && message) {
+      toast.error(message, { toastId: `register-error-${message}` });
+      dispatch(addNotification({ title: 'Registration Failed', message, type: 'warning' }));
+    }
 
     if (isSuccess || user) {
-      toast.success('Registration successful. Please verify your email with OTP.');
+      const successMessage = 'Registration successful. Please verify your email with OTP.';
+      toast.success(successMessage, { toastId: 'register-success' });
+      dispatch(addNotification({ title: 'Registration Successful', message: successMessage, type: 'success' }));
       navigate('/profile');
     }
 
@@ -99,7 +105,7 @@ const Register = () => {
           <div className="hidden lg:flex bg-gradient-to-br from-blue-800 via-indigo-700 to-emerald-600 p-10 text-white flex-col justify-between">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-xs font-bold tracking-wider mb-6">VERIFIED ONBOARDING</div>
-              <h1 className="text-4xl font-bold">Create your BidPulse account</h1>
+              <h1 className="text-4xl font-bold">Create your RiZBiD account</h1>
               <p className="text-white/80 mt-4 text-sm">Email OTP verification keeps bidding and listing secure.</p>
             </div>
             <p className="text-sm text-white/80">Already have an account? <Link to="/login" className="font-bold text-white hover:underline">Sign in</Link></p>
@@ -219,3 +225,4 @@ const Register = () => {
 };
 
 export default Register;
+

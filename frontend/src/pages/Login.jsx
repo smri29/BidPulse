@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { login, reset } from '../redux/authSlice';
+import { addNotification } from '../redux/notificationSlice';
 import { Mail, Lock, LogIn, Shield, ArrowRight } from 'lucide-react';
 
 const Login = () => {
@@ -14,7 +15,10 @@ const Login = () => {
   const { user, isLoading, isError, isSuccess, message } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (isError) toast.error(message);
+    if (isError && message) {
+      toast.error(message, { toastId: `login-error-${message}` });
+      dispatch(addNotification({ title: 'Login Failed', message, type: 'warning' }));
+    }
 
     if (user || isSuccess) {
       if (user?.role === 'admin') navigate('/dashboard/admin');
@@ -39,8 +43,8 @@ const Login = () => {
         <div className="hidden lg:flex bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-700 text-white p-10 flex-col justify-between">
           <div>
             <div className="inline-flex items-center gap-2 text-xs font-bold tracking-wider bg-white/10 rounded-full px-3 py-1 mb-6">SECURE ACCESS</div>
-            <h1 className="text-4xl font-bold leading-tight">Welcome back to BidPulse</h1>
-            <p className="text-white/80 mt-4 text-sm">Live bidding intelligence, escrow confidence, and high-integrity auction flow.</p>
+            <h1 className="text-4xl font-bold leading-tight">Welcome back to RiZBiD</h1>
+            <p className="text-white/80 mt-4 text-sm">Live bidding intelligence, verified listings, and high-integrity auction flow.</p>
           </div>
           <div className="text-sm text-white/80">Need an account? <Link to="/register" className="font-bold text-white hover:underline">Create one now</Link></div>
         </div>
@@ -90,3 +94,4 @@ const Login = () => {
 };
 
 export default Login;
+

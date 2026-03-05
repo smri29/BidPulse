@@ -47,10 +47,10 @@ const Profile = () => {
   }, [user]);
 
   useEffect(() => {
-    if (isError && message) toast.error(message);
-    if (isSuccess && message) toast.success(message);
-    dispatch(reset());
-  }, [dispatch, isError, isSuccess, message]);
+    if (isError || isSuccess) {
+      dispatch(reset());
+    }
+  }, [dispatch, isError, isSuccess]);
 
   const stats = useMemo(
     () => activity?.stats || { totalListed: 0, totalPlacedBids: 0, totalWins: 0, totalLosses: 0 },
@@ -80,17 +80,17 @@ const Profile = () => {
     dispatch(updateProfile(formData))
       .unwrap()
       .then(() => {
-        toast.success('Profile updated');
+        toast.success('Profile updated', { toastId: 'profile-updated' });
         setIsEditing(false);
       })
-      .catch((error) => toast.error(error || 'Failed to update profile'));
+      .catch((error) => toast.error(error || 'Failed to update profile', { toastId: `profile-update-${error || 'failed'}` }));
   };
 
   const handleSendOtp = () => {
     dispatch(sendVerificationOtp())
       .unwrap()
-      .then((res) => toast.success(res.message || 'OTP sent'))
-      .catch((error) => toast.error(error));
+      .then((res) => toast.success(res.message || 'OTP sent', { toastId: 'otp-sent' }))
+      .catch((error) => toast.error(error, { toastId: `otp-send-${error}` }));
   };
 
   const handleVerifyOtp = (event) => {
@@ -98,10 +98,10 @@ const Profile = () => {
     dispatch(verifyEmailOtp(otp))
       .unwrap()
       .then(() => {
-        toast.success('Email verified successfully');
+        toast.success('Email verified successfully', { toastId: 'otp-verified' });
         setOtp('');
       })
-      .catch((error) => toast.error(error));
+      .catch((error) => toast.error(error, { toastId: `otp-verify-${error}` }));
   };
 
   return (
@@ -183,9 +183,10 @@ const Profile = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <button
               onClick={handleSendOtp}
+              disabled={isLoading}
               className="inline-flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-amber-700"
             >
-              <Send size={14} /> Send OTP
+              <Send size={14} /> {isLoading ? 'Sending...' : 'Send OTP'}
             </button>
             <form onSubmit={handleVerifyOtp} className="flex items-center gap-2 w-full sm:w-auto">
               <input
@@ -195,7 +196,7 @@ const Profile = () => {
                 placeholder="Enter OTP"
                 className="w-full sm:w-44 rounded-lg border border-amber-300 px-3 py-2 text-sm"
               />
-              <button className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-semibold">Verify</button>
+              <button disabled={isLoading || otp.trim().length < 4} className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-70">{isLoading ? 'Verifying...' : 'Verify'}</button>
             </form>
           </div>
         </section>

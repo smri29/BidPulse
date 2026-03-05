@@ -47,7 +47,7 @@ const Settings = () => {
       const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.setAttribute('download', `bidpulse-data-${user._id}.zip`);
+      link.setAttribute('download', `RiZBiD-data-${user._id}.zip`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -149,3 +149,4 @@ const Toggle = ({ label, desc, defaultChecked = true }) => (
 );
 
 export default Settings;
+

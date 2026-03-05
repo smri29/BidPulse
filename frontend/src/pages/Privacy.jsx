@@ -16,7 +16,7 @@ const Privacy = () => {
             <h3 className="text-gray-900 font-bold mt-6 mb-2">2. How We Use Data</h3>
             <p>We use your data to:
                 <ul className="list-disc pl-5 mt-2">
-                    <li>Process transactions and Escrow payments.</li>
+                    <li>Process transactions, seller settlement, and shipping lifecycle updates.</li>
                     <li>Verify identities to prevent fraud.</li>
                     <li>Send transaction notifications.</li>
                 </ul>
