@@ -1,6 +1,7 @@
 const express = require('express');
 const {
   getAllAuctions,
+  getAuctionSummary,
   getAuctionById,
   createAuction,
   updateAuction,
@@ -29,6 +30,7 @@ const handleAuctionImageUpload = (req, res, next) => {
 };
 
 router.get('/', getAllAuctions);
+router.get('/summary/stats', getAuctionSummary);
 router.get('/:id', getAuctionById);
 
 // Protected Routes

@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -30,6 +30,8 @@ const supportRoutes = require('./routes/supportRoutes');
 
 const stripeClient = process.env.STRIPE_SECRET_KEY ? stripe(process.env.STRIPE_SECRET_KEY) : null;
 const STATIC_ADMIN_DB_ID = '000000000000000000000999';
+const DEFAULT_DEV_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:4173'];
+const isProduction = (process.env.NODE_ENV || 'development') === 'production';
 
 const parseAllowedOrigins = () => {
   const baseOrigins = [process.env.CLIENT_URL, process.env.CORS_ORIGIN]
@@ -44,7 +46,17 @@ const parseAllowedOrigins = () => {
   return Array.from(new Set([...baseOrigins, ...fromList]));
 };
 
-const allowedOrigins = parseAllowedOrigins();
+const resolveAllowedOrigins = () => {
+  const configuredOrigins = parseAllowedOrigins();
+  if (configuredOrigins.length > 0) return configuredOrigins;
+  if (!isProduction) return DEFAULT_DEV_ORIGINS;
+  return [];
+};
+
+const allowedOrigins = resolveAllowedOrigins();
+if (allowedOrigins.length === 0 && isProduction) {
+  console.warn('CORS warning: no allowed origins configured. Browser cross-origin requests will be rejected.');
+}
 
 connectDB();
 verifyEmailTransport();
@@ -54,7 +66,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
+    origin: allowedOrigins.length > 0 ? allowedOrigins : false,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
   },
 });
@@ -205,7 +217,7 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
         {
         type: 'success',
         title: 'Payment Completed',
-        message: `Payment completed for "${auction.title}". RiZBiD shipping is now in progress.`,
+        message: `Payment completed for "${auction.title}". BidPulse shipping is now in progress.`,
         auctionId,
         },
         { includeAdmins: true }
@@ -334,7 +346,7 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
@@ -357,7 +369,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/support', supportRoutes);
 
 app.get('/', (_req, res) => {
-  res.send('RiZBiD API is running...');
+  res.send('BidPulse API is running...');
 });
 
 app.get('/api/health', (_req, res) => {
@@ -487,7 +499,7 @@ cron.schedule('* * * * *', async () => {
       recipientEmails.forEach((email) => {
         sendEmailAsync({
           email,
-          subject: `RiZBiD starts in 5 minutes: ${auction.title}`,
+          subject: `BidPulse starts in 5 minutes: ${auction.title}`,
           message: templates.biddingStartsSoon({
             title: auction.title,
             startAt: auction.registrationEndAt,
@@ -583,3 +595,4 @@ const shutdown = async (signal) => {
 
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
+

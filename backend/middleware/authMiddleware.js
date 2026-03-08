@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+﻿const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const STATIC_ADMIN_DB_ID = '000000000000000000000999';
 
@@ -24,7 +24,7 @@ const protect = async (req, res, next) => {
              legacyId: 'static_admin_id_999',
              isStaticAdmin: true,
              name: 'Super Admin',
-             email: process.env.ADMIN_EMAIL || 'admin@rizbid.local',
+             email: process.env.ADMIN_EMAIL || 'admin@BidPulse.local',
              role: 'admin',
              emailVerified: true,
           };
@@ -61,4 +61,5 @@ const authorize = (...roles) => {
 };
 
 module.exports = { protect, authorize };
+
 

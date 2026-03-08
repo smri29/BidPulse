@@ -1,4 +1,4 @@
-const wrapEmail = ({ title, subtitle, body, accent = '#0f6fff', footerNote }) => {
+﻿const wrapEmail = ({ title, subtitle, body, accent = '#0f6fff', footerNote }) => {
   return `
     <div style="margin:0;padding:24px;background:#f3f6fb;font-family:Arial,sans-serif;color:#111827;">
       <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e5e7eb;">
@@ -10,7 +10,7 @@ const wrapEmail = ({ title, subtitle, body, accent = '#0f6fff', footerNote }) =>
           ${body}
         </div>
         <div style="padding:14px 22px;background:#f8fafc;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;">
-          ${footerNote || 'RiZBiD - Verified, office-inspected, transparent bidding'}
+          ${footerNote || 'BidPulse - Verified, office-inspected, transparent bidding'}
         </div>
       </div>
     </div>
@@ -20,7 +20,7 @@ const wrapEmail = ({ title, subtitle, body, accent = '#0f6fff', footerNote }) =>
 const PROMOTIONAL_CAMPAIGNS = [
   { month: 1, subject: 'January Kickoff: Verified Deals to Start the Year', title: 'January Promotion', subtitle: 'Start the year with office-verified premium listings', body: 'Browse newly verified products and register early to lock your queue advantage this month.', accent: '#2563eb' },
   { month: 2, subject: 'February Spotlight: Limited Future Bids Open', title: 'February Promotion', subtitle: 'High-interest listings are now open for registration', body: 'Future Bids are filling quickly. Register before windows close and stay ready for live sessions.', accent: '#dc2626' },
-  { month: 3, subject: 'March Momentum: Upgrade Season Starts on RiZBiD', title: 'March Promotion', subtitle: 'Spring inventory refresh with verified electronics and collectibles', body: 'Track your categories, compare history, and register for products that match your upgrade plan.', accent: '#059669' },
+  { month: 3, subject: 'March Momentum: Upgrade Season Starts on BidPulse', title: 'March Promotion', subtitle: 'Spring inventory refresh with verified electronics and collectibles', body: 'Track your categories, compare history, and register for products that match your upgrade plan.', accent: '#059669' },
   { month: 4, subject: 'April Advantage: Smart Bidders Register Earlier', title: 'April Promotion', subtitle: 'Queue position matters when live bidding opens', body: 'Early registration can improve bidding entry priority. Reserve your spot for upcoming listings now.', accent: '#7c3aed' },
   { month: 5, subject: 'May Drop: New Verified Listings Released', title: 'May Promotion', subtitle: 'Fresh catalog updates are live in Future Bids', body: 'Explore newly approved listings and monitor products that align with your budget targets.', accent: '#0f766e' },
   { month: 6, subject: 'June Mid-Year Deals: Bid with Confidence', title: 'June Promotion', subtitle: 'Transparent auction flow with real-time visibility', body: 'Join ongoing sessions as a spectator, review history, and prepare your next winning bid.', accent: '#1d4ed8' },
@@ -38,10 +38,10 @@ const getPromotionalCampaignByMonth = (month) =>
 const templates = {
   welcome: ({ name, clientUrl }) =>
     wrapEmail({
-      title: `Welcome to RiZBiD, ${name}!`,
+      title: `Welcome to BidPulse, ${name}!`,
       subtitle: 'Your bidding account is ready',
       body: `<p>You are now part of a verified bidding network.</p>
-             <p><a href="${clientUrl}" style="color:#0f6fff;font-weight:700;text-decoration:none;">Open RiZBiD</a> and explore upcoming bids.</p>`,
+             <p><a href="${clientUrl}" style="color:#0f6fff;font-weight:700;text-decoration:none;">Open BidPulse</a> and explore upcoming bids.</p>`,
       accent: '#0f6fff',
     }),
 
@@ -76,7 +76,7 @@ const templates = {
     wrapEmail({
       title: 'Listing Submitted for Verification',
       subtitle: 'Our team will inspect your product before publishing',
-      body: `<p><b>${title}</b> has been received.</p><p>Bring the product to the RiZBiD office for physical verification.</p>`,
+      body: `<p><b>${title}</b> has been received.</p><p>Bring the product to the BidPulse office for physical verification.</p>`,
       accent: '#0f766e',
     }),
 
@@ -139,7 +139,7 @@ const templates = {
   paymentReceipt: ({ title, amount }) =>
     wrapEmail({
       title: 'Payment Received',
-      subtitle: 'RiZBiD will now handle shipping directly',
+      subtitle: 'BidPulse will now handle shipping directly',
       body: `<p>Payment for <b>${title}</b> was successful.</p>
              <p>Amount: <b>$${amount}</b></p>
              <p>Delivery estimate: <b>7-14 days</b>. After delivery, confirm receipt in your dashboard.</p>`,
@@ -157,9 +157,9 @@ const templates = {
   sellerPaid: ({ title, grossAmount, sellerPayout, commission }) =>
     wrapEmail({
       title: 'Seller Payout Completed',
-      subtitle: `RiZBiD sale settlement for ${title}`,
+      subtitle: `BidPulse sale settlement for ${title}`,
       body: `<p>Winning amount: <b>$${grossAmount}</b></p>
-             <p>RiZBiD commission (5%): <b>$${commission}</b></p>
+             <p>BidPulse commission (5%): <b>$${commission}</b></p>
              <p>Final payout sent to seller: <b>$${sellerPayout}</b></p>`,
       accent: '#059669',
     }),
@@ -168,7 +168,7 @@ const templates = {
     wrapEmail({
       title: 'Shipping In Progress',
       subtitle: title,
-      body: `<p>RiZBiD has started fulfillment for your winning product.</p>
+      body: `<p>BidPulse has started fulfillment for your winning product.</p>
              <p>Expected delivery window: <b>${minDays}-${maxDays} days</b>.</p>
              <p>After delivery, confirm receipt here: <a href="${link}" style="color:#0f6fff;font-weight:700;text-decoration:none;">Open order details</a></p>`,
       accent: '#0369a1',
@@ -225,7 +225,7 @@ const templates = {
         title: `${campaign.title}${name ? ` - Hi ${name}` : ''}`,
         subtitle: campaign.subtitle,
         body: `<p>${campaign.body}</p>
-               <p><a href="${clientUrl}" style="color:#0f6fff;font-weight:700;text-decoration:none;">Open RiZBiD</a> to explore current opportunities.</p>`,
+               <p><a href="${clientUrl}" style="color:#0f6fff;font-weight:700;text-decoration:none;">Open BidPulse</a> to explore current opportunities.</p>`,
         accent: campaign.accent,
       }),
     };
@@ -233,3 +233,4 @@ const templates = {
 };
 
 module.exports = templates;
+
