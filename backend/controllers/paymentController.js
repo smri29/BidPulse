@@ -1,4 +1,4 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+﻿const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Auction = require('../models/Auction');
 const { sendEmailAsync } = require('../utils/emailService');
 const templates = require('../utils/emailTemplates');
@@ -265,7 +265,7 @@ exports.confirmCheckoutSuccess = async (req, res) => {
       {
         type: 'success',
         title: 'Payment Completed',
-        message: `Payment completed for "${auction.title}". RiZBiD shipping is now in progress.`,
+        message: `Payment completed for "${auction.title}". BidPulse shipping is now in progress.`,
         auctionId: auction._id.toString(),
       },
       {
@@ -417,7 +417,7 @@ exports.confirmProductReceived = async (req, res) => {
     if (adminEmail) {
       sendEmailAsync({
         email: adminEmail,
-        subject: `RiZBiD order closed: ${auction.title}`,
+        subject: `BidPulse order closed: ${auction.title}`,
         message: templates.productReceivedConfirmed({ title: auction.title }),
       });
     }
@@ -456,3 +456,4 @@ exports.confirmProductReceived = async (req, res) => {
 
 // Backward-compatible export name used by existing route import.
 exports.releaseFunds = exports.confirmProductReceived;
+

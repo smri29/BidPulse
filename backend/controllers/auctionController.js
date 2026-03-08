@@ -1,4 +1,4 @@
-const Auction = require('../models/Auction');
+﻿const Auction = require('../models/Auction');
 const User = require('../models/User');
 const { sendEmailAsync } = require('../utils/emailService');
 const templates = require('../utils/emailTemplates');
@@ -11,7 +11,7 @@ const TEST_REGISTRATION_MINUTES = [5];
 const uploadAuctionImages = async (files) => {
   if (!files?.length) return [];
 
-  const folder = process.env.CLOUDINARY_FOLDER || 'rizbid';
+  const folder = process.env.CLOUDINARY_FOLDER || 'BidPulse';
   const uploads = files.map(
     (file) =>
       new Promise((resolve, reject) => {
@@ -274,6 +274,41 @@ exports.getAllAuctions = async (req, res) => {
     return res.status(200).json(auctions);
   } catch (error) {
     return res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getAuctionSummary = async (_req, res) => {
+  try {
+    const grouped = await Auction.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } },
+    ]);
+
+    const byStatus = grouped.reduce((acc, item) => {
+      acc[item._id] = item.count;
+      return acc;
+    }, {});
+
+    const liveListings = Number(byStatus.ongoing || 0);
+    const futureBids = Number(byStatus.future || 0);
+    const closed = Number(
+      (byStatus.completed || 0) +
+      (byStatus.paid_shipping_pending || 0) +
+      (byStatus.paid_held_in_escrow || 0) +
+      (byStatus.closed || 0)
+    );
+
+    const totalListings = Object.values(byStatus).reduce((sum, count) => sum + Number(count || 0), 0);
+
+    return res.status(200).json({
+      liveListings,
+      futureBids,
+      closed,
+      totalListings,
+      byStatus,
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || 'Failed to load auction summary' });
   }
 };
 
@@ -734,3 +769,4 @@ exports.internalJobs = {
   handleGiveUpCore,
   finalizeOngoingAuction,
 };
+

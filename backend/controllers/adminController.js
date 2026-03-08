@@ -1,4 +1,4 @@
-const Auction = require('../models/Auction');
+﻿const Auction = require('../models/Auction');
 const User = require('../models/User');
 const { sendEmailAsync } = require('../utils/emailService');
 const templates = require('../utils/emailTemplates');
@@ -226,7 +226,7 @@ exports.sendTestEmail = async (_req, res) => {
 
   sendEmailAsync({
     email: targetEmail,
-    subject: 'RiZBiD Email Health Check',
+    subject: 'BidPulse Email Health Check',
     message: templates.welcome({ name: 'Admin', clientUrl: process.env.CLIENT_URL }),
   });
 
@@ -269,4 +269,5 @@ exports.triggerPromotionalCampaign = async (req, res) => {
     return res.status(500).json({ message: error.message || 'Failed to trigger promotional campaign' });
   }
 };
+
 

@@ -1,6 +1,14 @@
-const SupportTicket = require('../models/SupportTicket');
+﻿const SupportTicket = require('../models/SupportTicket');
 const { sendEmailAsync } = require('../utils/emailService');
 const templates = require('../utils/emailTemplates');
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const sanitizeText = (value) =>
+  String(value || '')
+    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 // @desc    Create support ticket (public)
 // @route   POST /api/support/tickets
@@ -8,16 +16,36 @@ const templates = require('../utils/emailTemplates');
 exports.createSupportTicket = async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
+    const cleanName = sanitizeText(name);
+    const cleanEmail = sanitizeText(email).toLowerCase();
+    const cleanSubject = sanitizeText(subject);
+    const cleanMessage = sanitizeText(message);
 
-    if (!name || !email || !subject || !message) {
+    if (!cleanName || !cleanEmail || !cleanSubject || !cleanMessage) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      return res.status(400).json({ message: 'Please provide a valid email address' });
+    }
+
+    if (cleanName.length < 2 || cleanName.length > 80) {
+      return res.status(400).json({ message: 'Name must be between 2 and 80 characters' });
+    }
+
+    if (cleanSubject.length < 4 || cleanSubject.length > 140) {
+      return res.status(400).json({ message: 'Subject must be between 4 and 140 characters' });
+    }
+
+    if (cleanMessage.length < 15 || cleanMessage.length > 3000) {
+      return res.status(400).json({ message: 'Message must be between 15 and 3000 characters' });
+    }
+
     const ticket = await SupportTicket.create({
-      name,
-      email,
-      subject,
-      message,
+      name: cleanName,
+      email: cleanEmail,
+      subject: cleanSubject,
+      message: cleanMessage,
       user: req.user?._id || null,
     });
 
@@ -25,14 +53,14 @@ exports.createSupportTicket = async (req, res) => {
     if (supportEmail) {
       sendEmailAsync({
         email: supportEmail,
-        subject: `[RiZBiD Support] ${subject}`,
+        subject: `[BidPulse Support] ${cleanSubject}`,
         message: templates.supportCreated({ ticketId: ticket._id }),
       });
     }
 
     sendEmailAsync({
-      email,
-      subject: 'RiZBiD Support Ticket Received',
+      email: cleanEmail,
+      subject: 'BidPulse Support Ticket Received',
       message: templates.supportCreated({ ticketId: ticket._id }),
     });
 
@@ -82,7 +110,7 @@ exports.updateSupportTicketStatus = async (req, res) => {
     if (previousStatus !== status) {
       sendEmailAsync({
         email: ticket.email,
-        subject: `RiZBiD Support: Ticket ${status.replace('_', ' ')}`,
+        subject: `BidPulse Support: Ticket ${status.replace('_', ' ')}`,
         message: templates.supportStatus({ ticketId: ticket._id, status }),
       });
     }
@@ -92,4 +120,3 @@ exports.updateSupportTicketStatus = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
-

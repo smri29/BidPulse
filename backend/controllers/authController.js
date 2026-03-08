@@ -1,4 +1,4 @@
-const User = require('../models/User');
+﻿const User = require('../models/User');
 const Auction = require('../models/Auction');
 const SupportTicket = require('../models/SupportTicket');
 const jwt = require('jsonwebtoken');
@@ -38,7 +38,7 @@ const serializeUser = (user) => ({
 const sendVerificationEmail = async (user, otp) => {
   await sendEmail({
     email: user.email,
-    subject: 'RiZBiD Email Verification OTP',
+    subject: 'BidPulse Email Verification OTP',
     message: templates.emailOtp({ otp }),
   });
 };
@@ -181,7 +181,7 @@ exports.verifyEmailOTP = async (req, res) => {
 
     sendEmailAsync({
       email: user.email,
-      subject: 'Welcome to RiZBiD',
+      subject: 'Welcome to BidPulse',
       message: templates.welcome({ name: user.name, clientUrl: process.env.CLIENT_URL }),
     });
 
@@ -251,7 +251,7 @@ exports.uploadAvatar = async (req, res) => {
       return res.status(503).json({ message: 'Avatar upload service is not configured in production' });
     }
 
-    const folder = process.env.CLOUDINARY_FOLDER || 'RiZBiD';
+    const folder = process.env.CLOUDINARY_FOLDER || 'BidPulse';
 
     const uploadResult = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
@@ -353,7 +353,7 @@ exports.exportUserDataZip = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename=RiZBiD-data-${userId}.zip`);
+    res.setHeader('Content-Disposition', `attachment; filename=BidPulse-data-${userId}.zip`);
 
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.on('error', (err) => {
@@ -408,13 +408,13 @@ exports.forgotPassword = async (req, res) => {
     try {
       await sendEmail({
         email: user.email,
-        subject: 'RiZBiD Password Reset Token',
+        subject: 'BidPulse Password Reset Token',
         message: `
           <div style="margin:0;padding:24px;background:#f3f6fb;font-family:Arial,sans-serif;color:#111827;">
             <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e5e7eb;">
               <div style="background:linear-gradient(120deg,#7c3aed,#0b1220);padding:26px;color:#fff;">
                 <h1 style="margin:0;font-size:24px;line-height:1.2;">Reset Your Password</h1>
-                <p style="margin:8px 0 0;opacity:.9;font-size:14px;">Secure access recovery for RiZBiD</p>
+                <p style="margin:8px 0 0;opacity:.9;font-size:14px;">Secure access recovery for BidPulse</p>
               </div>
               <div style="padding:24px 22px;font-size:14px;line-height:1.65;color:#1f2937;">
                 <p>You requested a password reset.</p>
@@ -468,4 +468,5 @@ exports.resetPassword = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
 
