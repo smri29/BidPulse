@@ -1,17 +1,18 @@
-/** @type {import('tailwindcss').Config} */
+﻿/** @type {import('tailwindcss').Config} */
 export default {
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
       colors: {
-        'bid-purple': '#0f6fff',
-        'bid-green': '#059669',
-        'bid-dark': '#0b1220',
-      }
+        'bid-purple': '#1a5fff',
+        'bid-green': '#0d9b90',
+        'bid-dark': '#0a1631',
+        'bid-gold': '#c89435',
+      },
     },
   },
   plugins: [],
-}
+};

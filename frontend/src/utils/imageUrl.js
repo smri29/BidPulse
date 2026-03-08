@@ -1,4 +1,4 @@
-const DEFAULT_AUCTION_IMAGE = 'https://via.placeholder.com/900x600?text=RiZBiD+Listing';
+﻿const DEFAULT_AUCTION_IMAGE = 'https://via.placeholder.com/900x600?text=BidPulse+Listing';
 
 export const toSafeImageUrl = (rawUrl) => {
   if (!rawUrl || typeof rawUrl !== 'string') return DEFAULT_AUCTION_IMAGE;
@@ -25,4 +25,5 @@ export const handleAuctionImageError = (event) => {
   target.dataset.fallbackApplied = 'true';
   target.src = DEFAULT_AUCTION_IMAGE;
 };
+
 
