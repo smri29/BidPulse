@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useRef } from 'react';
+﻿import React, { Suspense, lazy, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { toast } from 'react-toastify';
@@ -45,11 +45,15 @@ import { fetchCurrentUser, forceLogout } from './redux/authSlice';
 import { addNotification } from './redux/notificationSlice';
 import { socketUrl } from './utils/axiosConfig';
 
+const GLOBAL_NOTIFY_EVENTS = ['BidPulse:notify', 'rizbid:notify'];
+const AUTH_EXPIRED_EVENTS = ['BidPulse:auth-expired', 'RiZBiD:auth-expired'];
+
 function App() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const lastSessionCheckRef = useRef(0);
   const SESSION_RECHECK_INTERVAL_MS = 3 * 60 * 1000;
+  const isAdminSession = user?.role === 'admin';
 
   useEffect(() => {
     if (!user?.token) return;
@@ -86,8 +90,14 @@ function App() {
       dispatch(addNotification(detail));
     };
 
-    window.addEventListener('rizbid:notify', handleGlobalNotify);
-    return () => window.removeEventListener('rizbid:notify', handleGlobalNotify);
+    GLOBAL_NOTIFY_EVENTS.forEach((eventName) => {
+      window.addEventListener(eventName, handleGlobalNotify);
+    });
+
+    return () =>
+      GLOBAL_NOTIFY_EVENTS.forEach((eventName) => {
+        window.removeEventListener(eventName, handleGlobalNotify);
+      });
   }, [dispatch]);
 
   useEffect(() => {
@@ -102,8 +112,14 @@ function App() {
       toast.error('Your session ended. Please log in again.', { toastId: 'auth-expired-toast' });
     };
 
-    window.addEventListener('RiZBiD:auth-expired', handleAuthExpired);
-    return () => window.removeEventListener('RiZBiD:auth-expired', handleAuthExpired);
+    AUTH_EXPIRED_EVENTS.forEach((eventName) => {
+      window.addEventListener(eventName, handleAuthExpired);
+    });
+
+    return () =>
+      AUTH_EXPIRED_EVENTS.forEach((eventName) => {
+        window.removeEventListener(eventName, handleAuthExpired);
+      });
   }, [dispatch]);
 
   useEffect(() => {
@@ -151,13 +167,13 @@ function App() {
 
   return (
     <Router>
-      <div className="flex flex-col min-h-screen">
+      <div className={`app-shell flex min-h-screen flex-col ${isAdminSession ? 'admin-theme' : ''}`}>
         <ToastContainer position="top-right" autoClose={3000} />
         
         {/* Conditional Navbar: Show AdminNavbar if admin, else standard Navbar */}
         {user && user.role === 'admin' ? <AdminNavbar /> : <Navbar />}
         
-        <main className="flex-grow bg-white/50 backdrop-blur-[1px]">
+        <main className={`app-main flex-grow ${isAdminSession ? 'admin-main' : 'bg-white/30 backdrop-blur-[2px]'}`}>
           <Suspense fallback={pageLoader}>
           <Routes>
             {/* --- Public Routes --- */}
@@ -284,3 +300,4 @@ export default App;
   const pageLoader = (
     <div className="h-[60vh] flex items-center justify-center text-gray-500 text-sm">Loading page...</div>
   );
+

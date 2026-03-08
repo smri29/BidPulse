@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
 import axios from '../utils/axiosConfig';
@@ -41,7 +41,7 @@ const PaymentSuccess = () => {
       <p className="text-xl text-gray-600 max-w-md mb-8">
         {isConfirming
           ? 'We are confirming your payment and switching your order to delivery flow...'
-          : 'Your payment has been processed. RiZBiD has started fulfillment and will deliver the product within 7-14 days.'}
+          : 'Your payment has been processed. BidPulse has started fulfillment and will deliver the product within 7-14 days.'}
       </p>
       <p className="text-sm text-gray-500 max-w-xl mb-6">{confirmMessage}</p>
       <div className="flex items-center gap-3">
@@ -63,3 +63,4 @@ const PaymentSuccess = () => {
 };
 
 export default PaymentSuccess;
+

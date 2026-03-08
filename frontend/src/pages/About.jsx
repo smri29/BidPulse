@@ -1,38 +1,45 @@
-import React from 'react';
-import { Gavel, Globe, Users, Award } from 'lucide-react';
+﻿import React from 'react';
+import { Award, Gavel, Globe, Users } from 'lucide-react';
+import Reveal from '../components/ui/Reveal';
 
 const About = () => {
   return (
-    <div className="bg-white">
-      {/* Hero Section */}
-      <div className="bg-slate-900 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">
-            We Are <span className="text-bid-purple">RiZBiD</span>
-          </h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Revolutionizing the way the world buys and sells unique items through real-time auctions, office verification, and managed fulfillment.
-          </p>
-        </div>
-      </div>
+    <div className="py-14">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <Reveal>
+          <section className="premium-panel rounded-3xl p-8 text-center sm:p-12">
+            <p className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-700">
+              About BidPulse
+            </p>
+            <h1 className="mt-4 text-4xl font-extrabold text-bid-dark md:text-5xl">
+              Premium Bidding, Built on Trust
+            </h1>
+            <p className="mx-auto mt-4 max-w-3xl text-slate-600">
+              BidPulse is a verified auction network where every listing is physically checked and every transaction follows transparent, structured bidding.
+            </p>
+          </section>
+        </Reveal>
 
-      {/* Mission Section */}
-      <div className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Mission</h2>
-            <p className="text-lg text-gray-600 leading-relaxed mb-6">
-              At RiZBiD, we believe that every item has a story and a value waiting to be discovered. Our mission is to create a transparent, secure, and exciting marketplace where passion meets opportunity.
-            </p>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              We started in 2025 with a simple idea: remove risk from online auctions. RiZBiD verifies products in-office, handles shipping after payment, and keeps every stage transparent for buyers and sellers.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <StatCard icon={<Users size={32} />} number="10k+" label="Active Users" />
-            <StatCard icon={<Gavel size={32} />} number="50k+" label="Auctions Closed" />
-            <StatCard icon={<Globe size={32} />} number="12" label="Countries" />
-            <StatCard icon={<Award size={32} />} number="#1" label="Verified Auction Network" />
+        <div className="mt-10 grid grid-cols-1 gap-7 lg:grid-cols-12">
+          <Reveal className="lg:col-span-7">
+            <section className="surface-card rounded-3xl p-7 sm:p-8">
+              <h2 className="text-2xl font-bold text-slate-900">Our Mission</h2>
+              <p className="mt-4 leading-relaxed text-slate-600">
+                At BidPulse, every product has a real market story. Our mission is to run auctions with integrity by verifying listings, validating participants,
+                and enabling confident decisions in live bidding.
+              </p>
+              <p className="mt-4 leading-relaxed text-slate-600">
+                Since 2025, we have focused on reducing risk in digital auctions through office verification, transparent registration flow, and managed fulfillment
+                after successful payment.
+              </p>
+            </section>
+          </Reveal>
+
+          <div className="grid grid-cols-2 gap-4 lg:col-span-5">
+            <Reveal delay={40}><StatCard icon={<Users size={28} />} number="10k+" label="Active Users" /></Reveal>
+            <Reveal delay={80}><StatCard icon={<Gavel size={28} />} number="50k+" label="Auctions Closed" /></Reveal>
+            <Reveal delay={120}><StatCard icon={<Globe size={28} />} number="12" label="Countries" /></Reveal>
+            <Reveal delay={160}><StatCard icon={<Award size={28} />} number="#1" label="Verified Auction Network" /></Reveal>
           </div>
         </div>
       </div>
@@ -41,10 +48,10 @@ const About = () => {
 };
 
 const StatCard = ({ icon, number, label }) => (
-  <div className="bg-slate-50 p-6 rounded-2xl text-center hover:shadow-lg transition">
-    <div className="text-bid-purple flex justify-center mb-3">{icon}</div>
-    <div className="text-2xl font-bold text-gray-900">{number}</div>
-    <div className="text-sm text-gray-500">{label}</div>
+  <div className="surface-card hover-lift rounded-2xl p-5 text-center">
+    <div className="mb-3 inline-flex rounded-xl bg-blue-50 p-3 text-bid-purple">{icon}</div>
+    <div className="text-2xl font-extrabold text-bid-dark">{number}</div>
+    <div className="text-sm text-slate-500">{label}</div>
   </div>
 );
 

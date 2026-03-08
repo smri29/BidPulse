@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios, { socketUrl } from '../utils/axiosConfig';
 import { useSelector } from 'react-redux';
@@ -179,7 +179,7 @@ const AuctionDetails = () => {
   };
 
   const handleConfirmReceived = async () => {
-    if (!window.confirm('Confirm that you received the product from RiZBiD?')) return;
+    if (!window.confirm('Confirm that you received the product from BidPulse?')) return;
 
     try {
       await axios.post(`/payment/confirm-received/${id}`, {}, { headers: { Authorization: `Bearer ${user.token}` } });
@@ -401,7 +401,7 @@ const AuctionDetails = () => {
                 <div className="bg-blue-50 border border-blue-200 p-6 rounded-xl text-center">
                   <Package className="mx-auto h-8 w-8 text-blue-600 mb-2" />
                   <h3 className="text-lg font-bold text-blue-800 mb-1">Shipping in Progress</h3>
-                  <p className="text-sm text-blue-700 mb-3">RiZBiD will deliver within 7-14 days.</p>
+                  <p className="text-sm text-blue-700 mb-3">BidPulse will deliver within 7-14 days.</p>
                   <button onClick={handleConfirmReceived} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition w-full">
                     Product Received
                   </button>
@@ -453,3 +453,4 @@ const AuctionDetails = () => {
 };
 
 export default AuctionDetails;
+

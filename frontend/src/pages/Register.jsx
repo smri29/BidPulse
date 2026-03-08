@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -6,6 +6,7 @@ import { register, reset } from '../redux/authSlice';
 import { addNotification } from '../redux/notificationSlice';
 import { User, Mail, Phone, Lock, FileText, Calendar, CheckSquare, RefreshCw, ShieldCheck, MapPin } from 'lucide-react';
 import { COUNTRIES } from '../constants/countries';
+import Reveal from '../components/ui/Reveal';
 
 const Register = () => {
   const [captcha, setCaptcha] = useState({
@@ -100,12 +101,13 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center py-10 px-4">
-      <div className="max-w-5xl w-full rounded-3xl overflow-hidden border border-white/60 shadow-xl glass-surface animate-fade-up">
+      <Reveal className="max-w-5xl w-full">
+      <div className="max-w-5xl w-full rounded-3xl overflow-hidden border border-white/60 shadow-xl premium-panel">
         <div className="grid grid-cols-1 lg:grid-cols-2">
           <div className="hidden lg:flex bg-gradient-to-br from-blue-800 via-indigo-700 to-emerald-600 p-10 text-white flex-col justify-between">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-xs font-bold tracking-wider mb-6">VERIFIED ONBOARDING</div>
-              <h1 className="text-4xl font-bold">Create your RiZBiD account</h1>
+              <h1 className="text-4xl font-bold">Create your BidPulse account</h1>
               <p className="text-white/80 mt-4 text-sm">Email OTP verification keeps bidding and listing secure.</p>
             </div>
             <p className="text-sm text-white/80">Already have an account? <Link to="/login" className="font-bold text-white hover:underline">Sign in</Link></p>
@@ -203,7 +205,7 @@ const Register = () => {
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Human Verification</label>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="bg-white px-3 py-2 rounded-lg border border-gray-300 font-bold text-gray-700">{captcha.num1} + {captcha.num2} = ?</div>
-                  <button type="button" onClick={regenerateCaptcha} className="text-gray-400 hover:text-bid-purple p-1"><RefreshCw size={18} /></button>
+                  <button type="button" onClick={regenerateCaptcha} className="btn-soft p-1.5"><RefreshCw size={18} /></button>
                   <input type="number" name="captchaInput" value={captchaInput} onChange={onChange} required className="w-24 rounded-lg border border-gray-300 px-2 py-1.5" placeholder="Answer" />
                 </div>
               </div>
@@ -213,16 +215,18 @@ const Register = () => {
                 <span>I agree to the <Link to="/terms" className="text-bid-purple hover:underline">Terms</Link> and <Link to="/privacy" className="text-bid-purple hover:underline">Privacy Policy</Link>.</span>
               </label>
 
-              <button type="submit" disabled={isLoading} className="w-full bg-bid-purple hover:bg-blue-700 text-white rounded-xl py-2.5 font-bold transition disabled:opacity-70">
+              <button type="submit" disabled={isLoading} className="btn-premium w-full py-2.5 text-sm disabled:opacity-70">
                 {isLoading ? 'Creating Account...' : 'Create Account'}
               </button>
             </form>
           </div>
         </div>
       </div>
+      </Reveal>
     </div>
   );
 };
 
 export default Register;
+
 
