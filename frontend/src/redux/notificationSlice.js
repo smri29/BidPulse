@@ -1,10 +1,20 @@
-import { createSlice } from '@reduxjs/toolkit';
+﻿import { createSlice } from '@reduxjs/toolkit';
 
-const STORAGE_KEY = 'RiZBiD_notifications';
+const STORAGE_KEY = 'BidPulse_notifications';
+const LEGACY_STORAGE_KEY = 'RiZBiD_notifications';
 
 const loadNotifications = () => {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (Array.isArray(current)) return current;
+
+    const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) || 'null');
+    if (Array.isArray(legacy)) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(legacy));
+      return legacy;
+    }
+
+    return [];
   } catch {
     return [];
   }
@@ -69,4 +79,5 @@ export const {
 } = notificationSlice.actions;
 
 export default notificationSlice.reducer;
+
 

@@ -1,4 +1,4 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -19,19 +19,22 @@ const parseStoredUser = () => {
   }
 };
 
-const emitGlobalNotification = (detail) => {
+const dispatchWindowEvent = (eventName, detail = undefined) => {
   if (typeof window === 'undefined') return;
-  window.dispatchEvent(
-    new CustomEvent('rizbid:notify', {
-      detail: {
-        id: detail.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        title: detail.title || 'Update',
-        message: detail.message || '',
-        type: detail.type || 'info',
-        createdAt: detail.createdAt || new Date().toISOString(),
-      },
-    })
-  );
+  window.dispatchEvent(new CustomEvent(eventName, detail ? { detail } : undefined));
+};
+
+const emitGlobalNotification = (detail) => {
+  const payload = {
+    id: detail.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    title: detail.title || 'Update',
+    message: detail.message || '',
+    type: detail.type || 'info',
+    createdAt: detail.createdAt || new Date().toISOString(),
+  };
+
+  dispatchWindowEvent('BidPulse:notify', payload);
+  dispatchWindowEvent('rizbid:notify', payload);
 };
 
 const getNotificationTitle = (method, url, isError = false) => {
@@ -101,10 +104,16 @@ instance.interceptors.response.use(
     if (authFailure && !isAuthAction) {
       localStorage.removeItem('user');
       const now = Date.now();
-      const lastEventAt = Number(sessionStorage.getItem('rizbid_auth_expired_at') || 0);
+      const lastEventAt = Number(
+        sessionStorage.getItem('BidPulse_auth_expired_at') ||
+          sessionStorage.getItem('rizbid_auth_expired_at') ||
+          0
+      );
       if (now - lastEventAt > 2000) {
+        sessionStorage.setItem('BidPulse_auth_expired_at', String(now));
         sessionStorage.setItem('rizbid_auth_expired_at', String(now));
-        window.dispatchEvent(new CustomEvent('RiZBiD:auth-expired'));
+        dispatchWindowEvent('BidPulse:auth-expired');
+        dispatchWindowEvent('RiZBiD:auth-expired');
       }
     }
 
@@ -121,4 +130,5 @@ instance.interceptors.response.use(
 );
 
 export default instance;
+
 

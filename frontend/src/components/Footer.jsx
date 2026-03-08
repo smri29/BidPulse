@@ -1,49 +1,70 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
+import { MapPin, Sparkles } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="relative mt-auto overflow-hidden bg-slate-950 text-slate-300 border-t border-slate-800">
-      <div className="absolute -top-20 right-10 w-60 h-60 rounded-full bg-blue-500/10 blur-3xl"></div>
-      <div className="absolute -bottom-24 left-10 w-72 h-72 rounded-full bg-emerald-500/10 blur-3xl"></div>
+    <footer className="relative mt-auto overflow-hidden border-t border-slate-800 bg-slate-950 text-slate-300">
+      <div className="absolute -right-20 -top-28 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
+      <div className="absolute -bottom-28 left-6 h-80 w-80 rounded-full bg-emerald-500/20 blur-3xl" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-          <div className="md:col-span-4 space-y-4">
-            <Link to="/" className="inline-flex items-center gap-2 group">
-              <img src="/RiZBiD.svg" alt="RiZBiD" className="h-9 w-auto" />
-            </Link>
-            <p className="text-sm text-slate-400 leading-relaxed max-w-xs">A trust-first auction network with email-verified participants, office-verified products, and real-time bidding intelligence.</p>
-            <div className="inline-flex items-center gap-2 text-xs bg-white/5 border border-white/10 px-3 py-1 rounded-full text-slate-300">
-              <Sparkles size={12} /> Secure, verified, and live
+      <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="rounded-3xl border border-slate-700/70 bg-slate-900/78 p-7 shadow-[0_28px_60px_-35px_rgba(0,0,0,0.9)] backdrop-blur-xl sm:p-10">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+            <div className="space-y-4 lg:col-span-5">
+              <Link to="/" className="inline-flex items-center gap-2.5">
+                <img src="/BidPulse.svg" alt="BidPulse" className="h-10 w-auto" />
+                <span className="text-xl font-extrabold text-white">BidPulse</span>
+              </Link>
+
+              <p className="max-w-md text-sm leading-relaxed text-slate-200">
+                Premium, trust-first bidding with verified listings, transparent price movement, and managed fulfillment.
+              </p>
+
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-800/70 px-3 py-1 text-xs font-semibold text-slate-100">
+                <Sparkles size={13} /> Premium verified auction network
+              </div>
+
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-cyan-500/12 px-3 py-1 text-xs font-semibold text-cyan-200">
+                <MapPin size={13} /> Dhanmondi, Dhaka, Bangladesh
+              </div>
             </div>
-          </div>
 
-          <div className="hidden md:block md:col-span-2"></div>
+            <div className="lg:col-span-2">
+              <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-white">Platform</h3>
+              <div className="grid gap-3 text-sm">
+                <Link to="/" className="text-slate-200 hover:text-white">Live Auctions</Link>
+                <Link to="/about" className="text-slate-200 hover:text-white">About Us</Link>
+                <Link to="/how-it-works" className="text-slate-200 hover:text-white">How It Works</Link>
+                <Link to="/safety" className="text-slate-200 hover:text-white">Safety & Trust</Link>
+              </div>
+            </div>
 
-          <div className="md:col-span-3">
-            <h3 className="text-xs font-semibold text-white tracking-wider uppercase mb-4">Platform</h3>
-            <ul className="space-y-3 text-sm">
-              <li><Link to="/about" className="hover:text-blue-300 transition-colors">About Us</Link></li>
-              <li><Link to="/how-it-works" className="hover:text-blue-300 transition-colors">How it Works</Link></li>
-              <li><Link to="/safety" className="hover:text-blue-300 transition-colors">Safety & Trust</Link></li>
-            </ul>
-          </div>
+            <div className="lg:col-span-2">
+              <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-white">Support</h3>
+              <div className="grid gap-3 text-sm">
+                <Link to="/help" className="text-slate-200 hover:text-white">Help Center</Link>
+                <Link to="/terms" className="text-slate-200 hover:text-white">Terms of Service</Link>
+                <Link to="/privacy" className="text-slate-200 hover:text-white">Privacy Policy</Link>
+              </div>
+            </div>
 
-          <div className="md:col-span-3">
-            <h3 className="text-xs font-semibold text-white tracking-wider uppercase mb-4">Support</h3>
-            <ul className="space-y-3 text-sm">
-              <li><Link to="/help" className="hover:text-blue-300 transition-colors">Help Center</Link></li>
-              <li><Link to="/terms" className="hover:text-blue-300 transition-colors">Terms of Service</Link></li>
-              <li><Link to="/privacy" className="hover:text-blue-300 transition-colors">Privacy Policy</Link></li>
-            </ul>
+            <div className="lg:col-span-3">
+              <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-white">Get Started</h3>
+              <p className="mb-4 text-sm text-slate-200">
+                Join BidPulse to register for upcoming auctions and receive live bid notifications.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Link to="/register" className="btn-premium px-4 py-2 text-sm">Create Account</Link>
+                <Link to="/login" className="btn-secondary px-4 py-2 text-sm">Sign In</Link>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="border-t border-slate-800 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-          <p>&copy; {new Date().getFullYear()} RiZBiD Inc. All rights reserved.</p>
-          <p className="text-slate-400">Built for transparent digital commerce.</p>
+        <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-slate-800 pt-6 text-xs text-slate-400 md:flex-row">
+          <p>&copy; {new Date().getFullYear()} BidPulse Inc. All rights reserved.</p>
+          <p>Built for transparent, premium digital commerce.</p>
         </div>
       </div>
     </footer>
@@ -51,4 +72,3 @@ const Footer = () => {
 };
 
 export default Footer;
-
