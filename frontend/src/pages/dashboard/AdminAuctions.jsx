@@ -1,10 +1,13 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSelector } from 'react-redux';
+import { motion } from 'motion/react';
+import { AlertCircle, CalendarClock, CheckCircle, Eye, Search, Trash2, XCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axios from '../../utils/axiosConfig';
-import { AlertCircle, Search, Trash2, CheckCircle, XCircle, Eye, CalendarClock } from 'lucide-react';
-import { createPortal } from 'react-dom';
 import { getAuctionImage, handleAuctionImageError } from '../../utils/imageUrl';
+import Reveal from '../../components/ui/Reveal';
+import AnimatedNumber from '../../components/ui/AnimatedNumber';
 
 const REGISTRATION_DAY_OPTIONS = [1, 5, 8, 10, 15, 20];
 
@@ -39,12 +42,7 @@ const AdminAuctions = () => {
   }, [user?.token]);
 
   useEffect(() => {
-    if (selectedAuction) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-
+    document.body.style.overflow = selectedAuction ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
@@ -63,6 +61,20 @@ const AdminAuctions = () => {
       return matchesStatus && matchesSearch;
     });
   }, [auctions, search, statusFilter]);
+
+  const auctionMetrics = useMemo(() => {
+    const pending = auctions.filter((item) => item.status === 'pending_verification').length;
+    const disapproved = auctions.filter((item) => item.status === 'disapproved').length;
+    const live = auctions.filter((item) => ['future', 'ongoing'].includes(item.status)).length;
+
+    return {
+      total: auctions.length,
+      pending,
+      disapproved,
+      live,
+      visible: filtered.length,
+    };
+  }, [auctions, filtered.length]);
 
   const handleDeleteAuction = async (auctionId) => {
     if (!window.confirm('Delete this listing permanently?')) return;
@@ -134,8 +146,8 @@ const AdminAuctions = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600" />
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-red-600" />
       </div>
     );
   }
@@ -149,112 +161,131 @@ const AdminAuctions = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Listing Verification Control</h1>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <Reveal>
+        <section className="premium-panel rounded-2xl p-6 mb-6">
+          <h1 className="text-3xl font-bold text-slate-900">Listing Verification Control</h1>
+          <p className="mt-1 text-sm text-slate-600">Approve, disapprove, and monitor listing quality before and after launch.</p>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title, category, seller..."
-            className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm"
-          />
-        </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-        >
-          <option value="all">All Statuses</option>
-          <option value="pending_verification">Pending Verification</option>
-          <option value="disapproved">Disapproved</option>
-          <option value="future">Future</option>
-          <option value="ongoing">Ongoing</option>
-          <option value="completed">Completed</option>
-          <option value="closed">Closed</option>
-        </select>
-      </div>
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <MetricCard label="Total" value={auctionMetrics.total} tone="blue" />
+            <MetricCard label="Pending" value={auctionMetrics.pending} tone="amber" />
+            <MetricCard label="Live" value={auctionMetrics.live} tone="emerald" />
+            <MetricCard label="Disapproved" value={auctionMetrics.disapproved} tone="red" />
+            <MetricCard label="Visible" value={auctionMetrics.visible} tone="slate" />
+          </div>
+        </section>
+      </Reveal>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="p-4">Listing</th>
-                <th className="p-4">Seller</th>
-                <th className="p-4">Price</th>
-                <th className="p-4">Status</th>
-                <th className="p-4 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map((auction) => (
-                <tr key={auction._id} className="hover:bg-gray-50">
-                  <td className="p-4">
-                    <div className="font-semibold text-gray-900">{auction.title}</div>
-                    <div className="text-xs text-gray-400">{auction.category}</div>
-                  </td>
-                  <td className="p-4">
-                    <div className="text-gray-800">{auction.seller?.name || 'Unknown'}</div>
-                    <div className="text-xs text-gray-500">{auction.seller?.email || '-'}</div>
-                  </td>
-                  <td className="p-4 font-semibold text-gray-900">${auction.currentPrice}</td>
-                  <td className="p-4">
-                    <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 font-semibold">
-                      {auction.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    <div className="inline-flex gap-2">
-                      <button
-                        onClick={() => openDetails(auction._id)}
-                        className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 px-2 py-1 rounded hover:bg-slate-700 hover:text-white transition"
-                      >
-                        <Eye size={14} /> Details
-                      </button>
-                      <button
-                        onClick={() => handleDeleteAuction(auction._id)}
-                        className="inline-flex items-center gap-1 bg-red-100 text-red-600 px-2 py-1 rounded hover:bg-red-600 hover:text-white transition"
-                      >
-                        <Trash2 size={14} /> Delete
-                      </button>
-                    </div>
-                  </td>
+      <Reveal delay={70}>
+        <section className="premium-panel rounded-xl border border-slate-200 p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2 relative">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by title, category, seller..."
+              className="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-2 text-sm"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          >
+            <option value="all">All Statuses</option>
+            <option value="pending_verification">Pending Verification</option>
+            <option value="disapproved">Disapproved</option>
+            <option value="future">Future</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+            <option value="closed">Closed</option>
+          </select>
+        </section>
+      </Reveal>
+
+      <Reveal delay={100}>
+        <section className="premium-panel rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="p-4">Listing</th>
+                  <th className="p-4">Seller</th>
+                  <th className="p-4">Price</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-center">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {filtered.map((auction) => (
+                  <tr key={auction._id} className="hover:bg-slate-50">
+                    <td className="p-4">
+                      <div className="font-semibold text-slate-900">{auction.title}</div>
+                      <div className="text-xs text-slate-400">{auction.category}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-slate-800">{auction.seller?.name || 'Unknown'}</div>
+                      <div className="text-xs text-slate-500">{auction.seller?.email || '-'}</div>
+                    </td>
+                    <td className="p-4 font-semibold text-slate-900">${auction.currentPrice}</td>
+                    <td className="p-4">
+                      <StatusBadge status={auction.status} />
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className="inline-flex gap-2">
+                        <motion.button
+                          whileHover={{ y: -1 }}
+                          onClick={() => openDetails(auction._id)}
+                          className="btn-soft inline-flex items-center gap-1 px-2 py-1 text-slate-700"
+                          type="button"
+                        >
+                          <Eye size={14} /> Details
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ y: -1 }}
+                          onClick={() => handleDeleteAuction(auction._id)}
+                          className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-2 py-1 text-red-600 hover:bg-red-600 hover:text-white transition"
+                          type="button"
+                        >
+                          <Trash2 size={14} /> Delete
+                        </motion.button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </Reveal>
 
       {selectedAuction && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[1000] bg-black/55 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-900">Listing Details</h3>
-              <button onClick={() => setSelectedAuction(null)} className="text-gray-500 hover:text-gray-900">Close</button>
+          <div className="max-w-4xl mx-auto premium-panel rounded-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white/90">
+              <h3 className="text-xl font-bold text-slate-900">Listing Details</h3>
+              <button onClick={() => setSelectedAuction(null)} className="text-slate-500 hover:text-slate-900" type="button">Close</button>
             </div>
 
             <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <img
                     src={getAuctionImage(selectedAuction.images)}
                     alt={selectedAuction.title}
                     onError={handleAuctionImageError}
-                    className="w-full h-64 object-cover rounded-xl border border-gray-200"
+                    className="w-full h-64 object-cover rounded-xl border border-slate-200"
                   />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-2xl font-bold text-gray-900">{selectedAuction.title}</p>
-                  <p className="text-sm text-gray-600">{selectedAuction.description}</p>
-                  <p className="text-sm text-gray-700"><b>Category:</b> {selectedAuction.category}</p>
-                  <p className="text-sm text-gray-700"><b>Seller:</b> {selectedAuction.seller?.name} ({selectedAuction.seller?.email})</p>
-                  <p className="text-sm text-gray-700"><b>Starting Price:</b> ${selectedAuction.startingPrice}</p>
-                  <p className="text-sm text-gray-700"><b>Status:</b> {selectedAuction.status}</p>
+                  <p className="text-2xl font-bold text-slate-900">{selectedAuction.title}</p>
+                  <p className="text-sm text-slate-600">{selectedAuction.description}</p>
+                  <p className="text-sm text-slate-700"><b>Category:</b> {selectedAuction.category}</p>
+                  <p className="text-sm text-slate-700"><b>Seller:</b> {selectedAuction.seller?.name} ({selectedAuction.seller?.email})</p>
+                  <p className="text-sm text-slate-700"><b>Starting Price:</b> ${selectedAuction.startingPrice}</p>
+                  <p className="text-sm text-slate-700"><b>Status:</b> {selectedAuction.status}</p>
                   {selectedAuction.verificationNote ? (
                     <p className="text-sm text-red-700"><b>Verification Note:</b> {selectedAuction.verificationNote}</p>
                   ) : null}
@@ -262,11 +293,11 @@ const AdminAuctions = () => {
               </div>
 
               {(selectedAuction.status === 'pending_verification' || selectedAuction.status === 'disapproved') && (
-                <div className="rounded-xl border border-gray-200 p-4 space-y-3 bg-gray-50">
-                  <p className="text-sm font-semibold text-gray-800 inline-flex items-center gap-2">
+                <div className="rounded-xl border border-slate-200 p-4 space-y-3 bg-slate-50">
+                  <p className="text-sm font-semibold text-slate-800 inline-flex items-center gap-2">
                     <CalendarClock size={14} /> Registration Setup (for Approval)
                   </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     <select
                       value={registrationTestMinutes ? 'test' : registrationWindowDays}
                       onChange={(e) => {
@@ -277,7 +308,7 @@ const AdminAuctions = () => {
                         setRegistrationTestMinutes('');
                         setRegistrationWindowDays(e.target.value);
                       }}
-                      className="rounded-lg border border-gray-300 px-3 py-2"
+                      className="rounded-lg border border-slate-300 px-3 py-2"
                     >
                       <option value="test">5 minutes (test mode)</option>
                       {REGISTRATION_DAY_OPTIONS.map((days) => (
@@ -288,19 +319,14 @@ const AdminAuctions = () => {
                       type="datetime-local"
                       value={customEndAt}
                       onChange={(e) => setCustomEndAt(e.target.value)}
-                      className="rounded-lg border border-gray-300 px-3 py-2"
+                      className="rounded-lg border border-slate-300 px-3 py-2"
                       placeholder="Optional custom end time"
                     />
                   </div>
-                  <p className="text-xs text-gray-500">If custom end time is set, it overrides the selected day count.</p>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={handleApprove}
-                      className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-700"
-                    >
-                      <CheckCircle size={16} /> Approve
-                    </button>
-                  </div>
+                  <p className="text-xs text-slate-500">If custom end time is set, it overrides the selected day count.</p>
+                  <button onClick={handleApprove} className="btn-premium inline-flex items-center gap-2 px-4 py-2 text-sm" type="button">
+                    <CheckCircle size={16} /> Approve
+                  </button>
                 </div>
               )}
 
@@ -314,10 +340,7 @@ const AdminAuctions = () => {
                     className="w-full rounded-lg border border-red-200 px-3 py-2"
                     placeholder="Reason for disapproval (required)"
                   />
-                  <button
-                    onClick={handleDisapprove}
-                    className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700"
-                  >
+                  <button onClick={handleDisapprove} className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700" type="button">
                     <XCircle size={16} /> Disapprove
                   </button>
                 </div>
@@ -328,6 +351,42 @@ const AdminAuctions = () => {
         document.body
       )}
     </div>
+  );
+};
+
+const MetricCard = ({ label, value, tone = 'slate' }) => {
+  const tones = {
+    blue: 'bg-blue-50 border-blue-100 text-blue-700',
+    emerald: 'bg-emerald-50 border-emerald-100 text-emerald-700',
+    amber: 'bg-amber-50 border-amber-100 text-amber-700',
+    red: 'bg-red-50 border-red-100 text-red-700',
+    slate: 'bg-slate-50 border-slate-200 text-slate-700',
+  };
+
+  return (
+    <motion.div whileHover={{ y: -2 }} className={`rounded-xl border p-4 ${tones[tone] || tones.slate}`}>
+      <p className="text-xs font-semibold uppercase tracking-wide">{label}</p>
+      <p className="text-2xl font-bold text-slate-900 mt-1">
+        <AnimatedNumber value={value || 0} className="inline" />
+      </p>
+    </motion.div>
+  );
+};
+
+const StatusBadge = ({ status }) => {
+  const styleMap = {
+    pending_verification: 'bg-amber-100 text-amber-700',
+    disapproved: 'bg-red-100 text-red-700',
+    future: 'bg-blue-100 text-blue-700',
+    ongoing: 'bg-emerald-100 text-emerald-700',
+    completed: 'bg-indigo-100 text-indigo-700',
+    closed: 'bg-slate-800 text-white',
+  };
+
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${styleMap[status] || 'bg-slate-100 text-slate-700'}`}>
+      {status.replaceAll('_', ' ')}
+    </span>
   );
 };
 

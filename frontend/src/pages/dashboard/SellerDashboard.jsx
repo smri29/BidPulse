@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { motion } from 'motion/react';
 import {
   DollarSign,
   Plus,
@@ -17,6 +18,8 @@ import {
 } from 'lucide-react';
 import { getAllAuctions, deleteAuction } from '../../redux/auctionSlice';
 import { getAuctionImage, handleAuctionImageError } from '../../utils/imageUrl';
+import Reveal from '../../components/ui/Reveal';
+import AnimatedNumber from '../../components/ui/AnimatedNumber';
 
 const SellerDashboard = () => {
   const dispatch = useDispatch();
@@ -25,22 +28,22 @@ const SellerDashboard = () => {
   const [selectedListingId, setSelectedListingId] = useState(null);
 
   useEffect(() => {
-    if (user?._id) {
-      dispatch(
-        getAllAuctions({
-          seller: user._id,
-          includeRegistrations: true,
-          includeBids: true,
-          force: true,
-          limit: 300,
-        })
-      );
-    }
+    if (!user?._id) return;
+
+    dispatch(
+      getAllAuctions({
+        seller: user._id,
+        includeRegistrations: true,
+        includeBids: true,
+        force: true,
+        limit: 300,
+      })
+    );
   }, [dispatch, user?._id]);
 
   const myAuctions = useMemo(
-    () => auctions.filter((auction) => String(auction.seller?._id || auction.seller) === String(user._id)),
-    [auctions, user._id]
+    () => auctions.filter((auction) => String(auction.seller?._id || auction.seller) === String(user?._id)),
+    [auctions, user?._id]
   );
 
   const selectedListing = useMemo(
@@ -86,38 +89,39 @@ const SellerDashboard = () => {
       .sort((a, b) => b.count - a.count);
   }, [myAuctions]);
 
-  const bidTrend = useMemo(() => {
-    return myAuctions
-      .map((a) => ({
-        id: a._id,
-        label: a.title,
-        createdAt: new Date(a.createdAt).getTime(),
-        bidCount: a.bids?.length || 0,
-      }))
-      .sort((a, b) => a.createdAt - b.createdAt);
-  }, [myAuctions]);
+  const bidTrend = useMemo(
+    () =>
+      myAuctions
+        .map((a) => ({
+          id: a._id,
+          label: a.title,
+          createdAt: new Date(a.createdAt).getTime(),
+          bidCount: a.bids?.length || 0,
+        }))
+        .sort((a, b) => a.createdAt - b.createdAt),
+    [myAuctions]
+  );
 
-  const listingInsights = useMemo(() => {
-    return [...myAuctions]
-      .map((a) => {
-        const registrationCount = a.registrations?.length || 0;
-        const bidCount = a.bids?.length || 0;
-        const intensity = registrationCount > 0 ? (bidCount / registrationCount).toFixed(2) : '0.00';
-        const lastBid = bidCount > 0 ? a.bids[bidCount - 1] : null;
-        return {
-          ...a,
-          registrationCount,
-          bidCount,
-          intensity,
-          lastBid,
-        };
-      })
-      .sort((a, b) => b.bidCount - a.bidCount)
-      .slice(0, 6);
-  }, [myAuctions]);
+  const listingInsights = useMemo(
+    () =>
+      [...myAuctions]
+        .map((a) => {
+          const registrationCount = a.registrations?.length || 0;
+          const bidCount = a.bids?.length || 0;
+          const intensity = registrationCount > 0 ? (bidCount / registrationCount).toFixed(2) : '0.00';
+          const lastBid = bidCount > 0 ? a.bids[bidCount - 1] : null;
+          return { ...a, registrationCount, bidCount, intensity, lastBid };
+        })
+        .sort((a, b) => b.bidCount - a.bidCount)
+        .slice(0, 6),
+    [myAuctions]
+  );
 
   const triggerCsvDownload = (filename, headers, rows) => {
-    const csvRows = [headers.join(','), ...rows.map((r) => r.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(','))];
+    const csvRows = [
+      headers.join(','),
+      ...rows.map((r) => r.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')),
+    ];
     const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -139,9 +143,7 @@ const SellerDashboard = () => {
       ])
     );
 
-    if (!rows.length) {
-      return;
-    }
+    if (!rows.length) return;
 
     triggerCsvDownload(
       `seller-bid-history-${new Date().toISOString().slice(0, 10)}.csv`,
@@ -165,9 +167,7 @@ const SellerDashboard = () => {
       ];
     });
 
-    if (!rows.length) {
-      return;
-    }
+    if (!rows.length) return;
 
     triggerCsvDownload(
       `seller-earnings-report-${new Date().toISOString().slice(0, 10)}.csv`,
@@ -226,230 +226,242 @@ const SellerDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-emerald-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <section className="rounded-2xl border border-emerald-100 bg-white shadow-sm p-6 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Seller Analytics Dashboard</h1>
-              <p className="text-gray-600 mt-1">Track listing lifecycle, registrations, bids, and payout performance.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={exportBidHistoryCsv}
-                className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2.5 rounded-lg font-semibold hover:bg-blue-200"
-              >
-                <Download size={16} /> Bid History CSV
-              </button>
-              <button
-                onClick={exportEarningsCsv}
-                className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-4 py-2.5 rounded-lg font-semibold hover:bg-indigo-200"
-              >
-                <Download size={16} /> Earnings CSV
-              </button>
-              <button
-                onClick={exportSummaryPdf}
-                className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-slate-800"
-              >
-                <FileText size={16} /> Summary PDF
-              </button>
-              <Link
-                to="/create-auction"
-                className="inline-flex items-center gap-2 bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-emerald-800"
-              >
-                <Plus size={18} /> Submit Product
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-          <KpiCard label="Released Earnings" value={metrics.releasedEarnings} prefix="$" icon={<DollarSign size={16} />} tone="emerald" />
-          <KpiCard label="In Pipeline (95%)" value={metrics.pipelineEarnings} prefix="$" icon={<TrendingUp size={16} />} tone="indigo" />
-          <KpiCard label="Total Registrations" value={metrics.totalRegistrations} icon={<Users size={16} />} tone="blue" isCount />
-          <KpiCard label="Total Bids" value={metrics.totalBids} icon={<Gavel size={16} />} tone="amber" isCount />
-        </section>
-
-        <section className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-          <div className="xl:col-span-2 rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 inline-flex items-center gap-2">
-              <BarChart3 size={17} /> Bid Trend Across Listings
-            </h2>
-            <LineChart points={bidTrend} />
-          </div>
-
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Listing Status Distribution</h2>
-            <StatusBars items={statusDistribution} />
-            <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
-              <MiniMetric label="Total Listings" value={metrics.totalListings} />
-              <MiniMetric label="Live Listings" value={metrics.liveListings} />
-              <MiniMetric label="Highest Current Bid" value={`$${metrics.topBid.toLocaleString()}`} />
-              <MiniMetric label="Commission Rate" value="5%" />
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Listing Insights</h2>
-          {listingInsights.length ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {listingInsights.map((listing) => (
-                <button
-                  key={listing._id}
-                  type="button"
-                  onClick={() => setSelectedListingId(listing._id)}
-                  className={`text-left rounded-xl border p-4 transition hover:shadow-md ${
-                    selectedListingId === listing._id ? 'border-emerald-400 bg-emerald-50/40' : 'border-gray-200 bg-white'
-                  }`}
-                >
-                  <p className="font-semibold text-gray-900 truncate">{listing.title}</p>
-                  <p className="text-xs text-gray-500 mt-1 uppercase">{listing.status.replaceAll('_', ' ')}</p>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                    <InsightValue label="Registered" value={listing.registrationCount} />
-                    <InsightValue label="Bids" value={listing.bidCount} />
-                    <InsightValue label="Bid Intensity" value={listing.intensity} />
-                    <InsightValue label="Current" value={`$${listing.currentPrice}`} />
-                  </div>
-                  {listing.lastBid ? (
-                    <p className="mt-3 text-xs text-gray-600 inline-flex items-center gap-1">
-                      <Clock3 size={12} /> Last bid: ${listing.lastBid.amount}
-                    </p>
-                  ) : (
-                    <p className="mt-3 text-xs text-gray-400">No bids yet</p>
-                  )}
+    <div className="min-h-screen py-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <Reveal>
+          <section className="premium-panel rounded-2xl p-6 mb-8">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900">Seller Analytics Dashboard</h1>
+                <p className="mt-1 text-sm text-slate-600">Track listing lifecycle, bidding momentum, and payout performance in one view.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={exportBidHistoryCsv} className="btn-soft px-4 py-2.5 text-sm text-blue-700" type="button">
+                  <Download size={16} /> Bid History CSV
                 </button>
-              ))}
+                <button onClick={exportEarningsCsv} className="btn-soft px-4 py-2.5 text-sm text-indigo-700" type="button">
+                  <Download size={16} /> Earnings CSV
+                </button>
+                <button onClick={exportSummaryPdf} className="btn-secondary px-4 py-2.5 text-sm" type="button">
+                  <FileText size={16} /> Summary PDF
+                </button>
+                <Link to="/create-auction" className="btn-premium px-4 py-2.5 text-sm">
+                  <Plus size={18} /> Submit Product
+                </Link>
+              </div>
             </div>
-          ) : (
-            <p className="text-sm text-gray-500">No listing insights available yet.</p>
-          )}
-        </section>
+          </section>
+        </Reveal>
 
-        <section className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden mb-8">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-lg font-semibold text-gray-900">My Listings</h2>
-          </div>
+        <Reveal delay={60}>
+          <section className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 xl:grid-cols-4">
+            <KpiCard label="Released Earnings" value={metrics.releasedEarnings} prefix="$" icon={<DollarSign size={16} />} tone="emerald" />
+            <KpiCard label="In Pipeline (95%)" value={metrics.pipelineEarnings} prefix="$" icon={<TrendingUp size={16} />} tone="indigo" />
+            <KpiCard label="Total Registrations" value={metrics.totalRegistrations} icon={<Users size={16} />} tone="blue" isCount />
+            <KpiCard label="Total Bids" value={metrics.totalBids} icon={<Gavel size={16} />} tone="amber" isCount />
+          </section>
+        </Reveal>
 
-          {isLoading ? (
-            <div className="p-10 text-center text-gray-500">Loading your listings...</div>
-          ) : myAuctions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-gray-700">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>
-                    <th className="px-6 py-3.5">Item</th>
-                    <th className="px-6 py-3.5">Price</th>
-                    <th className="px-6 py-3.5">Status</th>
-                    <th className="px-6 py-3.5">Registered</th>
-                    <th className="px-6 py-3.5">Bids</th>
-                    <th className="px-6 py-3.5">Winner</th>
-                    <th className="px-6 py-3.5 text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {myAuctions.map((auction) => (
-                    <tr key={auction._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={getAuctionImage(auction.images)}
-                            alt={auction.title}
-                            onError={handleAuctionImageError}
-                            className="h-11 w-11 rounded-md border border-gray-200 object-cover"
-                          />
-                          <div>
-                            <p className="font-semibold text-gray-900">{auction.title}</p>
-                            <p className="text-xs text-gray-500">{auction.category}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-emerald-700">${auction.startingPrice} / ${auction.currentPrice}</td>
-                      <td className="px-6 py-4"><StatusBadge status={auction.status} /></td>
-                      <td className="px-6 py-4">{auction.registrations?.length || 0}</td>
-                      <td className="px-6 py-4">{auction.bids?.length || 0}</td>
-                      <td className="px-6 py-4">{auction.winner?.name || (auction.winner ? 'Winner selected' : 'N/A')}</td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="inline-flex gap-2">
-                          <button
-                            onClick={() => setSelectedListingId(auction._id)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-blue-100 text-blue-700 text-xs font-semibold"
-                          >
-                            <Eye size={13} /> Analytics
-                          </button>
-                          <Link to={`/auction/${auction._id}`} className="px-3 py-1.5 rounded bg-gray-900 text-white text-xs font-semibold">
-                            Details
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(auction._id)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-red-100 text-red-700 text-xs font-semibold"
-                          >
-                            <Trash2 size={13} /> Delete
-                          </button>
-                        </div>
-                      </td>
+        <Reveal delay={90}>
+          <section className="grid grid-cols-1 gap-6 mb-8 xl:grid-cols-3">
+            <div className="premium-panel rounded-2xl p-5 xl:col-span-2">
+              <h2 className="mb-4 inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
+                <BarChart3 size={17} /> Bid Trend Across Listings
+              </h2>
+              <LineChart points={bidTrend} />
+            </div>
+
+            <div className="premium-panel rounded-2xl p-5">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">Listing Status Distribution</h2>
+              <StatusBars items={statusDistribution} />
+              <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
+                <MiniMetric label="Total Listings" value={metrics.totalListings} />
+                <MiniMetric label="Live Listings" value={metrics.liveListings} />
+                <MiniMetric label="Highest Current Bid" value={`$${metrics.topBid.toLocaleString()}`} />
+                <MiniMetric label="Commission Rate" value="5%" />
+              </div>
+            </div>
+          </section>
+        </Reveal>
+
+        <Reveal delay={120}>
+          <section className="premium-panel rounded-2xl p-5 mb-8">
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">Top Listing Insights</h2>
+            {listingInsights.length ? (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {listingInsights.map((listing, index) => (
+                  <motion.button
+                    key={listing._id}
+                    type="button"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.04 }}
+                    whileHover={{ y: -2 }}
+                    onClick={() => setSelectedListingId(listing._id)}
+                    className={`text-left rounded-xl border p-4 transition ${
+                      selectedListingId === listing._id
+                        ? 'border-emerald-400 bg-emerald-50/40'
+                        : 'border-slate-200 bg-white'
+                    }`}
+                  >
+                    <p className="font-semibold text-slate-900 truncate">{listing.title}</p>
+                    <p className="text-xs text-slate-500 mt-1 uppercase">{listing.status.replaceAll('_', ' ')}</p>
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                      <InsightValue label="Registered" value={listing.registrationCount} />
+                      <InsightValue label="Bids" value={listing.bidCount} />
+                      <InsightValue label="Bid Intensity" value={listing.intensity} />
+                      <InsightValue label="Current" value={`$${listing.currentPrice}`} />
+                    </div>
+                    {listing.lastBid ? (
+                      <p className="mt-3 inline-flex items-center gap-1 text-xs text-slate-600">
+                        <Clock3 size={12} /> Last bid: ${listing.lastBid.amount}
+                      </p>
+                    ) : (
+                      <p className="mt-3 text-xs text-slate-400">No bids yet</p>
+                    )}
+                  </motion.button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">No listing insights available yet.</p>
+            )}
+          </section>
+        </Reveal>
+
+        <Reveal delay={150}>
+          <section className="premium-panel rounded-2xl overflow-hidden mb-8">
+            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/75">
+              <h2 className="text-lg font-semibold text-slate-900">My Listings</h2>
+            </div>
+
+            {isLoading ? (
+              <div className="p-10 text-center text-slate-500">Loading your listings...</div>
+            ) : myAuctions.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-slate-700">
+                  <thead className="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                      <th className="px-6 py-3.5">Item</th>
+                      <th className="px-6 py-3.5">Price</th>
+                      <th className="px-6 py-3.5">Status</th>
+                      <th className="px-6 py-3.5">Registered</th>
+                      <th className="px-6 py-3.5">Bids</th>
+                      <th className="px-6 py-3.5">Winner</th>
+                      <th className="px-6 py-3.5 text-center">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="p-14 text-center text-gray-500">No listings yet.</div>
-          )}
-        </section>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {myAuctions.map((auction) => (
+                      <tr key={auction._id} className="hover:bg-slate-50/60">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={getAuctionImage(auction.images)}
+                              alt={auction.title}
+                              onError={handleAuctionImageError}
+                              className="h-11 w-11 rounded-md border border-slate-200 object-cover"
+                            />
+                            <div>
+                              <p className="font-semibold text-slate-900">{auction.title}</p>
+                              <p className="text-xs text-slate-500">{auction.category}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 font-semibold text-emerald-700">${auction.startingPrice} / ${auction.currentPrice}</td>
+                        <td className="px-6 py-4"><StatusBadge status={auction.status} /></td>
+                        <td className="px-6 py-4">{auction.registrations?.length || 0}</td>
+                        <td className="px-6 py-4">{auction.bids?.length || 0}</td>
+                        <td className="px-6 py-4">{auction.winner?.name || (auction.winner ? 'Winner selected' : 'N/A')}</td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="inline-flex gap-2">
+                            <button
+                              onClick={() => setSelectedListingId(auction._id)}
+                              className="btn-soft inline-flex items-center gap-1 px-3 py-1.5 text-xs text-blue-700"
+                              type="button"
+                            >
+                              <Eye size={13} /> Analytics
+                            </button>
+                            <Link to={`/auction/${auction._id}`} className="btn-secondary px-3 py-1.5 text-xs">Details</Link>
+                            <button
+                              onClick={() => handleDelete(auction._id)}
+                              className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700"
+                              type="button"
+                            >
+                              <Trash2 size={13} /> Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-14 text-center text-slate-500">No listings yet.</div>
+            )}
+          </section>
+        </Reveal>
 
-        <section className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 inline-flex items-center gap-2">
-            <Trophy size={17} /> Listing Drill-down
-          </h2>
-          {selectedListing ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              <div className="lg:col-span-1 rounded-xl border border-gray-200 p-4 bg-gray-50">
-                <img
-                  src={getAuctionImage(selectedListing.images)}
-                  alt={selectedListing.title}
-                  onError={handleAuctionImageError}
-                  className="w-full h-44 object-cover rounded-lg border border-gray-200 mb-3"
-                />
-                <p className="font-semibold text-gray-900">{selectedListing.title}</p>
-                <p className="text-sm text-gray-600 mt-1">{selectedListing.description}</p>
-                <div className="mt-3 space-y-1 text-sm text-gray-700">
-                  <p><b>Status:</b> {selectedListing.status.replaceAll('_', ' ')}</p>
-                  <p><b>Current Price:</b> ${selectedListing.currentPrice}</p>
-                  <p><b>Registered:</b> {selectedListing.registrations?.length || 0}</p>
-                  <p><b>Total Bids:</b> {selectedListing.bids?.length || 0}</p>
+        <Reveal delay={180}>
+          <section className="premium-panel rounded-2xl p-5">
+            <h2 className="text-lg font-semibold text-slate-900 mb-4 inline-flex items-center gap-2">
+              <Trophy size={17} /> Listing Drill-down
+            </h2>
+            {selectedListing ? (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div className="lg:col-span-1 rounded-xl border border-slate-200 p-4 bg-slate-50/80">
+                  <img
+                    src={getAuctionImage(selectedListing.images)}
+                    alt={selectedListing.title}
+                    onError={handleAuctionImageError}
+                    className="w-full h-44 object-cover rounded-lg border border-slate-200 mb-3"
+                  />
+                  <p className="font-semibold text-slate-900">{selectedListing.title}</p>
+                  <p className="text-sm text-slate-600 mt-1">{selectedListing.description}</p>
+                  <div className="mt-3 space-y-1 text-sm text-slate-700">
+                    <p><b>Status:</b> {selectedListing.status.replaceAll('_', ' ')}</p>
+                    <p><b>Current Price:</b> ${selectedListing.currentPrice}</p>
+                    <p><b>Registered:</b> {selectedListing.registrations?.length || 0}</p>
+                    <p><b>Total Bids:</b> {selectedListing.bids?.length || 0}</p>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-2 rounded-xl border border-slate-200 p-4">
+                  <h3 className="font-semibold text-slate-900 mb-3">Bid Timeline</h3>
+                  {selectedListing.bids?.length ? (
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {[...selectedListing.bids].reverse().map((bid, index) => (
+                        <motion.div
+                          key={`${bid.time}-${index}`}
+                          whileHover={{ x: 2 }}
+                          className="rounded-lg border border-slate-100 p-3 bg-slate-50 flex items-center justify-between"
+                        >
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">{bid.bidder?.name || 'Bidder'}</p>
+                            <p className="text-xs text-slate-500">{new Date(bid.time).toLocaleString()}</p>
+                          </div>
+                          <p className="text-sm font-bold text-emerald-700">${bid.amount}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500">No bids on this listing yet.</p>
+                  )}
                 </div>
               </div>
-
-              <div className="lg:col-span-2 rounded-xl border border-gray-200 p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">Bid Timeline</h3>
-                {selectedListing.bids?.length ? (
-                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                    {[...selectedListing.bids].reverse().map((bid, index) => (
-                      <div key={`${bid.time}-${index}`} className="rounded-lg border border-gray-100 p-3 bg-gray-50 flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">{bid.bidder?.name || 'Bidder'}</p>
-                          <p className="text-xs text-gray-500">{new Date(bid.time).toLocaleString()}</p>
-                        </div>
-                        <p className="text-sm font-bold text-emerald-700">${bid.amount}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No bids on this listing yet.</p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500">Select a listing from the insights or table to view detailed bidding analytics.</p>
-          )}
-        </section>
+            ) : (
+              <p className="text-sm text-slate-500">Select a listing from insights or table to view detailed bidding analytics.</p>
+            )}
+          </section>
+        </Reveal>
       </div>
     </div>
   );
 };
 
 const KpiCard = ({ label, value, prefix = '', icon, tone = 'emerald', isCount = false }) => {
+  const safeValue = Number(value || 0);
+  const displayValue = isCount ? safeValue : Math.round(safeValue);
   const toneMap = {
     emerald: 'text-emerald-700',
     indigo: 'text-indigo-700',
@@ -457,21 +469,17 @@ const KpiCard = ({ label, value, prefix = '', icon, tone = 'emerald', isCount = 
     amber: 'text-amber-700',
   };
 
-  const displayValue = isCount
-    ? Number(value || 0).toLocaleString()
-    : Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <p className="text-xs uppercase tracking-wide text-gray-500 flex items-center gap-2">
+    <motion.div whileHover={{ y: -2 }} className="premium-panel rounded-xl p-5">
+      <p className="text-xs uppercase tracking-wide text-slate-500 flex items-center gap-2">
         {icon}
         {label}
       </p>
-      <p className={`text-2xl font-bold mt-2 ${toneMap[tone] || toneMap.emerald}`}>
+      <div className={`text-2xl font-bold mt-2 ${toneMap[tone] || toneMap.emerald}`}>
         {prefix}
-        {displayValue}
-      </p>
-    </div>
+        <AnimatedNumber value={displayValue} className="inline" />
+      </div>
+    </motion.div>
   );
 };
 
@@ -496,22 +504,22 @@ const StatusBadge = ({ status }) => {
 };
 
 const MiniMetric = ({ label, value }) => (
-  <div className="rounded-lg border border-gray-200 p-2.5 bg-gray-50">
-    <p className="text-[11px] uppercase text-gray-500">{label}</p>
-    <p className="text-sm font-semibold text-gray-900 mt-1">{value}</p>
+  <div className="rounded-lg border border-slate-200 p-2.5 bg-slate-50">
+    <p className="text-[11px] uppercase text-slate-500">{label}</p>
+    <p className="text-sm font-semibold text-slate-900 mt-1">{value}</p>
   </div>
 );
 
 const InsightValue = ({ label, value }) => (
-  <div className="rounded-md border border-gray-200 p-2 bg-gray-50">
-    <p className="text-[10px] uppercase text-gray-500">{label}</p>
-    <p className="text-xs font-semibold text-gray-900 mt-1">{value}</p>
+  <div className="rounded-md border border-slate-200 p-2 bg-slate-50">
+    <p className="text-[10px] uppercase text-slate-500">{label}</p>
+    <p className="text-xs font-semibold text-slate-900 mt-1">{value}</p>
   </div>
 );
 
 const LineChart = ({ points }) => {
   if (!points.length) {
-    return <p className="text-sm text-gray-500">No listing trend data available yet.</p>;
+    return <p className="text-sm text-slate-500">No listing trend data available yet.</p>;
   }
 
   const width = 720;
@@ -544,7 +552,7 @@ const LineChart = ({ points }) => {
 
 const StatusBars = ({ items }) => {
   if (!items.length) {
-    return <p className="text-sm text-gray-500">No listing status data yet.</p>;
+    return <p className="text-sm text-slate-500">No listing status data yet.</p>;
   }
 
   const max = Math.max(...items.map((item) => item.count), 1);
@@ -553,12 +561,17 @@ const StatusBars = ({ items }) => {
     <div className="space-y-3">
       {items.map((item) => (
         <div key={item.status}>
-          <div className="flex justify-between text-xs text-gray-600 mb-1">
+          <div className="flex justify-between text-xs text-slate-600 mb-1">
             <span className="uppercase">{item.status.replaceAll('_', ' ')}</span>
             <span>{item.count}</span>
           </div>
-          <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-            <div className="h-2 bg-gradient-to-r from-emerald-500 to-teal-500" style={{ width: `${(item.count / max) * 100}%` }} />
+          <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${(item.count / max) * 100}%` }}
+              transition={{ duration: 0.5 }}
+              className="h-2 bg-gradient-to-r from-emerald-500 to-teal-500"
+            />
           </div>
         </div>
       ))}

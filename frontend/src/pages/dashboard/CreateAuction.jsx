@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Info, Sparkles, UploadCloud, XCircle } from 'lucide-react';
@@ -137,7 +137,7 @@ const CreateAuction = () => {
               <Sparkles size={20} /> Submit Product Listing
             </h1>
             <p className="text-sm text-emerald-100 mt-1">
-              RiZBiD will inspect and verify this product before publishing it in Future Bids.
+              BidPulse will inspect and verify this product before publishing it in Future Bids.
             </p>
           </div>
 
@@ -242,7 +242,7 @@ const CreateAuction = () => {
 
               <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800 flex items-start gap-2">
                 <Info size={14} className="mt-0.5 shrink-0" />
-                If your product is verified and sold, RiZBiD charges a 5% commission on the winning amount.
+                If your product is verified and sold, BidPulse charges a 5% commission on the winning amount.
               </div>
 
               <button
@@ -271,3 +271,4 @@ const Field = ({ label, required, children }) => (
 );
 
 export default CreateAuction;
+
