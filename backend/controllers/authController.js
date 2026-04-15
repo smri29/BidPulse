@@ -658,21 +658,7 @@ exports.forgotPassword = async (req, res) => {
       await sendEmail({
         email: user.email,
         subject: 'BidPulse Password Reset Token',
-        message: `
-          <div style="margin:0;padding:24px;background:#f3f6fb;font-family:Arial,sans-serif;color:#111827;">
-            <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e5e7eb;">
-              <div style="background:linear-gradient(120deg,#7c3aed,#0b1220);padding:26px;color:#fff;">
-                <h1 style="margin:0;font-size:24px;line-height:1.2;">Reset Your Password</h1>
-                <p style="margin:8px 0 0;opacity:.9;font-size:14px;">Secure access recovery for BidPulse</p>
-              </div>
-              <div style="padding:24px 22px;font-size:14px;line-height:1.65;color:#1f2937;">
-                <p>You requested a password reset.</p>
-                <p><a href="${resetUrl}" style="display:inline-block;background:#7c3aed;color:#fff;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:700;">Reset Password</a></p>
-                <p>This link expires in 10 minutes.</p>
-              </div>
-            </div>
-          </div>
-        `,
+        message: templates.resetPassword({ resetUrl }),
       });
 
       return res.status(200).json({ success: true, message: 'Email sent' });

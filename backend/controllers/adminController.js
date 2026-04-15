@@ -238,7 +238,7 @@ exports.sendTestEmail = async (_req, res) => {
 // @access  Private/Admin
 exports.triggerPromotionalCampaign = async (req, res) => {
   try {
-    const { month, year, dryRun = false, forceSend = false } = req.body || {};
+    const { month, year, dayOfMonth, dryRun = false, forceSend = false } = req.body || {};
 
     if (month !== undefined) {
       const parsedMonth = Number(month);
@@ -254,9 +254,17 @@ exports.triggerPromotionalCampaign = async (req, res) => {
       }
     }
 
+    if (dayOfMonth !== undefined) {
+      const parsedDay = Number(dayOfMonth);
+      if (!Number.isInteger(parsedDay) || ![5, 25].includes(parsedDay)) {
+        return res.status(400).json({ message: 'dayOfMonth must be 5 or 25' });
+      }
+    }
+
     const stats = await sendMonthlyPromotionalEmails({
       month,
       year,
+      dayOfMonth,
       dryRun: Boolean(dryRun),
       forceSend: Boolean(forceSend),
     });

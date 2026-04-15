@@ -20,6 +20,7 @@ const User = require('./models/User');
 const { sendEmailAsync, verifyEmailTransport } = require('./utils/emailService');
 const templates = require('./utils/emailTemplates');
 const { sendMonthlyPromotionalEmails } = require('./utils/promotionalCampaignService');
+const { sendDailyBirthdayEmails } = require('./utils/birthdayEmailService');
 const { internalJobs } = require('./controllers/auctionController');
 
 const authRoutes = require('./routes/authRoutes');
@@ -541,33 +542,72 @@ cron.schedule('* * * * *', async () => {
   }
 });
 
-// Promotional campaign emails: every month on the 15th (repeats every year).
-cron.schedule('0 10 15 * *', async () => {
+const emailAutomationTimezone = process.env.PROMOTIONAL_EMAIL_TIMEZONE || 'UTC';
+
+// Promotional campaign emails: twice per month on the 5th and 25th.
+cron.schedule('0 10 5,25 * *', async () => {
   try {
-    const stats = await sendMonthlyPromotionalEmails();
+    const now = new Date();
+    const stats = await sendMonthlyPromotionalEmails({
+      month: now.getMonth() + 1,
+      year: now.getFullYear(),
+      dayOfMonth: now.getDate() >= 25 ? 25 : 5,
+    });
     console.log(
-      `Promotional email job completed. total=${stats.total}, sent=${stats.sent}, skipped=${stats.skipped}`
+      `Promotional email job completed. window=${stats.dayOfMonth}, total=${stats.total}, sent=${stats.sent}, skipped=${stats.skipped}`
     );
   } catch (error) {
     console.error('Promotional email job error:', error.message);
   }
 }, {
-  timezone: process.env.PROMOTIONAL_EMAIL_TIMEZONE || 'UTC',
+  timezone: emailAutomationTimezone,
 });
 
-// Startup catch-up: if server restarts on the 15th, ensure monthly promo still runs once.
+// Birthday emails: every day for verified users whose birthday matches today.
+cron.schedule('15 10 * * *', async () => {
+  try {
+    const stats = await sendDailyBirthdayEmails();
+    console.log(
+      `Birthday email job completed. total=${stats.total}, sent=${stats.sent}, skipped=${stats.skipped}`
+    );
+  } catch (error) {
+    console.error('Birthday email job error:', error.message);
+  }
+}, {
+  timezone: emailAutomationTimezone,
+});
+
+// Startup catch-up: if server restarts on the 5th or 25th, ensure the scheduled promo still runs once.
 setTimeout(async () => {
   try {
     const now = new Date();
-    if (now.getDate() !== 15) return;
-    const stats = await sendMonthlyPromotionalEmails({ month: now.getMonth() + 1, year: now.getFullYear() });
+    if (![5, 25].includes(now.getDate())) return;
+    const stats = await sendMonthlyPromotionalEmails({
+      month: now.getMonth() + 1,
+      year: now.getFullYear(),
+      dayOfMonth: now.getDate(),
+    });
     console.log(
-      `Promotional startup check completed. total=${stats.total}, sent=${stats.sent}, skipped=${stats.skipped}`
+      `Promotional startup check completed. window=${stats.dayOfMonth}, total=${stats.total}, sent=${stats.sent}, skipped=${stats.skipped}`
     );
   } catch (error) {
     console.error('Promotional startup check error:', error.message);
   }
 }, 15000);
+
+// Startup catch-up: if server restarts later in the day, still send today's birthday wishes once.
+setTimeout(async () => {
+  try {
+    const stats = await sendDailyBirthdayEmails();
+    if (stats.total > 0) {
+      console.log(
+        `Birthday startup check completed. total=${stats.total}, sent=${stats.sent}, skipped=${stats.skipped}`
+      );
+    }
+  } catch (error) {
+    console.error('Birthday startup check error:', error.message);
+  }
+}, 25000);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

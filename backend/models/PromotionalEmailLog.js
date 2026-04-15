@@ -20,6 +20,12 @@ const promotionalEmailLogSchema = new mongoose.Schema(
       max: 12,
       index: true,
     },
+    dayOfMonth: {
+      type: Number,
+      required: true,
+      enum: [5, 25],
+      index: true,
+    },
     campaignSubject: {
       type: String,
       required: true,
@@ -33,7 +39,6 @@ const promotionalEmailLogSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-promotionalEmailLogSchema.index({ user: 1, year: 1, month: 1 }, { unique: true });
+promotionalEmailLogSchema.index({ user: 1, year: 1, month: 1, dayOfMonth: 1 }, { unique: true });
 
 module.exports = mongoose.model('PromotionalEmailLog', promotionalEmailLogSchema);
-

@@ -16,9 +16,19 @@ const normalizeYear = (value) => {
   return year;
 };
 
+const normalizePromotionalSendDay = (value, fallbackDate = new Date()) => {
+  const explicitDay = Number(value);
+  if (Number.isInteger(explicitDay) && [5, 25].includes(explicitDay)) {
+    return explicitDay;
+  }
+
+  return fallbackDate.getDate() >= 25 ? 25 : 5;
+};
+
 const sendMonthlyPromotionalEmails = async ({
   month,
   year,
+  dayOfMonth,
   clientUrl,
   forceSend = false,
   dryRun = false,
@@ -26,23 +36,31 @@ const sendMonthlyPromotionalEmails = async ({
   const now = new Date();
   const effectiveMonth = normalizeMonth(month) || now.getMonth() + 1;
   const effectiveYear = normalizeYear(year) || now.getFullYear();
+  const effectiveDayOfMonth = normalizePromotionalSendDay(dayOfMonth, now);
   const effectiveClientUrl = clientUrl || process.env.CLIENT_URL || 'http://localhost:5173';
 
   const recipients = await User.find({
-    isBanned: { $ne: true },
-    emailVerified: true,
     email: { $exists: true, $ne: '' },
   })
     .select('_id name email')
     .lean();
 
   if (!recipients.length) {
-    return { month: effectiveMonth, year: effectiveYear, total: 0, sent: 0, skipped: 0, dryRun };
+    return {
+      month: effectiveMonth,
+      year: effectiveYear,
+      dayOfMonth: effectiveDayOfMonth,
+      total: 0,
+      sent: 0,
+      skipped: 0,
+      dryRun,
+    };
   }
 
   const existingLogs = await PromotionalEmailLog.find({
     year: effectiveYear,
     month: effectiveMonth,
+    dayOfMonth: effectiveDayOfMonth,
     user: { $in: recipients.map((r) => r._id) },
   })
     .select('user')
@@ -77,7 +95,7 @@ const sendMonthlyPromotionalEmails = async ({
     });
 
     await PromotionalEmailLog.updateOne(
-      { user: recipient._id, year: effectiveYear, month: effectiveMonth },
+      { user: recipient._id, year: effectiveYear, month: effectiveMonth, dayOfMonth: effectiveDayOfMonth },
       {
         $set: {
           campaignSubject: campaign.subject,
@@ -87,6 +105,7 @@ const sendMonthlyPromotionalEmails = async ({
           user: recipient._id,
           year: effectiveYear,
           month: effectiveMonth,
+          dayOfMonth: effectiveDayOfMonth,
         },
       },
       { upsert: true }
@@ -98,6 +117,7 @@ const sendMonthlyPromotionalEmails = async ({
   return {
     month: effectiveMonth,
     year: effectiveYear,
+    dayOfMonth: effectiveDayOfMonth,
     total: recipients.length,
     sent,
     skipped,
@@ -109,4 +129,3 @@ const sendMonthlyPromotionalEmails = async ({
 module.exports = {
   sendMonthlyPromotionalEmails,
 };
-
