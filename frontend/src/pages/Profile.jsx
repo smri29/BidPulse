@@ -23,6 +23,7 @@ import {
   reset,
   startProfileVerification,
   updateProfile,
+  uploadAvatar,
   verifyProfileOtp,
 } from '../redux/authSlice';
 import Reveal from '../components/ui/Reveal';
@@ -57,6 +58,7 @@ const Profile = () => {
   const [otp, setOtp] = useState('');
   const [verificationForm, setVerificationForm] = useState(initialVerificationForm);
   const [verificationAvatarFile, setVerificationAvatarFile] = useState(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -279,33 +281,27 @@ const Profile = () => {
                   )}
                 </div>
               )}
-              {isEditing ? (
-                <>
-                  <button
-                    onClick={handleSave}
-                    disabled={isLoading}
-                    className="btn-premium inline-flex items-center gap-2 px-4 py-2 text-sm disabled:opacity-70"
-                    type="button"
-                  >
-                    <Save size={14} /> Save Changes
-                  </button>
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="btn-soft px-4 py-2 text-sm text-slate-700"
-                    type="button"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="btn-soft px-4 py-2 text-sm text-slate-700"
-                  type="button"
-                >
-                  Edit Profile
-                </button>
-              )}
+              <label className="btn-soft inline-flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700">
+                <User size={14} /> {isUploadingAvatar ? 'Uploading...' : 'Edit Profile Picture'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    setIsUploadingAvatar(true);
+                    dispatch(uploadAvatar(file))
+                      .unwrap()
+                      .then(() => toast.success('Profile picture updated', { toastId: 'profile-photo-updated' }))
+                      .catch((error) => toast.error(error || 'Failed to update profile picture'))
+                      .finally(() => {
+                        setIsUploadingAvatar(false);
+                        event.target.value = '';
+                      });
+                  }}
+                />
+              </label>
             </div>
           </div>
         </section>
@@ -344,7 +340,36 @@ const Profile = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Reveal delay={90} className="lg:col-span-2">
           <section className="premium-panel rounded-2xl p-6">
-            <h2 className="mb-5 text-lg font-semibold text-gray-900">Account Details</h2>
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Account Details</h2>
+              {isEditing ? (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleSave}
+                    disabled={isLoading}
+                    className="btn-premium inline-flex items-center gap-2 px-4 py-2 text-sm disabled:opacity-70"
+                    type="button"
+                  >
+                    <Save size={14} /> Save Changes
+                  </button>
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="btn-soft px-4 py-2 text-sm text-slate-700"
+                    type="button"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="btn-soft px-4 py-2 text-sm text-slate-700"
+                  type="button"
+                >
+                  Edit Profile
+                </button>
+              )}
+            </div>
             {isEditing ? (
               <form className="space-y-4">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
