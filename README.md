@@ -1,186 +1,186 @@
-# RiZBiD
+# BidPulse
 
-RiZBiD is a full-stack, real-time verified bidding platform.
+BidPulse is a full-stack, real-time auction platform for verified buying and selling. Sellers submit listings, admins review them, bidders register before the session opens, and winners complete payment while BidPulse manages the post-auction flow.
 
-Core business model:
-- Sellers submit products to RiZBiD for office verification.
-- Admin approves/disapproves listings before publishing.
-- Bidders register during a registration window.
-- Live bidding starts after registration closes.
-- Winner pays.
-- RiZBiD handles shipping (7-14 days).
-- Winner confirms `Product Received` to close lifecycle.
+## Stack
 
----
+- Frontend: React 19, Vite, Redux Toolkit, React Router, Socket.IO client
+- Backend: Express 5, MongoDB with Mongoose, Socket.IO
+- Payments: Stripe
+- Media: Cloudinary
+- Email: Brevo, Resend, or SMTP fallback
+- Bot protection: Cloudflare Turnstile
 
-## 1. Full Analysis Summary
+## Core Flow
 
-### 1.1 Key Findings (Before This Update)
-- Notification leakage: some live notifications were broadcast globally to all users.
-- Payment UI race: winner could still see `Proceed to Payment` after successful payment if webhook sync lagged.
-- Image reliability: cross-browser/profile image loading could fail without graceful fallback.
-- Frontend startup load: large initial JS bundle due to eager page imports.
-- Socket efficiency: auction detail page had suboptimal socket lifecycle.
-- Marketing automation missing: no recurring monthly promotional campaign scheduler.
-- Documentation drift: old escrow-focused and BidPulse-era docs were out of date.
+1. A user signs up with name, email, password, and Turnstile verification.
+2. The new account is created but is not logged in automatically.
+3. The user signs in through the regular login page.
+4. After login, regular users are taken to the profile page.
+5. The user completes profile verification with identity details and a profile picture.
+6. Verification is finalized through either OTP or an email link sent to the user's primary email.
+7. Only verified users can register for auctions, place bids, or create listings.
+8. Sellers submit listings, admins approve or reject them, and approved listings move into the future auction pipeline.
+9. Bidders register before the registration window closes, then live bidding begins.
+10. The winner pays, BidPulse manages shipping, and the winner confirms product receipt to close the lifecycle.
 
-### 1.2 Improvements Implemented
-- Targeted notification delivery by user/admin socket rooms.
-- Payment reconciliation fallback to sync paid state reliably.
-- One-time payment safeguards and shipping-state transition.
-- Robust image URL normalization + runtime fallback.
-- Route-level lazy loading to reduce initial bundle.
-- Cleaner socket connect/disconnect lifecycle in auction detail page.
-- Recurring monthly promotional email campaign (Jan-Dec), 15th every month, repeats yearly.
-- Dedupe/send-tracking for promotional emails via MongoDB log model.
-- README fully updated to current RiZBiD architecture and flows.
+## Current Product Highlights
 
----
+- User-specific notification system with bell popover and full notifications page
+- Separate admin login page removed; admin credentials work through the regular login page
+- Turnstile protection on sign up, login, and create-auction flows
+- Profile verification moved out of sign-up and into the profile page after login
+- Profile verification supports:
+  - Date of birth with 18+ enforcement
+  - Country
+  - Primary contact
+  - Optional emergency contact
+  - NID or passport number
+  - Profile picture upload
+  - OTP or verification-link completion
+- Dynamic social profile links in account editing
+- Payment reconciliation helpers to reduce Stripe/webhook race issues
+- Automated promotional and birthday email system
 
-## 2. Architecture
+## Architecture
 
 ```mermaid
 flowchart LR
-  C[React + Vite] --> API[Express API]
-  C <--> WS[Socket.io]
+  UI[React + Vite] --> API[Express API]
+  UI <--> WS[Socket.IO]
   API <--> WS
   API --> DB[(MongoDB)]
   API --> STRIPE[Stripe]
   API --> CLOUD[Cloudinary]
   API --> MAIL[Brevo / Resend / SMTP]
+  API --> TURNSTILE[Cloudflare Turnstile]
 ```
 
----
+## Auction Lifecycle
 
-## 3. Auction Lifecycle (Current Logic)
+1. Seller creates a listing request.
+2. Admin reviews the request.
+3. If approved, the listing becomes a future auction.
+4. Bidders register during the registration window.
+5. If no one registers, the seller can withdraw or relist lower.
+6. If one bidder registers, that bidder can win at the configured starting logic.
+7. If multiple bidders register, live turn-based bidding begins.
+8. The winner completes Stripe checkout.
+9. BidPulse moves the order into shipping.
+10. The winner confirms receipt and the auction closes.
 
-1. Seller submits listing request.
-2. Admin reviews and either:
-   - Approves: listing moves to `future`.
-   - Disapproves: seller receives reason.
-3. Bidders register during configured registration window.
-4. If 0 registrations:
-   - Seller may withdraw (`$9.99`) or relist lower (`$14.99`).
-5. If 1 registration:
-   - Single bidder wins at starting price.
-6. If >=2 registrations:
-   - Live bidding starts with first two registrants.
-   - 10-second turn cycle + give-up queue logic.
-7. Winner pays.
-8. RiZBiD handles shipping (7-14 days).
-9. Winner confirms `Product Received`.
-10. Auction closes (`closed`).
+## Authentication And Verification
 
----
+- `POST /api/auth/register`
+  - Creates a new account
+  - Requires Turnstile
+  - Does not auto-login
+- `POST /api/auth/login`
+  - Handles both normal users and admin credentials
+  - Requires Turnstile
+- `POST /api/auth/profile-verification/start`
+  - Starts profile verification
+  - Accepts OTP or link method
+  - Uploads the profile picture as part of the flow
+- `POST /api/auth/profile-verification/verify-otp`
+  - Completes verification with OTP
+- `GET /api/auth/profile-verification/verify-link/:token`
+  - Completes verification with email link
 
-## 4. Payment and Shipping Flow
+Legacy email-verification-at-signup endpoints still exist in the router, but they now return `410` and are no longer part of the intended flow.
 
-- `completed` -> winner can start checkout.
-- On payment success -> `paid_shipping_pending`.
-- Seller payout computed immediately (5% commission, 95% seller amount).
-- Winner sees `Product Received` button.
-- On confirm received -> `closed`.
+## Notifications
 
-### Payment Reliability Enhancements
-- Duplicate checkout blocked if payment already completed.
-- Active session lock prevents concurrent duplicate payment sessions.
-- `confirm-success` endpoint validates Stripe session from success page.
-- `reconcile` endpoint syncs status from stored Stripe session if webhook was delayed.
+- Bell icon opens a popover instead of redirecting immediately
+- Popover shows up to 10 notifications
+- Unread notifications are shown first in the bell popover
+- The full notifications page shows all notifications strictly by time and date
+- Notifications are scoped to the signed-in user and no longer leak across accounts on the same device
 
----
+Realtime delivery uses Socket.IO rooms such as:
 
-## 5. Notification Model (User-Specific)
+- `user:<id>`
+- `role:admin`
 
-Realtime notifications now route to:
-- `user:<id>` room for user-targeted events.
-- `role:admin` room for admin-targeted events.
+## Email System
 
-No global broadcast for sensitive lifecycle events (payment, failure, approval, payout, receipt, etc.).
+BidPulse uses a shared email service and template layer:
 
----
+- `backend/utils/emailService.js`
+- `backend/utils/emailTemplates.js`
 
-## 6. Monthly Promotional Email System
+Delivery priority:
 
-### Schedule
-- Cron: every month on the **15th** at **10:00**.
-- Repeats automatically every year.
-- Timezone configurable with `PROMOTIONAL_EMAIL_TIMEZONE` (default `UTC`).
+1. Brevo
+2. Resend
+3. SMTP via Nodemailer
 
-### Deduplication
-- `PromotionalEmailLog` model stores `(user, year, month)` unique records.
-- Prevents duplicate sends during restarts/retries.
+### Transactional Emails
 
-### Audience
-- Verified, non-banned users with a valid email.
+- Profile verification OTP
+- Profile verification link
+- Profile verified confirmation
+- Password reset
+- Support ticket creation and status updates
+- Listing submitted, approved, disapproved
+- Auction winner and participant outcome updates
+- Payment receipt
+- Shipping started
+- Seller payout updates
+- Funds released
+- Payment failed
+- Product received confirmation
 
-### Campaign Subjects (12 Emails)
-1. January Kickoff: Verified Deals to Start the Year
-2. February Spotlight: Limited Future Bids Open
-3. March Momentum: Upgrade Season Starts on RiZBiD
-4. April Advantage: Smart Bidders Register Earlier
-5. May Drop: New Verified Listings Released
-6. June Mid-Year Deals: Bid with Confidence
-7. July Priority Access: Best Upcoming Bids
-8. August Insider List: Top Performing Categories
-9. September Power Bids: Verified Listings Expanding
-10. October Premium Cycle: High-Value Bidding Week
-11. November Peak Season: Register for Priority Bids
-12. December Year-End Event: Final Verified Deals
+### Promotional Emails
 
-### New Files/Code
-- `backend/models/PromotionalEmailLog.js`
-- `backend/utils/emailTemplates.js` (12 campaign templates)
-- `backend/server.js` (cron + startup catch-up)
+- Sent on the `5th` and `25th` of every month
+- The same month's campaign is used for both sends
+- Sent to all users with an email address
+  - verified
+  - unverified
+  - banned
+  - active
+- Tracked by `PromotionalEmailLog`
+- Manual trigger endpoint:
+  - `POST /api/admin/promotional/trigger`
+  - accepts `month`, `year`, `dayOfMonth`, `dryRun`, and `forceSend`
 
-### Manual Admin Trigger (Testing/Demo)
-- Endpoint: `POST /api/admin/promotional/trigger`
-- Body options:
-  - `month` (1-12, optional; defaults to current month)
-  - `year` (optional; defaults to current year)
-  - `dryRun` (`true/false`, optional)
-  - `forceSend` (`true/false`, optional; bypasses monthly dedupe)
+### Birthday Emails
 
-Example:
-```json
-{
-  "month": 2,
-  "year": 2026,
-  "dryRun": false,
-  "forceSend": true
-}
-```
+- Sent daily to verified users whose date of birth matches the current day
+- Tracked by `BirthdayEmailLog`
+- Sent once per user per year
 
----
+## Important Models
 
-## 7. Performance Optimizations Applied
+- `User`
+- `Auction`
+- `SupportTicket`
+- `PromotionalEmailLog`
+- `BirthdayEmailLog`
 
-### Frontend
-- Route-level lazy loading for page modules (`React.lazy` + `Suspense`).
-- AuctionDetails socket lifecycle optimized (connect only when needed, proper teardown).
-- Image helper fallback prevents broken-image rendering stalls.
-
-### Backend
-- Targeted socket emission reduces unnecessary event traffic.
-- Promotional send dedupe prevents repeat work.
-
-### Build Result Snapshot
-- Initial chunk size reduced significantly by route splitting.
-- Pages are now served as separate chunks for faster first load.
-
----
-
-## 8. Core API Endpoints
+## Main API Areas
 
 ### Auth
+
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
+- `GET /api/auth/activity`
 - `PUT /api/auth/updatedetails`
-- `POST /api/auth/send-verification-otp`
-- `POST /api/auth/verify-email-otp`
+- `DELETE /api/auth/deleteaccount`
+- `POST /api/auth/avatar/upload`
+- `POST /api/auth/profile-verification/start`
+- `POST /api/auth/profile-verification/verify-otp`
+- `GET /api/auth/profile-verification/verify-link/:token`
+- `GET /api/auth/export-data`
+- `POST /api/auth/forgotpassword`
+- `PUT /api/auth/resetpassword/:resetToken`
 
 ### Auctions
+
 - `GET /api/auctions`
+- `GET /api/auctions/summary/stats`
 - `GET /api/auctions/:id`
 - `POST /api/auctions`
 - `PUT /api/auctions/:id`
@@ -190,40 +190,62 @@ Example:
 - `POST /api/auctions/:id/give-up`
 - `POST /api/auctions/:id/no-registration-decision`
 
-### Payment
+### Payments
+
 - `POST /api/payment/checkout/:auctionId`
+- `POST /api/payment/create-checkout-session/:auctionId`
 - `POST /api/payment/confirm-success`
 - `POST /api/payment/reconcile/:auctionId`
 - `POST /api/payment/confirm-received/:auctionId`
+- `POST /api/payment/release/:auctionId`
 - `POST /api/webhook`
 
 ### Admin
+
 - `GET /api/admin/stats`
 - `GET /api/admin/users`
-- `GET /api/admin/auctions`
+- `GET /api/admin/users/:id/history`
 - `PUT /api/admin/users/ban/:id`
 - `DELETE /api/admin/users/:id`
+- `GET /api/admin/auctions`
 - `DELETE /api/admin/auctions/:id`
+- `PUT /api/admin/auctions/:id/approve`
+- `PUT /api/admin/auctions/:id/disapprove`
+- `POST /api/admin/test-email`
 - `POST /api/admin/promotional/trigger`
 
----
+### Support
 
-## 9. Environment Variables
+- `POST /api/support/tickets`
+- `GET /api/support/tickets`
+- `PUT /api/support/tickets/:id`
+
+## Environment Variables
 
 ### Backend
+
 ```env
-NODE_ENV=production
+NODE_ENV=development
 PORT=5000
+
 MONGO_URI=...
+MONGO_MAX_POOL_SIZE=20
+MONGO_SERVER_SELECTION_TIMEOUT_MS=10000
+MONGO_SOCKET_TIMEOUT_MS=45000
+
 JWT_SECRET=...
 JWT_EXPIRE=30d
 
 CLIENT_URL=http://localhost:5173
+CLIENT_APP_URL=http://localhost:5173
 CORS_ORIGIN=http://localhost:5173
 CORS_ORIGINS=http://localhost:5173
 
 ADMIN_EMAIL=...
 ADMIN_PASS=...
+SUPPORT_EMAIL=...
+
+TURNSTILE_SECRET_KEY=...
 
 STRIPE_SECRET_KEY=...
 STRIPE_WEBHOOK_SECRET=...
@@ -231,58 +253,75 @@ STRIPE_WEBHOOK_SECRET=...
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
-CLOUDINARY_FOLDER=rizbid
+CLOUDINARY_FOLDER=BidPulse
 
-# Promo campaign scheduler timezone
 PROMOTIONAL_EMAIL_TIMEZONE=UTC
 
-# Preferred mail provider
 BREVO_API_KEY=...
 BREVO_SENDER_EMAIL=...
-BREVO_SENDER_NAME=RiZBiD
+BREVO_SENDER_NAME=BidPulse Support
+BREVO_API_URL=https://api.brevo.com/v3/smtp/email
+BREVO_TIMEOUT_MS=15000
+
+RESEND_API_KEY=...
+RESEND_FROM_EMAIL=...
+RESEND_API_URL=https://api.resend.com/emails
+RESEND_TIMEOUT_MS=15000
+
+SMTP_HOST=...
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_FAMILY=4
+SMTP_CONNECTION_TIMEOUT_MS=10000
+SMTP_GREETING_TIMEOUT_MS=10000
+SMTP_SOCKET_TIMEOUT_MS=15000
+
+EMAIL_SERVICE=gmail
+EMAIL_USERNAME=...
+EMAIL_PASSWORD=...
+EMAIL_USER=...
+EMAIL_PASS=...
 ```
 
 ### Frontend
+
 ```env
 VITE_API_URL=http://localhost:5000/api
 VITE_SOCKET_URL=http://localhost:5000
+VITE_TURNSTILE_SITE_KEY=...
 ```
 
----
+## Local Development
 
-## 10. Local Development
+### Backend
 
-Backend:
 ```bash
 cd backend
 npm install
 npm run dev
 ```
 
-Frontend:
+### Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Build:
+### Production Frontend Build
+
 ```bash
 cd frontend
 npm run build
 ```
 
----
+## Notes
 
-## 11. Suggested Next Improvements
-
-1. Add integration tests for payment/webhook/reconcile/receipt flow.
-2. Add notification preference controls (user can mute promo or specific categories).
-3. Add queue-based job processing (BullMQ) for high-volume email sends.
-4. Add tracing/request IDs across API + websocket events.
-5. Add Redis adapter for socket room scaling in multi-instance deployments.
-
----
+- If your MongoDB already has the older unique index for promotional emails on `(user, year, month)`, it should be replaced with the new `(user, year, month, dayOfMonth)` index so the 5th and 25th sends can coexist correctly.
+- Socket connections are used for realtime auction and notification updates.
+- The project currently has no dedicated automated test suite configured in `package.json`.
 
 ## License
+
 MIT
