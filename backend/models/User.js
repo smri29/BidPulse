@@ -13,6 +13,14 @@ const socialLinksSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const socialProfileEntrySchema = new mongoose.Schema(
+  {
+    name: { type: String, default: '' },
+    link: { type: String, default: '' },
+  },
+  { _id: false }
+);
+
 const pendingProfileVerificationSchema = new mongoose.Schema(
   {
     dob: Date,
@@ -75,6 +83,34 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  cityState: {
+    type: String,
+    default: '',
+  },
+  postalCode: {
+    type: String,
+    default: '',
+  },
+  gender: {
+    type: String,
+    default: '',
+  },
+  occupation: {
+    type: String,
+    default: '',
+  },
+  preferredDeliveryAddress: {
+    type: String,
+    default: '',
+  },
+  secondaryEmail: {
+    type: String,
+    default: '',
+  },
+  medicalNotes: {
+    type: String,
+    default: '',
+  },
   password: {
     type: String,
     required: [true, 'Please add a password'],
@@ -132,6 +168,10 @@ const userSchema = new mongoose.Schema({
   socialLinks: {
     type: socialLinksSchema,
     default: () => ({}),
+  },
+  socialProfiles: {
+    type: [socialProfileEntrySchema],
+    default: [],
   },
   avatarUrl: {
     type: String,

@@ -24,6 +24,13 @@ const serializeUser = (user) => ({
   mobile: user.mobile,
   emergencyContact: user.emergencyContact,
   bloodGroup: user.bloodGroup,
+  cityState: user.cityState,
+  postalCode: user.postalCode,
+  gender: user.gender,
+  occupation: user.occupation,
+  preferredDeliveryAddress: user.preferredDeliveryAddress,
+  secondaryEmail: user.secondaryEmail,
+  medicalNotes: user.medicalNotes,
   role: user.role,
   dob: user.dob,
   location: user.location,
@@ -32,6 +39,7 @@ const serializeUser = (user) => ({
   idNumber: user.idNumber,
   emailVerified: user.emailVerified,
   socialLinks: user.socialLinks,
+  socialProfiles: user.socialProfiles,
   avatarUrl: user.avatarUrl,
   avatarEmoji: user.avatarEmoji,
   profileVerifiedAt: user.profileVerifiedAt,
@@ -438,10 +446,34 @@ exports.updateUserDetails = async (req, res) => {
         typeof req.body.emergencyContact === 'string' ? req.body.emergencyContact : user.emergencyContact;
       user.bloodGroup =
         typeof req.body.bloodGroup === 'string' ? req.body.bloodGroup : user.bloodGroup;
+      user.cityState =
+        typeof req.body.cityState === 'string' ? req.body.cityState : user.cityState;
+      user.postalCode =
+        typeof req.body.postalCode === 'string' ? req.body.postalCode : user.postalCode;
+      user.gender =
+        typeof req.body.gender === 'string' ? req.body.gender : user.gender;
+      user.occupation =
+        typeof req.body.occupation === 'string' ? req.body.occupation : user.occupation;
+      user.preferredDeliveryAddress =
+        typeof req.body.preferredDeliveryAddress === 'string'
+          ? req.body.preferredDeliveryAddress
+          : user.preferredDeliveryAddress;
+      user.secondaryEmail =
+        typeof req.body.secondaryEmail === 'string' ? req.body.secondaryEmail : user.secondaryEmail;
+      user.medicalNotes =
+        typeof req.body.medicalNotes === 'string' ? req.body.medicalNotes : user.medicalNotes;
       user.socialLinks = {
         ...user.socialLinks,
         ...(req.body.socialLinks || {}),
       };
+      if (Array.isArray(req.body.socialProfiles)) {
+        user.socialProfiles = req.body.socialProfiles
+          .map((entry) => ({
+            name: typeof entry?.name === 'string' ? entry.name.trim() : '',
+            link: typeof entry?.link === 'string' ? entry.link.trim() : '',
+          }))
+          .filter((entry) => entry.name || entry.link);
+      }
 
       if (req.body.password) {
         user.password = req.body.password;

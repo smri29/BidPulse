@@ -6,9 +6,11 @@ import {
   Calendar,
   CheckCircle,
   Clock3,
+  Link2,
   IdCard,
   Mail,
   MapPin,
+  Plus,
   Save,
   ShieldCheck,
   Smartphone,
@@ -29,14 +31,6 @@ import {
 import Reveal from '../components/ui/Reveal';
 import AnimatedNumber from '../components/ui/AnimatedNumber';
 
-const initialSocials = {
-  facebook: '',
-  instagram: '',
-  x: '',
-  threads: '',
-  youtube: '',
-};
-
 const initialVerificationForm = {
   dob: '',
   country: '',
@@ -47,6 +41,7 @@ const initialVerificationForm = {
 };
 
 const BLOOD_GROUP_OPTIONS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+const GENDER_OPTIONS = ['Male', 'Female', 'Other', 'Prefer not to say'];
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -66,7 +61,14 @@ const Profile = () => {
     address: '',
     emergencyContact: '',
     bloodGroup: '',
-    socialLinks: initialSocials,
+    cityState: '',
+    postalCode: '',
+    gender: '',
+    occupation: '',
+    preferredDeliveryAddress: '',
+    secondaryEmail: '',
+    medicalNotes: '',
+    socialProfiles: [],
   });
 
   useEffect(() => {
@@ -81,10 +83,14 @@ const Profile = () => {
       address: user.address || '',
       emergencyContact: user.emergencyContact || '',
       bloodGroup: user.bloodGroup || '',
-      socialLinks: {
-        ...initialSocials,
-        ...(user.socialLinks || {}),
-      },
+      cityState: user.cityState || '',
+      postalCode: user.postalCode || '',
+      gender: user.gender || '',
+      occupation: user.occupation || '',
+      preferredDeliveryAddress: user.preferredDeliveryAddress || '',
+      secondaryEmail: user.secondaryEmail || '',
+      medicalNotes: user.medicalNotes || '',
+      socialProfiles: Array.isArray(user.socialProfiles) ? user.socialProfiles : [],
     });
     setVerificationForm({
       dob: user.dob ? new Date(user.dob).toISOString().slice(0, 10) : '',
@@ -150,14 +156,26 @@ const Profile = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSocialInput = (event) => {
-    const { name, value } = event.target;
+  const handleSocialInput = (index, key, value) => {
     setFormData((prev) => ({
       ...prev,
-      socialLinks: {
-        ...prev.socialLinks,
-        [name]: value,
-      },
+      socialProfiles: prev.socialProfiles.map((profile, profileIndex) =>
+        profileIndex === index ? { ...profile, [key]: value } : profile
+      ),
+    }));
+  };
+
+  const handleAddSocialProfile = () => {
+    setFormData((prev) => ({
+      ...prev,
+      socialProfiles: [...prev.socialProfiles, { name: '', link: '' }],
+    }));
+  };
+
+  const handleRemoveSocialProfile = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      socialProfiles: prev.socialProfiles.filter((_, profileIndex) => profileIndex !== index),
     }));
   };
 
@@ -400,37 +418,92 @@ const Profile = () => {
                         ))}
                       </select>
                     </Field>
+                    <Field label="Gender">
+                      <select name="gender" value={formData.gender} onChange={handleInput} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2">
+                        <option value="">Select gender</option>
+                        {GENDER_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Occupation">
+                      <input type="text" name="occupation" value={formData.occupation} onChange={handleInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Occupation" />
+                    </Field>
+                    <Field label="Secondary Email">
+                      <input type="email" name="secondaryEmail" value={formData.secondaryEmail} onChange={handleInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Secondary email address" />
+                    </Field>
                   </div>
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                   <p className="mb-3 text-sm font-semibold text-slate-900">Address</p>
-                  <Field label="Specific Address">
-                    <textarea name="address" value={formData.address} onChange={handleInput} rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Street, apartment, landmark, or delivery notes" />
-                  </Field>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                  <p className="mb-3 text-sm font-semibold text-slate-900">Social Profiles</p>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <Field label="Facebook">
-                      <input name="facebook" value={formData.socialLinks.facebook} onChange={handleSocialInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Facebook profile URL" />
+                    <Field label="City / State">
+                      <input type="text" name="cityState" value={formData.cityState} onChange={handleInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="City / State" />
                     </Field>
-                    <Field label="Instagram">
-                      <input name="instagram" value={formData.socialLinks.instagram} onChange={handleSocialInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Instagram profile URL" />
-                    </Field>
-                    <Field label="X">
-                      <input name="x" value={formData.socialLinks.x} onChange={handleSocialInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="X profile URL" />
-                    </Field>
-                    <Field label="Threads">
-                      <input name="threads" value={formData.socialLinks.threads} onChange={handleSocialInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Threads profile URL" />
+                    <Field label="Postal Code">
+                      <input type="text" name="postalCode" value={formData.postalCode} onChange={handleInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Postal code" />
                     </Field>
                   </div>
                   <div className="mt-4">
-                    <Field label="YouTube">
-                      <input name="youtube" value={formData.socialLinks.youtube} onChange={handleSocialInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="YouTube channel URL" />
+                    <Field label="Specific Address">
+                      <textarea name="address" value={formData.address} onChange={handleInput} rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Street, apartment, landmark, or delivery notes" />
                     </Field>
                   </div>
+                  <div className="mt-4">
+                    <Field label="Preferred Delivery Address">
+                      <textarea name="preferredDeliveryAddress" value={formData.preferredDeliveryAddress} onChange={handleInput} rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Preferred delivery address for orders" />
+                    </Field>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-slate-900">Social Profiles</p>
+                    <button onClick={handleAddSocialProfile} className="btn-soft inline-flex items-center gap-2 px-3 py-2 text-sm text-slate-700" type="button">
+                      <Plus size={14} /> Add
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    {formData.socialProfiles.length > 0 ? (
+                      formData.socialProfiles.map((profile, index) => (
+                        <div key={`${index}-${profile.name}`} className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1.5fr_auto] md:items-end">
+                            <Field label="Name">
+                              <input
+                                value={profile.name}
+                                onChange={(event) => handleSocialInput(index, 'name', event.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                                placeholder="Platform name"
+                              />
+                            </Field>
+                            <Field label="Link">
+                              <input
+                                value={profile.link}
+                                onChange={(event) => handleSocialInput(index, 'link', event.target.value)}
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                                placeholder="Profile URL"
+                              />
+                            </Field>
+                            <button onClick={() => handleRemoveSocialProfile(index)} className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50" type="button">
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-slate-500">No social profiles added yet.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                  <p className="mb-3 text-sm font-semibold text-slate-900">Health Notes</p>
+                  <Field label="Medical Notes / Allergies">
+                    <textarea name="medicalNotes" value={formData.medicalNotes} onChange={handleInput} rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Any important medical notes or allergies" />
+                  </Field>
                 </div>
               </form>
             ) : user.emailVerified ? (
@@ -441,12 +514,43 @@ const Profile = () => {
                   <Info label="Primary Contact" value={user.mobile || 'Not set'} icon={<Smartphone size={15} />} />
                   <Info label="Emergency Contact" value={user.emergencyContact || 'Not provided'} icon={<Users size={15} />} />
                   <Info label="Blood Group" value={user.bloodGroup || 'Not provided'} icon={<BadgeAlert size={15} />} />
+                  <Info label="City / State" value={user.cityState || 'Not provided'} icon={<MapPin size={15} />} />
+                  <Info label="Postal Code" value={user.postalCode || 'Not provided'} icon={<IdCard size={15} />} />
+                  <Info label="Gender" value={user.gender || 'Not provided'} icon={<User size={15} />} />
+                  <Info label="Occupation" value={user.occupation || 'Not provided'} icon={<BadgeAlert size={15} />} />
+                  <Info label="Secondary Email" value={user.secondaryEmail || 'Not provided'} icon={<Mail size={15} />} />
                   <Info label="NID / Passport Number" value={user.idNumber || 'Not set'} icon={<IdCard size={15} />} />
                   <Info label="Verified On" value={formatDateTime(user.profileVerifiedAt || user.createdAt)} icon={<Clock3 size={15} />} />
                 </div>
                 <div>
                   <p className="mb-1 text-xs uppercase tracking-wide text-gray-500">Address</p>
                   <p className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800">{user.address || 'No address added'}</p>
+                </div>
+                <div>
+                  <p className="mb-1 text-xs uppercase tracking-wide text-gray-500">Preferred Delivery Address</p>
+                  <p className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800">{user.preferredDeliveryAddress || 'No preferred delivery address added'}</p>
+                </div>
+                <div>
+                  <p className="mb-1 text-xs uppercase tracking-wide text-gray-500">Medical Notes / Allergies</p>
+                  <p className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800">{user.medicalNotes || 'No medical notes added'}</p>
+                </div>
+                <div>
+                  <p className="mb-3 text-xs uppercase tracking-wide text-gray-500">Social Profiles</p>
+                  {Array.isArray(user.socialProfiles) && user.socialProfiles.length > 0 ? (
+                    <div className="space-y-3">
+                      {user.socialProfiles.map((profile, index) => (
+                        <div key={`${profile.name}-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{profile.name || 'Unnamed profile'}</p>
+                            <p className="mt-1 break-all text-sm text-slate-600">{profile.link || 'No link added'}</p>
+                          </div>
+                          <Link2 size={16} className="shrink-0 text-slate-400" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800">No social profiles added.</p>
+                  )}
                 </div>
               </div>
             ) : (
