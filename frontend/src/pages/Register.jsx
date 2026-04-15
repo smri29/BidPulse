@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { register, reset } from '../redux/authSlice';
-import { addNotification } from '../redux/notificationSlice';
 import {
   User,
   Mail,
@@ -91,7 +90,7 @@ const Register = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { user, isLoading, isError, isSuccess, message } = useSelector((state) => state.auth);
+  const { isLoading, isError, isSuccess, message } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (isError && message) {
@@ -100,15 +99,14 @@ const Register = () => {
       turnstileRef.current?.reset?.();
     }
 
-    if (isSuccess || user) {
-      const successMessage = 'Registration successful. Please verify your email with OTP.';
+    if (isSuccess) {
+      const successMessage = 'Registration successful. Please sign in to continue.';
       toast.success(successMessage, { toastId: 'register-success' });
-      dispatch(addNotification({ title: 'Registration Successful', message: successMessage, type: 'success' }));
-      navigate('/profile');
+      navigate('/login');
     }
 
     dispatch(reset());
-  }, [user, isError, isSuccess, message, navigate, dispatch]);
+  }, [isError, isSuccess, message, navigate, dispatch]);
 
   const passwordChecks = useMemo(() => getPasswordChecks(password), [password]);
   const isPasswordValid = Object.values(passwordChecks).every(Boolean);

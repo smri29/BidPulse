@@ -39,9 +39,6 @@ export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async 
 export const register = createAsyncThunk('auth/register', async (userData, thunkAPI) => {
   try {
     const response = await axios.post('/auth/register', userData, { timeout: 70000 });
-    if (response.data) {
-      localStorage.setItem('user', JSON.stringify(response.data));
-    }
     return response.data;
   } catch (error) {
     const message = getApiErrorMessage(error);
@@ -221,7 +218,7 @@ const authSlice = createSlice({
       .addCase(register.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.user = action.payload;
+        state.user = null;
         state.message = action.payload?.warning || '';
       })
       .addCase(register.rejected, (state, action) => {

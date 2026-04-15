@@ -27,7 +27,7 @@ const Login = () => {
 
     if (user || isSuccess) {
       if (user?.role === 'admin') navigate('/dashboard/admin');
-      else navigate('/dashboard/bidder');
+      else navigate('/profile');
     }
 
     dispatch(reset());
