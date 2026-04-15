@@ -260,9 +260,6 @@ const CreateAuction = () => {
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <div className="mb-3">
                   <p className="text-sm font-semibold text-slate-900">Cloudflare Verification</p>
-                  <p className="mt-1 text-xs text-slate-600">
-                    Complete the human check before submitting your product for review.
-                  </p>
                 </div>
                 <TurnstileWidget
                   ref={turnstileRef}

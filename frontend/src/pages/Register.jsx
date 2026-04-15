@@ -340,9 +340,6 @@ const Register = () => {
 
                   <div className="rounded-[1.6rem] border border-dashed border-slate-300 bg-slate-50/90 p-4">
                     <p className="text-sm font-semibold text-slate-800">Cloudflare Verification</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      Complete the challenge before creating your account.
-                    </p>
                     <TurnstileWidget
                       ref={turnstileRef}
                       siteKey={turnstileSiteKey}

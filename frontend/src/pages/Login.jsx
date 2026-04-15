@@ -84,7 +84,6 @@ const Login = () => {
 
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
                 <p className="text-sm font-semibold text-slate-800">Cloudflare Verification</p>
-                <p className="mt-1 text-sm text-slate-600">Complete the challenge before signing in.</p>
                 <TurnstileWidget
                   ref={turnstileRef}
                   siteKey={turnstileSiteKey}
