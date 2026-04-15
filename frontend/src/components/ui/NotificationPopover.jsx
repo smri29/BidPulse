@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Bell, CheckCircle, AlertTriangle, Clock, DollarSign } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +21,16 @@ const NotificationPopover = ({ onClose, variant = 'default' }) => {
   const navigate = useNavigate();
   const notifications = useSelector((state) => state.notifications.items);
   const unreadCount = notifications.filter((item) => !item.read).length;
-  const previewItems = notifications.slice(0, 5);
+  const previewItems = useMemo(
+    () =>
+      [...notifications]
+        .sort((a, b) => {
+          if (a.read !== b.read) return a.read ? 1 : -1;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        })
+        .slice(0, 10),
+    [notifications]
+  );
   const isAdmin = variant === 'admin';
 
   const panelClassName = isAdmin

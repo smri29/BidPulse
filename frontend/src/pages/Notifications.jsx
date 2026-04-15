@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Bell, CheckCircle, AlertTriangle, DollarSign, Clock, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { markAllNotificationsRead, markNotificationRead, clearNotifications } from '../redux/notificationSlice';
@@ -6,6 +6,13 @@ import { markAllNotificationsRead, markNotificationRead, clearNotifications } fr
 const Notifications = () => {
   const dispatch = useDispatch();
   const notifications = useSelector((state) => state.notifications.items);
+  const orderedNotifications = useMemo(
+    () =>
+      [...notifications].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [notifications]
+  );
 
   const iconForType = (type) => {
     if (type === 'success') return <CheckCircle size={20} />;
@@ -32,9 +39,9 @@ const Notifications = () => {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {notifications.length > 0 ? (
+        {orderedNotifications.length > 0 ? (
           <div className="divide-y divide-gray-50">
-            {notifications.map((item) => (
+            {orderedNotifications.map((item) => (
               <button
                 key={item.id}
                 onClick={() => dispatch(markNotificationRead(item.id))}
