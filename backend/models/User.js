@@ -13,6 +13,27 @@ const socialLinksSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const pendingProfileVerificationSchema = new mongoose.Schema(
+  {
+    dob: Date,
+    location: { type: String, default: '' },
+    mobile: { type: String, default: '' },
+    emergencyContact: { type: String, default: '' },
+    idNumber: { type: String, default: '' },
+    avatarUrl: { type: String, default: '' },
+    method: {
+      type: String,
+      enum: ['otp', 'link'],
+    },
+    otpHash: String,
+    otpExpire: Date,
+    linkTokenHash: String,
+    linkExpire: Date,
+    requestedAt: Date,
+  },
+  { _id: false }
+);
+
 const passwordRequirementsMessage =
   'Password must be at least 8 characters, include 1 number, include 1 special character, and have no leading or trailing whitespace';
 
@@ -43,6 +64,10 @@ const userSchema = new mongoose.Schema({
     ],
   },
   mobile: {
+    type: String,
+    default: '',
+  },
+  emergencyContact: {
     type: String,
     default: '',
   },
@@ -85,6 +110,11 @@ const userSchema = new mongoose.Schema({
   },
   emailVerificationOTP: String,
   emailVerificationOTPExpire: Date,
+  profileVerifiedAt: Date,
+  pendingProfileVerification: {
+    type: pendingProfileVerificationSchema,
+    default: undefined,
+  },
   isBanned: {
     type: Boolean,
     default: false,
@@ -149,6 +179,26 @@ userSchema.methods.generateEmailVerificationOTP = function () {
   this.emailVerificationOTP = crypto.createHash('sha256').update(otp).digest('hex');
   this.emailVerificationOTPExpire = Date.now() + 5 * 60 * 1000;
   return otp;
+};
+
+userSchema.methods.generateProfileVerificationOTP = function () {
+  const otp = `${Math.floor(100000 + Math.random() * 900000)}`;
+  if (!this.pendingProfileVerification) {
+    this.pendingProfileVerification = {};
+  }
+  this.pendingProfileVerification.otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+  this.pendingProfileVerification.otpExpire = Date.now() + 5 * 60 * 1000;
+  return otp;
+};
+
+userSchema.methods.generateProfileVerificationLinkToken = function () {
+  const token = crypto.randomBytes(20).toString('hex');
+  if (!this.pendingProfileVerification) {
+    this.pendingProfileVerification = {};
+  }
+  this.pendingProfileVerification.linkTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  this.pendingProfileVerification.linkExpire = Date.now() + 5 * 60 * 1000;
+  return token;
 };
 
 module.exports = mongoose.model('User', userSchema);

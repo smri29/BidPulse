@@ -109,6 +109,38 @@ export const verifyEmailOtp = createAsyncThunk('auth/verifyEmailOtp', async (otp
   }
 });
 
+export const startProfileVerification = createAsyncThunk('auth/startProfileVerification', async (formData, thunkAPI) => {
+  try {
+    const token = getTokenFromState(thunkAPI);
+    const response = await axios.post('/auth/profile-verification/start', formData, {
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: 70000,
+    });
+    return response.data;
+  } catch (error) {
+    const message = getApiErrorMessage(error);
+    return thunkAPI.rejectWithValue(message);
+  }
+});
+
+export const verifyProfileOtp = createAsyncThunk('auth/verifyProfileOtp', async (otp, thunkAPI) => {
+  try {
+    const token = getTokenFromState(thunkAPI);
+    const response = await axios.post('/auth/profile-verification/verify-otp', { otp }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.data?.user) {
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
+
+    return response.data;
+  } catch (error) {
+    const message = getApiErrorMessage(error);
+    return thunkAPI.rejectWithValue(message);
+  }
+});
+
 export const uploadAvatar = createAsyncThunk('auth/uploadAvatar', async (file, thunkAPI) => {
   try {
     const token = getTokenFromState(thunkAPI);
@@ -263,6 +295,31 @@ const authSlice = createSlice({
         state.user = action.payload.user;
       })
       .addCase(verifyEmailOtp.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+      .addCase(startProfileVerification.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(startProfileVerification.fulfilled, (state) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+      })
+      .addCase(startProfileVerification.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload;
+      })
+      .addCase(verifyProfileOtp.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(verifyProfileOtp.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.user = action.payload.user;
+      })
+      .addCase(verifyProfileOtp.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;

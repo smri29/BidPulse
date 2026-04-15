@@ -9,6 +9,9 @@ const {
   deleteUserAccount,
   sendVerificationOTP,
   verifyEmailOTP,
+  startProfileVerification,
+  verifyProfileOtp,
+  verifyProfileLink,
   getUserActivity,
   uploadAvatar,
   exportUserDataZip,
@@ -42,6 +45,9 @@ router.delete('/deleteaccount', protect, deleteUserAccount);
 router.post('/send-verification-otp', protect, otpLimiter, sendVerificationOTP);
 router.post('/verify-email-otp', protect, otpLimiter, verifyEmailOTP);
 router.post('/avatar/upload', protect, handleAvatarUpload, uploadAvatar);
+router.post('/profile-verification/start', protect, otpLimiter, handleAvatarUpload, startProfileVerification);
+router.post('/profile-verification/verify-otp', protect, otpLimiter, verifyProfileOtp);
+router.get('/profile-verification/verify-link/:token', verifyProfileLink);
 router.get('/export-data', protect, exportUserDataZip);
 
 router.post('/forgotpassword', passwordLimiter, forgotPassword);

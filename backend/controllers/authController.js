@@ -22,6 +22,7 @@ const serializeUser = (user) => ({
   name: user.name,
   email: user.email,
   mobile: user.mobile,
+  emergencyContact: user.emergencyContact,
   role: user.role,
   dob: user.dob,
   location: user.location,
@@ -32,16 +33,89 @@ const serializeUser = (user) => ({
   socialLinks: user.socialLinks,
   avatarUrl: user.avatarUrl,
   avatarEmoji: user.avatarEmoji,
+  profileVerifiedAt: user.profileVerifiedAt,
   createdAt: user.createdAt,
   token: generateToken(user._id),
 });
 
-const sendVerificationEmail = async (user, otp) => {
+const sendProfileVerificationOtpEmail = async (user, otp) => {
   await sendEmail({
     email: user.email,
-    subject: 'BidPulse Email Verification OTP',
-    message: templates.emailOtp({ otp }),
+    subject: 'BidPulse Profile Verification OTP',
+    message: templates.profileVerificationOtp({ otp }),
   });
+};
+
+const sendProfileVerificationLinkEmail = async (user, verificationUrl) => {
+  await sendEmail({
+    email: user.email,
+    subject: 'BidPulse Profile Verification Link',
+    message: templates.profileVerificationLink({ verificationUrl }),
+  });
+};
+
+const uploadAvatarImage = async (fileBuffer) => {
+  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    throw new Error('Profile image upload service is not configured');
+  }
+
+  const folder = process.env.CLOUDINARY_FOLDER || 'BidPulse';
+
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: 'image',
+        transformation: [{ width: 512, height: 512, crop: 'fill', gravity: 'face' }],
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        return resolve(result);
+      }
+    );
+
+    stream.end(fileBuffer);
+  });
+};
+
+const isAtLeast18 = (dateValue) => {
+  const dob = new Date(dateValue);
+  if (Number.isNaN(dob.getTime())) return false;
+
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age -= 1;
+  }
+  return age >= 18;
+};
+
+const clearPendingProfileVerification = (user) => {
+  user.pendingProfileVerification = undefined;
+};
+
+const finalizeProfileVerification = async (user) => {
+  const pending = user.pendingProfileVerification;
+
+  if (!pending?.dob || !pending?.location || !pending?.mobile || !pending?.idNumber || !pending?.avatarUrl) {
+    throw new Error('Verification details are incomplete');
+  }
+
+  user.dob = pending.dob;
+  user.location = pending.location;
+  user.mobile = pending.mobile;
+  user.emergencyContact = pending.emergencyContact || '';
+  user.idNumber = pending.idNumber;
+  user.avatarUrl = pending.avatarUrl;
+  user.avatarEmoji = '';
+  user.emailVerified = true;
+  user.profileVerifiedAt = new Date();
+  user.emailVerificationOTP = undefined;
+  user.emailVerificationOTPExpire = undefined;
+  clearPendingProfileVerification(user);
+  await user.save();
+  return user;
 };
 
 exports.register = async (req, res) => {
@@ -85,18 +159,10 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Invalid user data' });
     }
 
-    const otp = user.generateEmailVerificationOTP();
-    await user.save();
-    try {
-      await sendVerificationEmail(user, otp);
-      return res.status(201).json(serializeUser(user));
-    } catch (emailError) {
-      return res.status(201).json({
-        ...serializeUser(user),
-        warning: `Account created, but verification email failed to send. ${emailError.message}`,
-        emailDeliveryFailed: true,
-      });
-    }
+    return res.status(201).json({
+      message: 'Account created successfully. Please sign in to continue.',
+      accountCreated: true,
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -158,33 +224,108 @@ exports.login = async (req, res) => {
 };
 
 exports.sendVerificationOTP = async (req, res) => {
+  return res.status(410).json({ message: 'Use the profile verification flow from the Profile page.' });
+};
+
+exports.verifyEmailOTP = async (req, res) => {
+  return res.status(410).json({ message: 'Use the profile verification flow from the Profile page.' });
+};
+
+exports.startProfileVerification = async (req, res) => {
   try {
     if (req.user.isStaticAdmin) {
-      return res.status(400).json({ message: 'Admin account does not require verification' });
+      return res.status(400).json({ message: 'Admin account does not require profile verification' });
+    }
+
+    const { dob, country, primaryContact, emergencyContact, idNumber, verificationMethod } = req.body;
+
+    if (!dob || !country || !primaryContact || !idNumber || !verificationMethod) {
+      return res.status(400).json({ message: 'All required verification fields must be provided' });
+    }
+
+    if (!['otp', 'link'].includes(verificationMethod)) {
+      return res.status(400).json({ message: 'Verification method must be OTP or link' });
+    }
+
+    if (!isAtLeast18(dob)) {
+      return res.status(400).json({ message: 'You must be at least 18 years old to verify your profile' });
     }
 
     const user = await User.findById(req.user.id);
 
     if (!user) return res.status(404).json({ message: 'User not found' });
-    if (user.emailVerified) return res.status(400).json({ message: 'Email already verified' });
 
-    const otp = user.generateEmailVerificationOTP();
-    await user.save();
-    try {
-      await sendVerificationEmail(user, otp);
-    } catch (emailError) {
-      return res.status(503).json({
-        message: `Unable to send verification OTP right now. ${emailError.message}`,
+    let avatarUrl = user.avatarUrl || '';
+    if (req.file) {
+      try {
+        const uploadResult = await uploadAvatarImage(req.file.buffer);
+        avatarUrl = uploadResult.secure_url;
+      } catch (uploadError) {
+        return res.status(503).json({ message: uploadError.message });
+      }
+    }
+
+    if (!avatarUrl) {
+      return res.status(400).json({ message: 'Profile picture is required for verification' });
+    }
+
+    user.pendingProfileVerification = {
+      dob: new Date(dob),
+      location: String(country).trim(),
+      mobile: String(primaryContact).trim(),
+      emergencyContact: String(emergencyContact || '').trim(),
+      idNumber: String(idNumber).trim(),
+      avatarUrl,
+      method: verificationMethod,
+      requestedAt: new Date(),
+      otpHash: undefined,
+      otpExpire: undefined,
+      linkTokenHash: undefined,
+      linkExpire: undefined,
+    };
+
+    if (verificationMethod === 'otp') {
+      const otp = user.generateProfileVerificationOTP();
+      await user.save();
+
+      try {
+        await sendProfileVerificationOtpEmail(user, otp);
+      } catch (emailError) {
+        clearPendingProfileVerification(user);
+        await user.save();
+        return res.status(503).json({ message: `Unable to send verification OTP right now. ${emailError.message}` });
+      }
+
+      return res.json({
+        message: 'A profile verification OTP has been sent to your primary email address.',
+        verificationMethod: 'otp',
       });
     }
 
-    return res.json({ message: 'Verification OTP sent to your email' });
+    const linkToken = user.generateProfileVerificationLinkToken();
+    await user.save();
+
+    const clientUrl = process.env.CLIENT_URL || process.env.CLIENT_APP_URL || 'http://localhost:5173';
+    const verificationUrl = `${clientUrl.replace(/\/$/, '')}/verify-profile/${linkToken}`;
+
+    try {
+      await sendProfileVerificationLinkEmail(user, verificationUrl);
+    } catch (emailError) {
+      clearPendingProfileVerification(user);
+      await user.save();
+      return res.status(503).json({ message: `Unable to send verification link right now. ${emailError.message}` });
+    }
+
+    return res.json({
+      message: 'A profile verification link has been sent to your primary email address.',
+      verificationMethod: 'link',
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
 
-exports.verifyEmailOTP = async (req, res) => {
+exports.verifyProfileOtp = async (req, res) => {
   try {
     const { otp } = req.body;
 
@@ -195,33 +336,71 @@ exports.verifyEmailOTP = async (req, res) => {
     const user = await User.findById(req.user.id);
 
     if (!user) return res.status(404).json({ message: 'User not found' });
-    if (user.emailVerified) return res.status(400).json({ message: 'Email already verified' });
+    if (user.emailVerified) return res.status(400).json({ message: 'Profile already verified' });
+
+    const pending = user.pendingProfileVerification;
+    if (!pending || pending.method !== 'otp') {
+      return res.status(400).json({ message: 'No OTP-based profile verification request was found' });
+    }
 
     const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
 
     if (
-      user.emailVerificationOTP !== hashedOtp ||
-      !user.emailVerificationOTPExpire ||
-      user.emailVerificationOTPExpire < Date.now()
+      pending.otpHash !== hashedOtp ||
+      !pending.otpExpire ||
+      pending.otpExpire < Date.now()
     ) {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
-    user.emailVerified = true;
-    user.emailVerificationOTP = undefined;
-    user.emailVerificationOTPExpire = undefined;
-    await user.save();
+    await finalizeProfileVerification(user);
 
     sendEmailAsync({
       email: user.email,
-      subject: 'Welcome to BidPulse',
-      message: templates.welcome({ name: user.name, clientUrl: process.env.CLIENT_URL }),
+      subject: 'BidPulse Profile Verified',
+      message: templates.profileVerified({ name: user.name, clientUrl: process.env.CLIENT_URL }),
     });
 
     return res.json({
-      message: 'Email verified successfully',
+      message: 'Profile verified successfully',
       user: serializeUser(user),
     });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+exports.verifyProfileLink = async (req, res) => {
+  try {
+    const token = req.params.token;
+
+    if (!token) {
+      return res.status(400).json({ message: 'Verification token is required' });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      'pendingProfileVerification.linkTokenHash': hashedToken,
+      'pendingProfileVerification.linkExpire': { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired verification link' });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({ message: 'Profile already verified' });
+    }
+
+    await finalizeProfileVerification(user);
+
+    sendEmailAsync({
+      email: user.email,
+      subject: 'BidPulse Profile Verified',
+      message: templates.profileVerified({ name: user.name, clientUrl: process.env.CLIENT_URL }),
+    });
+
+    return res.json({ message: 'Profile verified successfully' });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

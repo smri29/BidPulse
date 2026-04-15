@@ -26,6 +26,7 @@ const HelpCenter = lazy(() => import('./pages/HelpCenter'));
 const Terms = lazy(() => import('./pages/Terms'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Profile = lazy(() => import('./pages/Profile'));
+const ProfileVerificationLink = lazy(() => import('./pages/ProfileVerificationLink'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -191,6 +192,7 @@ function App() {
             <Route path="/help" element={<HelpCenter />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/verify-profile/:token" element={<ProfileVerificationLink />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
             {/* --- User Account Routes --- */}

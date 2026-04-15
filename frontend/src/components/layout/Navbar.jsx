@@ -137,7 +137,7 @@ const Navbar = () => {
                   to="/profile"
                   className="hidden rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 lg:inline-flex"
                 >
-                  Verify Email
+                  Verify Profile
                 </Link>
               )}
 

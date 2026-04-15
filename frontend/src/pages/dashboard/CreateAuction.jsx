@@ -88,7 +88,7 @@ const CreateAuction = () => {
     event.preventDefault();
 
     if (!user?.emailVerified) {
-      toast.error('Verify your email from Profile before submitting a listing.');
+      toast.error('Verify your profile from the Profile page before submitting a listing.');
       return;
     }
 

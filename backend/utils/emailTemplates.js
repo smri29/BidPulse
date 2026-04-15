@@ -55,6 +55,35 @@ const templates = {
       accent: '#2563eb',
     }),
 
+  profileVerificationOtp: ({ otp }) =>
+    wrapEmail({
+      title: 'Verify Your BidPulse Profile',
+      subtitle: 'Use this one-time code to complete your account verification',
+      body: `<p>Your profile verification code:</p>
+             <div style="font-size:30px;font-weight:800;letter-spacing:6px;color:#0f6fff;background:#eff6ff;padding:12px 16px;border-radius:12px;display:inline-block;">${otp}</div>
+             <p style="margin-top:14px;">Code expires in 5 minutes.</p>`,
+      accent: '#2563eb',
+    }),
+
+  profileVerificationLink: ({ verificationUrl }) =>
+    wrapEmail({
+      title: 'Complete Your Profile Verification',
+      subtitle: 'Use the secure link below to confirm your identity details',
+      body: `<p>Your profile details are ready for confirmation.</p>
+             <p><a href="${verificationUrl}" style="display:inline-block;background:#0f6fff;color:#ffffff;padding:12px 18px;border-radius:12px;font-weight:700;text-decoration:none;">Verify My Profile</a></p>
+             <p style="margin-top:14px;">This verification link expires in 5 minutes.</p>`,
+      accent: '#2563eb',
+    }),
+
+  profileVerified: ({ name, clientUrl }) =>
+    wrapEmail({
+      title: `Profile Verified, ${name}`,
+      subtitle: 'Your BidPulse account is now ready for bidding and selling',
+      body: `<p>Your profile verification is complete.</p>
+             <p><a href="${clientUrl}" style="color:#0f6fff;font-weight:700;text-decoration:none;">Open BidPulse</a> to start exploring auctions.</p>`,
+      accent: '#059669',
+    }),
+
   supportCreated: ({ ticketId }) =>
     wrapEmail({
       title: 'Support Ticket Received',
