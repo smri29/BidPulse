@@ -1,10 +1,11 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Info, Sparkles, UploadCloud, XCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { createAuction, reset } from '../../redux/auctionSlice';
 import { addNotification } from '../../redux/notificationSlice';
+import TurnstileWidget from '../../components/ui/TurnstileWidget';
 
 const CATEGORY_OPTIONS = [
   'Electronics',
@@ -34,11 +35,14 @@ const CreateAuction = () => {
     registrationTestMinutes: '',
   });
   const [imageFiles, setImageFiles] = useState([]);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileRef = useRef(null);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { isLoading } = useSelector((state) => state.auction);
+  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
   const previews = useMemo(() => imageFiles.map((file) => URL.createObjectURL(file)), [imageFiles]);
 
@@ -93,6 +97,11 @@ const CreateAuction = () => {
       return;
     }
 
+    if (!turnstileToken) {
+      toast.error('Please complete the human verification challenge.');
+      return;
+    }
+
     const payload = new FormData();
     payload.append('title', formData.title.trim());
     payload.append('description', formData.description.trim());
@@ -103,6 +112,7 @@ const CreateAuction = () => {
     } else {
       payload.append('registrationWindowDays', String(formData.registrationWindowDays));
     }
+    payload.append('turnstileToken', turnstileToken);
     imageFiles.forEach((file) => payload.append('images', file));
 
     dispatch(createAuction(payload))
@@ -118,6 +128,8 @@ const CreateAuction = () => {
         navigate('/dashboard/seller');
       })
       .catch((error) => {
+        setTurnstileToken('');
+        turnstileRef.current?.reset();
         const msg = error || 'Failed to submit listing';
         toast.error(msg);
         dispatch(addNotification({
@@ -130,20 +142,20 @@ const CreateAuction = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 py-10">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div className="bg-white rounded-2xl border border-emerald-100 shadow-xl overflow-hidden">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6">
+        <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-xl">
           <div className="bg-gradient-to-r from-emerald-700 to-teal-700 px-6 py-5 text-white">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
+            <h1 className="flex items-center gap-2 text-2xl font-bold">
               <Sparkles size={20} /> Submit Product Listing
             </h1>
-            <p className="text-sm text-emerald-100 mt-1">
+            <p className="mt-1 text-sm text-emerald-100">
               BidPulse will inspect and verify this product before publishing it in Future Bids.
             </p>
           </div>
 
           <div className="p-6 sm:p-8">
             <form onSubmit={onSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Field label="Product Title" required>
                   <input
                     type="text"
@@ -160,7 +172,7 @@ const CreateAuction = () => {
                     name="category"
                     value={formData.category}
                     onChange={onChange}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-white"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5"
                   >
                     {CATEGORY_OPTIONS.map((category) => (
                       <option key={category} value={category}>
@@ -183,7 +195,7 @@ const CreateAuction = () => {
                 />
               </Field>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Field label="Starting Bid (USD)" required>
                   <input
                     type="number"
@@ -201,7 +213,7 @@ const CreateAuction = () => {
                     name="registrationWindowDays"
                     value={formData.registrationTestMinutes ? 'test' : formData.registrationWindowDays}
                     onChange={onChange}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-white"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5"
                   >
                     <option value="test">5 minutes (test mode)</option>
                     <option value="1">1 day</option>
@@ -215,22 +227,22 @@ const CreateAuction = () => {
               </div>
 
               <Field label="Upload Images (1 to 3)" required>
-                <label className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition">
-                  <UploadCloud size={26} className="text-emerald-700 mb-2" />
+                <label className="flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center transition hover:border-emerald-400 hover:bg-emerald-50">
+                  <UploadCloud size={26} className="mb-2 text-emerald-700" />
                   <span className="text-sm font-medium text-gray-800">Choose images</span>
-                  <span className="text-xs text-gray-500 mt-1">JPG/PNG/WebP, max 5MB each</span>
+                  <span className="mt-1 text-xs text-gray-500">JPG/PNG/WebP, max 5MB each</span>
                   <input type="file" accept="image/*" multiple className="hidden" onChange={onSelectImages} />
                 </label>
 
                 {previews.length > 0 && (
-                  <div className="grid grid-cols-3 gap-3 mt-3">
+                  <div className="mt-3 grid grid-cols-3 gap-3">
                     {previews.map((src, index) => (
-                      <div key={`${src}-${index}`} className="relative rounded-lg overflow-hidden border border-gray-200">
+                      <div key={`${src}-${index}`} className="relative overflow-hidden rounded-lg border border-gray-200">
                         <img src={src} alt={`preview-${index + 1}`} className="h-28 w-full object-cover" />
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-black/80"
+                          className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
                         >
                           <XCircle size={14} />
                         </button>
@@ -240,15 +252,31 @@ const CreateAuction = () => {
                 )}
               </Field>
 
-              <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800 flex items-start gap-2">
+              <div className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
                 <Info size={14} className="mt-0.5 shrink-0" />
                 If your product is verified and sold, BidPulse charges a 5% commission on the winning amount.
               </div>
 
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="mb-3">
+                  <p className="text-sm font-semibold text-slate-900">Cloudflare Verification</p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Complete the human check before submitting your product for review.
+                  </p>
+                </div>
+                <TurnstileWidget
+                  ref={turnstileRef}
+                  siteKey={turnstileSiteKey}
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken('')}
+                  onError={() => setTurnstileToken('')}
+                />
+              </div>
+
               <button
                 type="submit"
-                disabled={isLoading || !user?.emailVerified}
-                className="w-full rounded-lg bg-emerald-700 text-white font-semibold py-3 hover:bg-emerald-800 disabled:opacity-60"
+                disabled={isLoading || !user?.emailVerified || !turnstileToken}
+                className="w-full rounded-lg bg-emerald-700 py-3 font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
               >
                 {isLoading ? 'Submitting...' : 'Submit for Verification'}
               </button>
@@ -262,13 +290,12 @@ const CreateAuction = () => {
 
 const Field = ({ label, required, children }) => (
   <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+    <label className="mb-1.5 block text-sm font-medium text-gray-700">
       {label}
-      {required ? <span className="text-red-500 ml-1">*</span> : null}
+      {required ? <span className="ml-1 text-red-500">*</span> : null}
     </label>
     {children}
   </div>
 );
 
 export default CreateAuction;
-

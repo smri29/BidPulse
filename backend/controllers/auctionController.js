@@ -3,6 +3,7 @@ const User = require('../models/User');
 const { sendEmailAsync } = require('../utils/emailService');
 const templates = require('../utils/emailTemplates');
 const cloudinary = require('../config/cloudinary');
+const { validateTurnstileToken } = require('../utils/turnstile');
 
 const REGISTRATION_WINDOWS = [24, 120, 192, 240, 360, 480];
 const REGISTRATION_DAYS = [1, 5, 8, 10, 15, 20];
@@ -333,11 +334,30 @@ exports.getAuctionById = async (req, res) => {
 };
 
 exports.createAuction = async (req, res) => {
-  const { title, description, category, startingPrice } = req.body;
+  const { title, description, category, startingPrice, turnstileToken } = req.body;
 
   try {
     if (!req.user.emailVerified) {
       return res.status(403).json({ message: 'Please verify your email before submitting listings.' });
+    }
+
+    const remoteip =
+      req.headers['cf-connecting-ip'] ||
+      String(req.headers['x-forwarded-for'] || '')
+        .split(',')
+        .map((item) => item.trim())
+        .find(Boolean) ||
+      req.ip;
+
+    const turnstileValidation = await validateTurnstileToken({
+      token: turnstileToken || req.body['cf-turnstile-response'],
+      remoteip,
+    });
+
+    if (!turnstileValidation.success) {
+      return res
+        .status(turnstileValidation.status)
+        .json({ message: turnstileValidation.message, errorCodes: turnstileValidation.errorCodes });
     }
 
     const parsedWindow = resolveRegistrationWindowHours(req.body);
