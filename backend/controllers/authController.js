@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const archiver = require('archiver');
 const { PassThrough } = require('stream');
 const cloudinary = require('../config/cloudinary');
+const { validateTurnstileToken } = require('../utils/turnstile');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -44,9 +45,28 @@ const sendVerificationEmail = async (user, otp) => {
 };
 
 exports.register = async (req, res) => {
-  const { name, email, mobile, password, dob, idType, idNumber, location, address } = req.body;
+  const { name, email, password, turnstileToken } = req.body;
 
   try {
+    const remoteip =
+      req.headers['cf-connecting-ip'] ||
+      String(req.headers['x-forwarded-for'] || '')
+        .split(',')
+        .map((item) => item.trim())
+        .find(Boolean) ||
+      req.ip;
+
+    const turnstileValidation = await validateTurnstileToken({
+      token: turnstileToken || req.body['cf-turnstile-response'],
+      remoteip,
+    });
+
+    if (!turnstileValidation.success) {
+      return res
+        .status(turnstileValidation.status)
+        .json({ message: turnstileValidation.message, errorCodes: turnstileValidation.errorCodes });
+    }
+
     const userExists = await User.findOne({ email });
 
     if (userExists) {
@@ -56,14 +76,8 @@ exports.register = async (req, res) => {
     const user = await User.create({
       name,
       email,
-      mobile,
       password,
       role: 'user',
-      dob,
-      idType,
-      idNumber,
-      location: location || 'Not set',
-      address: address || '',
       emailVerified: false,
     });
 

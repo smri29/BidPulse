@@ -13,6 +13,21 @@ const socialLinksSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const passwordRequirementsMessage =
+  'Password must be at least 8 characters, include 1 number, include 1 special character, and have no leading or trailing whitespace';
+
+const passwordValidator = (value) => {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  if (value !== value.trim()) {
+    return false;
+  }
+
+  return value.length >= 8 && /\d/.test(value) && /[^A-Za-z0-9]/.test(value);
+};
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -34,7 +49,11 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Please add a password'],
-    minlength: 6,
+    minlength: [8, passwordRequirementsMessage],
+    validate: {
+      validator: passwordValidator,
+      message: passwordRequirementsMessage,
+    },
     select: false,
   },
   role: {
