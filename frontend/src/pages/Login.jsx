@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -6,10 +6,14 @@ import { login, reset } from '../redux/authSlice';
 import { addNotification } from '../redux/notificationSlice';
 import { Mail, Lock, LogIn, Shield, ArrowRight } from 'lucide-react';
 import Reveal from '../components/ui/Reveal';
+import TurnstileWidget from '../components/ui/TurnstileWidget';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [turnstileToken, setTurnstileToken] = useState('');
   const { email, password } = formData;
+  const turnstileRef = useRef(null);
+  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -19,6 +23,8 @@ const Login = () => {
     if (isError && message) {
       toast.error(message, { toastId: `login-error-${message}` });
       dispatch(addNotification({ title: 'Login Failed', message, type: 'warning' }));
+      setTurnstileToken('');
+      turnstileRef.current?.reset?.();
     }
 
     if (user || isSuccess) {
@@ -35,7 +41,13 @@ const Login = () => {
 
   const onSubmit = (e) => {
     e.preventDefault();
-    dispatch(login({ email, password }));
+
+    if (!turnstileToken) {
+      toast.error('Please complete the Cloudflare verification challenge.');
+      return;
+    }
+
+    dispatch(login({ email, password, turnstileToken }));
   };
 
   return (
@@ -68,6 +80,19 @@ const Login = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
                 <input type="password" name="password" value={password} onChange={onChange} required placeholder="Password" className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 py-2.5" />
+              </div>
+
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-slate-800">Cloudflare Verification</p>
+                <p className="mt-1 text-sm text-slate-600">Complete the challenge before signing in.</p>
+                <TurnstileWidget
+                  ref={turnstileRef}
+                  siteKey={turnstileSiteKey}
+                  className="mt-4"
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken('')}
+                  onError={() => setTurnstileToken('')}
+                />
               </div>
 
               <div className="flex justify-end">

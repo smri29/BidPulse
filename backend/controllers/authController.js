@@ -103,9 +103,28 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, turnstileToken } = req.body;
 
   try {
+    const remoteip =
+      req.headers['cf-connecting-ip'] ||
+      String(req.headers['x-forwarded-for'] || '')
+        .split(',')
+        .map((item) => item.trim())
+        .find(Boolean) ||
+      req.ip;
+
+    const turnstileValidation = await validateTurnstileToken({
+      token: turnstileToken || req.body['cf-turnstile-response'],
+      remoteip,
+    });
+
+    if (!turnstileValidation.success) {
+      return res
+        .status(turnstileValidation.status)
+        .json({ message: turnstileValidation.message, errorCodes: turnstileValidation.errorCodes });
+    }
+
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPass = process.env.ADMIN_PASS;
 
