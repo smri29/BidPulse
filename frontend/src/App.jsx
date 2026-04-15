@@ -12,6 +12,7 @@ import AdminNavbar from './components/layout/AdminNavbar'; // Import AdminNavbar
 import Footer from './components/Footer'; 
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
+import FloatingSupportChat from './components/ui/FloatingSupportChat';
 
 // Lazy pages for faster initial bundle load
 const Home = lazy(() => import('./pages/Home'));
@@ -289,6 +290,7 @@ function App() {
           </Suspense>
         </main>
 
+        <FloatingSupportChat />
         <Footer />
       </div>
     </Router>
