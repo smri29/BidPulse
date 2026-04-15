@@ -50,6 +50,9 @@ const Profile = () => {
   const { user, isLoading, activity, isError, isSuccess } = useSelector((state) => state.auth);
   const [isEditing, setIsEditing] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [verificationCooldownEndsAt, setVerificationCooldownEndsAt] = useState(null);
+  const [verificationCooldownLabel, setVerificationCooldownLabel] = useState('Awaiting Verification');
+  const [verificationCountdown, setVerificationCountdown] = useState(0);
   const [verificationStep, setVerificationStep] = useState('form');
   const [otp, setOtp] = useState('');
   const [verificationForm, setVerificationForm] = useState(initialVerificationForm);
@@ -91,10 +94,31 @@ const Profile = () => {
     }
   }, [dispatch, isError, isSuccess]);
 
+  useEffect(() => {
+    if (!verificationCooldownEndsAt) {
+      setVerificationCountdown(0);
+      return undefined;
+    }
+
+    const updateCountdown = () => {
+      const remainingSeconds = Math.max(0, Math.ceil((verificationCooldownEndsAt - Date.now()) / 1000));
+      setVerificationCountdown(remainingSeconds);
+      if (remainingSeconds === 0) {
+        setVerificationCooldownEndsAt(null);
+      }
+    };
+
+    updateCountdown();
+    const intervalId = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [verificationCooldownEndsAt]);
+
   const stats = useMemo(
     () => activity?.stats || { totalListed: 0, totalPlacedBids: 0, totalWins: 0, totalLosses: 0 },
     [activity?.stats]
   );
+
+  const isVerificationCooldownActive = verificationCountdown > 0;
 
   const verificationAvatarPreview = useMemo(() => {
     if (verificationAvatarFile) {
@@ -186,6 +210,8 @@ const Profile = () => {
       .unwrap()
       .then((response) => {
         toast.success(response.message || 'Verification request created');
+        setVerificationCooldownEndsAt(Date.now() + 60 * 1000);
+        setVerificationCooldownLabel(response.verificationMethod === 'link' ? 'Link Sent' : 'Awaiting Verification');
         if (response.verificationMethod === 'otp') {
           setVerificationStep('otp');
           return;
@@ -210,6 +236,8 @@ const Profile = () => {
       })
       .catch((error) => toast.error(error || 'Unable to verify OTP'));
   };
+
+  const verificationCountdownText = formatCountdown(verificationCountdown);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
@@ -237,9 +265,19 @@ const Profile = () => {
 
             <div className="flex flex-wrap gap-2">
               {!user.emailVerified && (
-                <button onClick={openVerificationModal} className="btn-premium inline-flex items-center gap-2 px-4 py-2 text-sm" type="button">
-                  <ShieldCheck size={14} /> Verify
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={openVerificationModal}
+                    disabled={isVerificationCooldownActive}
+                    className="btn-premium inline-flex items-center gap-2 px-4 py-2 text-sm disabled:opacity-70"
+                    type="button"
+                  >
+                    <ShieldCheck size={14} /> {isVerificationCooldownActive ? verificationCooldownLabel : 'Verify'}
+                  </button>
+                  {isVerificationCooldownActive && (
+                    <span className="text-sm font-semibold text-amber-700">{verificationCountdownText}</span>
+                  )}
+                </div>
               )}
               {isEditing ? (
                 <>
@@ -285,9 +323,19 @@ const Profile = () => {
                   Complete your identity details, then verify through OTP or email link sent to your primary email address.
                 </p>
               </div>
-              <button onClick={openVerificationModal} className="inline-flex items-center justify-center rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700" type="button">
-                Start Verification
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={openVerificationModal}
+                  disabled={isVerificationCooldownActive}
+                  className="inline-flex items-center justify-center rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-70"
+                  type="button"
+                >
+                  {isVerificationCooldownActive ? verificationCooldownLabel : 'Start Verification'}
+                </button>
+                {isVerificationCooldownActive && (
+                  <span className="text-sm font-semibold text-amber-700">{verificationCountdownText}</span>
+                )}
+              </div>
             </div>
           </section>
         </Reveal>
@@ -577,6 +625,13 @@ const formatDate = (value) => {
 const formatDateTime = (value) => {
   if (!value) return 'Not available';
   return new Date(value).toLocaleString();
+};
+
+const formatCountdown = (seconds) => {
+  const safeSeconds = Math.max(0, seconds);
+  const minutes = Math.floor(safeSeconds / 60);
+  const remainingSeconds = safeSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 };
 
 export default Profile;
