@@ -43,7 +43,7 @@ const EditAuction = lazy(() => import('./pages/dashboard/EditAuction'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 import { fetchCurrentUser, forceLogout } from './redux/authSlice';
-import { addNotification } from './redux/notificationSlice';
+import { addNotification, setNotificationOwner } from './redux/notificationSlice';
 import { socketUrl } from './utils/axiosConfig';
 
 const GLOBAL_NOTIFY_EVENTS = ['BidPulse:notify', 'rizbid:notify'];
@@ -55,6 +55,10 @@ function App() {
   const lastSessionCheckRef = useRef(0);
   const SESSION_RECHECK_INTERVAL_MS = 3 * 60 * 1000;
   const isAdminSession = user?.role === 'admin';
+
+  useEffect(() => {
+    dispatch(setNotificationOwner(user || null));
+  }, [dispatch, user?._id, user?.id, user?.email, user?.role]);
 
   useEffect(() => {
     if (!user?.token) return;

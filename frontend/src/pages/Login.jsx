@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { login, reset } from '../redux/authSlice';
-import { addNotification } from '../redux/notificationSlice';
 import { Mail, Lock, LogIn, Shield, ArrowRight } from 'lucide-react';
 import Reveal from '../components/ui/Reveal';
 import TurnstileWidget from '../components/ui/TurnstileWidget';
@@ -22,7 +21,6 @@ const Login = () => {
   useEffect(() => {
     if (isError && message) {
       toast.error(message, { toastId: `login-error-${message}` });
-      dispatch(addNotification({ title: 'Login Failed', message, type: 'warning' }));
       setTurnstileToken('');
       turnstileRef.current?.reset?.();
     }

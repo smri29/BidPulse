@@ -96,7 +96,6 @@ const Register = () => {
   useEffect(() => {
     if (isError && message) {
       toast.error(message, { toastId: `register-error-${message}` });
-      dispatch(addNotification({ title: 'Registration Failed', message, type: 'warning' }));
       setTurnstileToken('');
       turnstileRef.current?.reset?.();
     }
