@@ -23,6 +23,7 @@ const serializeUser = (user) => ({
   email: user.email,
   mobile: user.mobile,
   emergencyContact: user.emergencyContact,
+  bloodGroup: user.bloodGroup,
   role: user.role,
   dob: user.dob,
   location: user.location,
@@ -433,6 +434,10 @@ exports.updateUserDetails = async (req, res) => {
       user.mobile = req.body.mobile || user.mobile;
       user.location = req.body.location || user.location;
       user.address = typeof req.body.address === 'string' ? req.body.address : user.address;
+      user.emergencyContact =
+        typeof req.body.emergencyContact === 'string' ? req.body.emergencyContact : user.emergencyContact;
+      user.bloodGroup =
+        typeof req.body.bloodGroup === 'string' ? req.body.bloodGroup : user.bloodGroup;
       user.socialLinks = {
         ...user.socialLinks,
         ...(req.body.socialLinks || {}),

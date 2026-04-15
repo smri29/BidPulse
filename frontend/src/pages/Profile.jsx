@@ -46,6 +46,8 @@ const initialVerificationForm = {
   verificationMethod: 'otp',
 };
 
+const BLOOD_GROUP_OPTIONS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
 const Profile = () => {
   const dispatch = useDispatch();
   const { user, isLoading, activity, isError, isSuccess } = useSelector((state) => state.auth);
@@ -62,6 +64,8 @@ const Profile = () => {
   const [formData, setFormData] = useState({
     name: '',
     address: '',
+    emergencyContact: '',
+    bloodGroup: '',
     socialLinks: initialSocials,
   });
 
@@ -75,6 +79,8 @@ const Profile = () => {
     setFormData({
       name: user.name || '',
       address: user.address || '',
+      emergencyContact: user.emergencyContact || '',
+      bloodGroup: user.bloodGroup || '',
       socialLinks: {
         ...initialSocials,
         ...(user.socialLinks || {}),
@@ -372,18 +378,60 @@ const Profile = () => {
             </div>
             {isEditing ? (
               <form className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <input type="text" name="name" value={formData.name} onChange={handleInput} className="rounded-lg border border-gray-300 px-3 py-2" placeholder="Full Name" />
-                  <input type="text" value={user.email} disabled className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-500" />
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                  <p className="mb-3 text-sm font-semibold text-slate-900">Basic Information</p>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <Field label="Full Name">
+                      <input type="text" name="name" value={formData.name} onChange={handleInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Full Name" />
+                    </Field>
+                    <Field label="Email Address">
+                      <input type="text" value={user.email} disabled className="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-gray-500" />
+                    </Field>
+                    <Field label="Emergency Contact">
+                      <input type="text" name="emergencyContact" value={formData.emergencyContact} onChange={handleInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Add or update emergency contact" />
+                    </Field>
+                    <Field label="Blood Group">
+                      <select name="bloodGroup" value={formData.bloodGroup} onChange={handleInput} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2">
+                        <option value="">Select blood group</option>
+                        {BLOOD_GROUP_OPTIONS.map((group) => (
+                          <option key={group} value={group}>
+                            {group}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
                 </div>
-                <textarea name="address" value={formData.address} onChange={handleInput} rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Specific address (street, apartment, landmark)" />
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <input name="facebook" value={formData.socialLinks.facebook} onChange={handleSocialInput} className="rounded-lg border border-gray-300 px-3 py-2" placeholder="Facebook URL" />
-                  <input name="instagram" value={formData.socialLinks.instagram} onChange={handleSocialInput} className="rounded-lg border border-gray-300 px-3 py-2" placeholder="Instagram URL" />
-                  <input name="x" value={formData.socialLinks.x} onChange={handleSocialInput} className="rounded-lg border border-gray-300 px-3 py-2" placeholder="X URL" />
-                  <input name="threads" value={formData.socialLinks.threads} onChange={handleSocialInput} className="rounded-lg border border-gray-300 px-3 py-2" placeholder="Threads URL" />
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                  <p className="mb-3 text-sm font-semibold text-slate-900">Address</p>
+                  <Field label="Specific Address">
+                    <textarea name="address" value={formData.address} onChange={handleInput} rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Street, apartment, landmark, or delivery notes" />
+                  </Field>
                 </div>
-                <input name="youtube" value={formData.socialLinks.youtube} onChange={handleSocialInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="YouTube URL" />
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                  <p className="mb-3 text-sm font-semibold text-slate-900">Social Profiles</p>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <Field label="Facebook">
+                      <input name="facebook" value={formData.socialLinks.facebook} onChange={handleSocialInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Facebook profile URL" />
+                    </Field>
+                    <Field label="Instagram">
+                      <input name="instagram" value={formData.socialLinks.instagram} onChange={handleSocialInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Instagram profile URL" />
+                    </Field>
+                    <Field label="X">
+                      <input name="x" value={formData.socialLinks.x} onChange={handleSocialInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="X profile URL" />
+                    </Field>
+                    <Field label="Threads">
+                      <input name="threads" value={formData.socialLinks.threads} onChange={handleSocialInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Threads profile URL" />
+                    </Field>
+                  </div>
+                  <div className="mt-4">
+                    <Field label="YouTube">
+                      <input name="youtube" value={formData.socialLinks.youtube} onChange={handleSocialInput} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="YouTube channel URL" />
+                    </Field>
+                  </div>
+                </div>
               </form>
             ) : user.emailVerified ? (
               <div className="space-y-5">
@@ -392,6 +440,7 @@ const Profile = () => {
                   <Info label="Country" value={user.location || 'Not set'} icon={<MapPin size={15} />} />
                   <Info label="Primary Contact" value={user.mobile || 'Not set'} icon={<Smartphone size={15} />} />
                   <Info label="Emergency Contact" value={user.emergencyContact || 'Not provided'} icon={<Users size={15} />} />
+                  <Info label="Blood Group" value={user.bloodGroup || 'Not provided'} icon={<BadgeAlert size={15} />} />
                   <Info label="NID / Passport Number" value={user.idNumber || 'Not set'} icon={<IdCard size={15} />} />
                   <Info label="Verified On" value={formatDateTime(user.profileVerifiedAt || user.createdAt)} icon={<Clock3 size={15} />} />
                 </div>
