@@ -2,6 +2,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, reset } from '../../redux/authSlice';
+import NotificationPopover from '../ui/NotificationPopover';
 import {
   Bell,
   ChevronDown,
@@ -52,8 +53,10 @@ const Navbar = () => {
   const unreadCount = notifications.filter((item) => !item.read).length;
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const notificationRef = useRef(null);
 
   const modeFromPath = getModeFromPath(location.pathname);
   const preferredMode = useMemo(() => readPreferredMode(), []);
@@ -67,11 +70,15 @@ const Navbar = () => {
 
   useEffect(() => {
     setIsDropdownOpen(false);
+    setIsNotificationOpen(false);
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setIsNotificationOpen(false);
+      }
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
@@ -85,6 +92,7 @@ const Navbar = () => {
     dispatch(logout());
     dispatch(reset());
     setIsDropdownOpen(false);
+    setIsNotificationOpen(false);
     setIsMobileMenuOpen(false);
     navigate('/');
   };
@@ -142,14 +150,23 @@ const Navbar = () => {
                 {isSellerMode ? 'Switch to Buying' : 'Switch to Selling'}
               </button>
 
-              <Link to="/notifications" className="relative rounded-full p-2 text-slate-500 hover:bg-white hover:text-bid-purple">
-                <Bell size={19} />
-                {unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border border-white bg-red-500 px-1 text-[10px] font-bold text-white">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </Link>
+              <div className="relative" ref={notificationRef}>
+                <button
+                  onClick={() => setIsNotificationOpen((prev) => !prev)}
+                  className="relative rounded-full p-2 text-slate-500 hover:bg-white hover:text-bid-purple"
+                  type="button"
+                  aria-label="Open notifications"
+                >
+                  <Bell size={19} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border border-white bg-red-500 px-1 text-[10px] font-bold text-white">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {isNotificationOpen && <NotificationPopover onClose={() => setIsNotificationOpen(false)} />}
+              </div>
 
               <div className="relative hidden md:block" ref={dropdownRef}>
                 <button

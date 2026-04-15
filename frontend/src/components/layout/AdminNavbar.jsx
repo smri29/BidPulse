@@ -2,6 +2,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, reset } from '../../redux/authSlice';
+import NotificationPopover from '../ui/NotificationPopover';
 import {
   Bell,
   ChevronDown,
@@ -32,16 +33,22 @@ const AdminNavbar = () => {
   const unreadCount = notifications.filter((item) => !item.read).length;
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const notificationRef = useRef(null);
 
   useEffect(() => {
     setIsDropdownOpen(false);
+    setIsNotificationOpen(false);
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setIsNotificationOpen(false);
+      }
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
@@ -54,6 +61,8 @@ const AdminNavbar = () => {
   const onLogout = () => {
     dispatch(logout());
     dispatch(reset());
+    setIsDropdownOpen(false);
+    setIsNotificationOpen(false);
     navigate('/');
   };
 
@@ -82,16 +91,24 @@ const AdminNavbar = () => {
             );
           })}
 
-          <Link to="/notifications" className="admin-nav-link relative rounded-lg px-3 py-2 text-sm font-semibold">
-            <span className="inline-flex items-center gap-2">
-              <Bell size={16} /> Notifications
-            </span>
-            {unreadCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                {unreadCount > 9 ? '9+' : unreadCount}
+          <div className="relative" ref={notificationRef}>
+            <button
+              onClick={() => setIsNotificationOpen((prev) => !prev)}
+              className="admin-nav-link relative rounded-lg px-3 py-2 text-sm font-semibold"
+              type="button"
+            >
+              <span className="inline-flex items-center gap-2">
+                <Bell size={16} /> Notifications
               </span>
-            )}
-          </Link>
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {isNotificationOpen && <NotificationPopover onClose={() => setIsNotificationOpen(false)} variant="admin" />}
+          </div>
 
           <Link to="/" className="admin-live-link px-3 py-2 text-sm">
             Live Site
