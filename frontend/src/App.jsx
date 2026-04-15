@@ -18,7 +18,6 @@ import FloatingSupportChat from './components/ui/FloatingSupportChat';
 const Home = lazy(() => import('./pages/Home'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
-const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AuctionDetails = lazy(() => import('./pages/AuctionDetails'));
 const About = lazy(() => import('./pages/About'));
 const HowItWorks = lazy(() => import('./pages/HowItWorks'));
@@ -185,7 +184,6 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/auction/:id" element={<AuctionDetails />} />
             <Route path="/about" element={<About />} />
             <Route path="/how-it-works" element={<HowItWorks />} />

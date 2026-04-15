@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { login, reset } from '../redux/authSlice';
-import { Mail, Lock, LogIn, Shield, ArrowRight } from 'lucide-react';
+import { Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
 import Reveal from '../components/ui/Reveal';
 import TurnstileWidget from '../components/ui/TurnstileWidget';
 
@@ -104,12 +104,6 @@ const Login = () => {
             <div className="mt-6 text-center text-sm">
               <span className="text-slate-500">New here? </span>
               <Link to="/register" className="font-semibold text-bid-purple hover:underline">Create account</Link>
-            </div>
-
-            <div className="mt-6 border-t border-slate-100 pt-6 text-center">
-              <Link to="/admin-login" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800">
-                <Shield size={12} /> Admin Access
-              </Link>
             </div>
           </div>
         </div>
