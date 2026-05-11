@@ -4,8 +4,10 @@ import { Bell, CheckCircle, AlertTriangle, Clock, DollarSign } from 'lucide-reac
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { markAllNotificationsRead, markNotificationRead } from '../../redux/notificationSlice';
-
-const DISMISSED_STORAGE_PREFIX = 'AuctionPulse_notificationPopoverHidden';
+import {
+  persistDismissedNotificationIds,
+  readDismissedNotificationIds,
+} from '../../utils/notificationPopover';
 
 const iconForType = (type) => {
   if (type === 'success') return <CheckCircle size={16} />;
@@ -19,26 +21,14 @@ const toneForType = (type) => {
   return 'bg-blue-100 text-blue-600';
 };
 
-const getDismissedStorageKey = (ownerKey) =>
-  `${DISMISSED_STORAGE_PREFIX}:${ownerKey || 'guest'}`;
-
-const readDismissedNotifications = (ownerKey) => {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(getDismissedStorageKey(ownerKey)) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-
 const NotificationPopover = ({ onClose, variant = 'default' }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items: notifications, ownerKey } = useSelector((state) => state.notifications);
-  const [dismissedIds, setDismissedIds] = useState(() => readDismissedNotifications(ownerKey));
+  const [dismissedIds, setDismissedIds] = useState(() => readDismissedNotificationIds(ownerKey));
 
   useEffect(() => {
-    setDismissedIds(readDismissedNotifications(ownerKey));
+    setDismissedIds(readDismissedNotificationIds(ownerKey));
   }, [ownerKey]);
 
   const unreadCount = notifications.filter((item) => !item.read).length;
@@ -61,7 +51,7 @@ const NotificationPopover = ({ onClose, variant = 'default' }) => {
 
   const persistDismissed = (nextDismissedIds) => {
     setDismissedIds(nextDismissedIds);
-    localStorage.setItem(getDismissedStorageKey(ownerKey), JSON.stringify(nextDismissedIds));
+    persistDismissedNotificationIds(ownerKey, nextDismissedIds);
   };
 
   const dismissFromPopover = (notificationId) => {

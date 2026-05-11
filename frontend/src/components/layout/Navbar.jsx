@@ -4,6 +4,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout, reset } from '../../redux/authSlice';
 import NotificationPopover from '../ui/NotificationPopover';
 import {
+  NOTIFICATION_POPOVER_EVENT,
+  readDismissedNotificationIds,
+} from '../../utils/notificationPopover';
+import {
   Bell,
   ChevronDown,
   LayoutDashboard,
@@ -49,8 +53,13 @@ const Navbar = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const notifications = useSelector((state) => state.notifications.items);
-  const unreadCount = notifications.filter((item) => !item.read).length;
+  const { items: notifications, ownerKey } = useSelector((state) => state.notifications);
+  const [dismissedNotificationIds, setDismissedNotificationIds] = useState(() =>
+    readDismissedNotificationIds(ownerKey)
+  );
+  const unreadCount = notifications.filter(
+    (item) => !item.read && !dismissedNotificationIds.includes(item.id)
+  ).length;
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -73,6 +82,19 @@ const Navbar = () => {
     setIsNotificationOpen(false);
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    setDismissedNotificationIds(readDismissedNotificationIds(ownerKey));
+
+    const handleDismissedChange = (event) => {
+      if (event.detail?.ownerKey === ownerKey) {
+        setDismissedNotificationIds(event.detail.ids || []);
+      }
+    };
+
+    window.addEventListener(NOTIFICATION_POPOVER_EVENT, handleDismissedChange);
+    return () => window.removeEventListener(NOTIFICATION_POPOVER_EVENT, handleDismissedChange);
+  }, [ownerKey]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
