@@ -30,6 +30,7 @@ const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const [selectedUserReport, setSelectedUserReport] = useState(null);
   const [isReportLoading, setIsReportLoading] = useState(false);
@@ -61,9 +62,15 @@ const AdminUsers = () => {
 
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter((u) => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q));
-  }, [users, search]);
+    return users.filter((u) => {
+      const matchesQuery = !q || u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q);
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'active' && !u.isBanned) ||
+        (statusFilter === 'banned' && u.isBanned);
+      return matchesQuery && matchesStatus;
+    });
+  }, [search, statusFilter, users]);
 
   const userMetrics = useMemo(() => {
     const total = users.length;
@@ -138,20 +145,14 @@ const AdminUsers = () => {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <Reveal>
         <section className="premium-panel rounded-2xl p-6 mb-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div>
               <h1 className="flex items-center gap-2 text-3xl font-bold text-slate-900">
                 <Users className="text-bid-purple" /> User Management
               </h1>
-              <p className="mt-1 text-sm text-slate-600">Monitor account health, investigate user activity, and enforce platform policy.</p>
-            </div>
-            <div className="w-full lg:w-80">
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
-                placeholder="Search user name or email"
-              />
+              <p className="mt-1 max-w-2xl text-sm text-slate-600">
+                Review user roles, investigate activity history, and enforce account policy from one cleaner control view.
+              </p>
             </div>
           </div>
 
@@ -167,13 +168,91 @@ const AdminUsers = () => {
 
       <Reveal delay={70}>
         <section className="premium-panel rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="border-b border-slate-200 bg-slate-50/80 p-4">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.8fr)_220px]">
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-sm"
+                  placeholder="Search by user name or email"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"
+              >
+                <option value="all">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="banned">Banned</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid gap-4 p-4 lg:hidden">
+            {filteredUsers.map((u) => (
+              <div
+                key={u._id}
+                className={`rounded-2xl border p-4 shadow-sm ${u.isBanned ? 'border-red-200 bg-red-50/70' : 'border-slate-200 bg-white'}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-sm font-bold text-slate-700">
+                        {u.name?.charAt(0)?.toUpperCase() || 'U'}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-bold text-slate-900">{u.name}</p>
+                        <p className="truncate text-xs text-slate-500">{u.email}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <RoleBadge role={u.role} />
+                </div>
+
+                <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-xs">
+                  <span className="font-medium text-slate-500">Status</span>
+                  <StatusBadge isBanned={u.isBanned} />
+                </div>
+
+                <p className="mt-3 truncate text-[11px] text-slate-400">ID: {u._id}</p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {u.role !== 'admin' ? (
+                    <>
+                      <ActionButton onClick={() => handleViewHistory(u._id)} tone="soft" title="View Activity Log">
+                        <Eye size={16} />
+                      </ActionButton>
+                      <ActionButton
+                        onClick={() => handleBanUser(u._id)}
+                        tone={u.isBanned ? 'success' : 'warning'}
+                        title={u.isBanned ? 'Unban User' : 'Ban User'}
+                      >
+                        {u.isBanned ? <Unlock size={16} /> : <Ban size={16} />}
+                      </ActionButton>
+                      <ActionButton onClick={() => handleDeleteUser(u._id)} tone="danger" title="Delete User">
+                        <Trash2 size={16} />
+                      </ActionButton>
+                    </>
+                  ) : (
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
+                      Protected account
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto lg:block">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
                 <tr>
-                  <th className="p-4">User Details</th>
+                  <th className="p-4">Account</th>
                   <th className="p-4">Role</th>
-                  <th className="p-4">Contact</th>
+                  <th className="p-4">Email</th>
                   <th className="p-4">Status</th>
                   <th className="p-4 text-center">Actions</th>
                 </tr>
@@ -182,41 +261,37 @@ const AdminUsers = () => {
                 {filteredUsers.map((u) => (
                   <tr key={u._id} className={`${u.isBanned ? 'bg-red-50/60' : 'hover:bg-slate-50/70'}`}>
                     <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <div className="font-bold text-slate-900 text-base">{u.name}</div>
-                        {u.isBanned && (
-                          <span className="text-[10px] font-bold bg-red-600 text-white px-2 py-0.5 rounded-full">BANNED</span>
-                        )}
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-sm font-bold text-slate-700">
+                          {u.name?.charAt(0)?.toUpperCase() || 'U'}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-bold text-slate-900 text-base">{u.name}</div>
+                          <div className="text-xs text-slate-400 font-mono truncate">ID: {u._id}</div>
+                        </div>
                       </div>
-                      <div className="text-xs text-slate-400 font-mono">ID: {u._id}</div>
                     </td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold border ${u.role === 'admin' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'}`}>
-                        {u.role}
-                      </span>
-                    </td>
+                    <td className="p-4"><RoleBadge role={u.role} /></td>
                     <td className="p-4 text-slate-600">
                       <div className="flex items-center gap-2"><Mail size={14} className="text-slate-400" /> {u.email}</div>
                     </td>
-                    <td className="p-4">
-                      {u.isBanned ? (
-                        <span className="flex items-center gap-1 text-red-600 font-bold text-xs"><Ban size={14} /> Suspended</span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-emerald-600 font-bold text-xs"><CheckCircle size={14} /> Active</span>
-                      )}
-                    </td>
+                    <td className="p-4"><StatusBadge isBanned={u.isBanned} /></td>
                     <td className="p-4 text-center">
                       {u.role !== 'admin' ? (
                         <div className="flex justify-center gap-2">
-                          <motion.button whileHover={{ y: -1 }} onClick={() => handleViewHistory(u._id)} className="btn-soft p-2 text-blue-700" title="View Activity Log" type="button">
+                          <ActionButton onClick={() => handleViewHistory(u._id)} tone="soft" title="View Activity Log">
                             <Eye size={18} />
-                          </motion.button>
-                          <motion.button whileHover={{ y: -1 }} onClick={() => handleBanUser(u._id)} className={`p-2 rounded-lg transition text-white ${u.isBanned ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-amber-500 hover:bg-amber-600'}`} title={u.isBanned ? 'Unban' : 'Ban'} type="button">
+                          </ActionButton>
+                          <ActionButton
+                            onClick={() => handleBanUser(u._id)}
+                            tone={u.isBanned ? 'success' : 'warning'}
+                            title={u.isBanned ? 'Unban User' : 'Ban User'}
+                          >
                             {u.isBanned ? <Unlock size={18} /> : <Ban size={18} />}
-                          </motion.button>
-                          <motion.button whileHover={{ y: -1 }} onClick={() => handleDeleteUser(u._id)} className="p-2 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition" title="Delete" type="button">
+                          </ActionButton>
+                          <ActionButton onClick={() => handleDeleteUser(u._id)} tone="danger" title="Delete User">
                             <Trash2 size={18} />
-                          </motion.button>
+                          </ActionButton>
                         </div>
                       ) : (
                         <span className="text-xs text-slate-300 select-none">Protected</span>
@@ -227,6 +302,12 @@ const AdminUsers = () => {
               </tbody>
             </table>
           </div>
+
+          {filteredUsers.length === 0 && (
+            <div className="p-10 text-center text-sm text-slate-500">
+              No users matched the current search and filter settings.
+            </div>
+          )}
         </section>
       </Reveal>
 
@@ -295,6 +376,50 @@ const AdminUsers = () => {
         document.body
       )}
     </div>
+  );
+};
+
+const RoleBadge = ({ role }) => (
+  <span
+    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${
+      role === 'admin'
+        ? 'border-red-200 bg-red-100 text-red-800'
+        : 'border-emerald-200 bg-emerald-100 text-emerald-800'
+    }`}
+  >
+    {role}
+  </span>
+);
+
+const StatusBadge = ({ isBanned }) =>
+  isBanned ? (
+    <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+      <Ban size={13} /> Suspended
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+      <CheckCircle size={13} /> Active
+    </span>
+  );
+
+const ActionButton = ({ children, onClick, title, tone }) => {
+  const toneClassMap = {
+    soft: 'btn-soft text-blue-700',
+    success: 'bg-emerald-500 text-white hover:bg-emerald-600',
+    warning: 'bg-amber-500 text-white hover:bg-amber-600',
+    danger: 'border border-red-200 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white',
+  };
+
+  return (
+    <motion.button
+      whileHover={{ y: -1 }}
+      onClick={onClick}
+      className={`rounded-xl p-2 transition ${toneClassMap[tone] || toneClassMap.soft}`}
+      title={title}
+      type="button"
+    >
+      {children}
+    </motion.button>
   );
 };
 

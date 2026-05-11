@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
-  Shield,
   Users,
   DollarSign,
   Briefcase,
@@ -106,16 +105,8 @@ const AdminDashboard = () => {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <Reveal>
-        <section className="premium-panel rounded-2xl p-6 mb-8">
-          <div className="flex items-center gap-4">
-            <div className="rounded-xl border border-red-200 bg-red-100 p-3 shadow-sm">
-              <Shield className="h-8 w-8 text-red-600" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">Admin Control Tower</h1>
-              <p className="text-slate-600 text-sm">Platform overview, liquidity tracking, and auction health in one place.</p>
-            </div>
-          </div>
+        <section className="mb-6">
+          <h1 className="text-3xl font-bold text-slate-900">Admin Panel</h1>
         </section>
       </Reveal>
 
