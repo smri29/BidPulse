@@ -94,9 +94,10 @@ const AdminAuctions = () => {
       const { data } = await axios.get(`/auctions/${auctionId}`);
       setSelectedAuction(data);
       const hours = Number(data.registrationWindowHours) || 24;
+      const testMinutes = hours < 1 ? String(Math.round(hours * 60)) : '';
       const days = Math.round(hours / 24);
       setRegistrationWindowDays(String(REGISTRATION_DAY_OPTIONS.includes(days) ? days : 1));
-      setRegistrationTestMinutes(hours < 1 ? '5' : '');
+      setRegistrationTestMinutes(testMinutes === '2' || testMinutes === '5' ? testMinutes : '');
       setCustomEndAt('');
       setDisapproveReason('');
     } catch (_error) {
@@ -299,10 +300,10 @@ const AdminAuctions = () => {
                   </p>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     <select
-                      value={registrationTestMinutes ? 'test' : registrationWindowDays}
+                      value={registrationTestMinutes ? `test-${registrationTestMinutes}` : registrationWindowDays}
                       onChange={(e) => {
-                        if (e.target.value === 'test') {
-                          setRegistrationTestMinutes('5');
+                        if (e.target.value === 'test-2' || e.target.value === 'test-5') {
+                          setRegistrationTestMinutes(e.target.value === 'test-2' ? '2' : '5');
                           return;
                         }
                         setRegistrationTestMinutes('');
@@ -310,7 +311,8 @@ const AdminAuctions = () => {
                       }}
                       className="rounded-lg border border-slate-300 px-3 py-2"
                     >
-                      <option value="test">5 minutes (test mode)</option>
+                      <option value="test-2">2 minutes (test mode)</option>
+                      <option value="test-5">5 minutes (test mode)</option>
                       {REGISTRATION_DAY_OPTIONS.map((days) => (
                         <option key={days} value={days}>{days} day{days > 1 ? 's' : ''}</option>
                       ))}

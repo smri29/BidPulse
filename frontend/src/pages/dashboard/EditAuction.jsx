@@ -62,13 +62,18 @@ const EditAuction = () => {
           return;
         }
 
+        const testMinutes =
+          (auction.registrationWindowHours || 24) < 1
+            ? String(Math.round((auction.registrationWindowHours || 24) * 60))
+            : '';
+
         setFormData({
           title: auction.title || '',
           description: auction.description || '',
           category: auction.category || 'Electronics',
           startingPrice: String(auction.startingPrice || ''),
           registrationWindowDays: String(Math.round((auction.registrationWindowHours || 24) / 24)),
-          registrationTestMinutes: (auction.registrationWindowHours || 24) < 1 ? '5' : '',
+          registrationTestMinutes: testMinutes === '2' || testMinutes === '5' ? testMinutes : '',
         });
         setExistingImages(auction.images || []);
       } catch (error) {
@@ -84,8 +89,12 @@ const EditAuction = () => {
   const onChange = (event) => {
     const { name, value } = event.target;
     if (name === 'registrationWindowDays') {
-      if (value === 'test') {
-        setFormData((prev) => ({ ...prev, registrationWindowDays: '1', registrationTestMinutes: '5' }));
+      if (value === 'test-2' || value === 'test-5') {
+        setFormData((prev) => ({
+          ...prev,
+          registrationWindowDays: '1',
+          registrationTestMinutes: value === 'test-2' ? '2' : '5',
+        }));
         return;
       }
       setFormData((prev) => ({ ...prev, registrationWindowDays: value, registrationTestMinutes: '' }));
@@ -200,11 +209,16 @@ const EditAuction = () => {
             <Field label="Registration Period">
               <select
                 name="registrationWindowDays"
-                value={formData.registrationTestMinutes ? 'test' : formData.registrationWindowDays}
+                value={
+                  formData.registrationTestMinutes
+                    ? `test-${formData.registrationTestMinutes}`
+                    : formData.registrationWindowDays
+                }
                 onChange={onChange}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-white"
               >
-                <option value="test">5 minutes (test mode)</option>
+                <option value="test-2">2 minutes (test mode)</option>
+                <option value="test-5">5 minutes (test mode)</option>
                 <option value="1">1 day</option>
                 <option value="5">5 days</option>
                 <option value="8">8 days</option>
