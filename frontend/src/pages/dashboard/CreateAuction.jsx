@@ -6,22 +6,7 @@ import { toast } from 'react-toastify';
 import { createAuction, reset } from '../../redux/auctionSlice';
 import { addNotification } from '../../redux/notificationSlice';
 import TurnstileWidget from '../../components/ui/TurnstileWidget';
-
-const CATEGORY_OPTIONS = [
-  'Electronics',
-  'Smartphones & Tablets',
-  'Computers & Accessories',
-  'Gaming',
-  'Fashion',
-  'Sneakers',
-  'Luxury Watches',
-  'Jewelry',
-  'Art & Collectibles',
-  'Automotive',
-  'Home & Decor',
-  'Industrial Equipment',
-  'Other',
-];
+import { AUCTION_CATEGORY_OPTIONS } from '../../constants/auctionCategories';
 
 const MAX_IMAGES = 3;
 
@@ -178,7 +163,7 @@ const CreateAuction = () => {
                     onChange={onChange}
                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5"
                   >
-                    {CATEGORY_OPTIONS.map((category) => (
+                    {AUCTION_CATEGORY_OPTIONS.map((category) => (
                       <option key={category} value={category}>
                         {category}
                       </option>

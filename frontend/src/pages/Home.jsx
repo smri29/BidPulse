@@ -8,7 +8,7 @@ import axios from '../utils/axiosConfig';
 import { getAllAuctions } from '../redux/auctionSlice';
 import AuctionCard from '../components/cards/AuctionCard';
 import Reveal from '../components/ui/Reveal';
-import AnimatedNumber from '../components/ui/AnimatedNumber';
+import { AUCTION_CATEGORY_OPTIONS } from '../constants/auctionCategories';
 
 const WATCHLIST_KEY = 'AuctionPulse_watchlist';
 const LEGACY_WATCHLIST_KEY = 'rizbid_watchlist';
@@ -46,25 +46,6 @@ const loadWatchlist = () => {
   }
 };
 
-const deriveSummaryFromAuctions = (auctions = []) => {
-  const byStatus = auctions.reduce((acc, auction) => {
-    const key = auction.status || 'unknown';
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
-
-  return {
-    liveListings: Number(byStatus.ongoing || 0),
-    futureBids: Number(byStatus.future || 0),
-    closed:
-      Number(byStatus.completed || 0) +
-      Number(byStatus.paid_shipping_pending || 0) +
-      Number(byStatus.paid_held_in_escrow || 0) +
-      Number(byStatus.closed || 0),
-    totalListings: auctions.length,
-  };
-};
-
 const Home = () => {
   const dispatch = useDispatch();
   const { auctions, isLoading } = useSelector((state) => state.auction);
@@ -75,12 +56,6 @@ const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [watchlist, setWatchlist] = useState(() => loadWatchlist());
   const [heroMessageIndex, setHeroMessageIndex] = useState(0);
-  const [summary, setSummary] = useState({
-    liveListings: 0,
-    futureBids: 0,
-    closed: 0,
-    totalListings: 0,
-  });
 
   useEffect(() => {
     dispatch(getAllAuctions({ includeBids: false, includeRegistrations: true, force: true, limit: 200 }));
@@ -98,44 +73,8 @@ const Home = () => {
     return () => window.clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
-    const derived = deriveSummaryFromAuctions(auctions);
-    setSummary((prev) => ({
-      ...prev,
-      ...derived,
-    }));
-  }, [auctions]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadSummary = async () => {
-      try {
-        const { data } = await axios.get('/auctions/summary/stats');
-        if (!mounted) return;
-
-        setSummary({
-          liveListings: Number(data.liveListings || 0),
-          futureBids: Number(data.futureBids || 0),
-          closed: Number(data.closed || 0),
-          totalListings: Number(data.totalListings || 0),
-        });
-      } catch (_error) {
-        // Fallback to locally derived counts already set from /auctions list.
-      }
-    };
-
-    loadSummary();
-    const intervalId = window.setInterval(loadSummary, 45000);
-
-    return () => {
-      mounted = false;
-      window.clearInterval(intervalId);
-    };
-  }, []);
-
   const categories = useMemo(() => {
-    const set = new Set(['All']);
+    const set = new Set(['All', ...AUCTION_CATEGORY_OPTIONS]);
     auctions.forEach((item) => item.category && set.add(item.category));
     return [...set];
   }, [auctions]);
@@ -189,13 +128,7 @@ const Home = () => {
 
           <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center">
             <div className="space-y-4 lg:col-span-7">
-              <p className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-700">
-                Verified Premium Auction Network
-              </p>
-
-              <h1 className="text-3xl font-extrabold leading-tight text-bid-dark md:text-5xl">
-                AuctionPulse Live Engine
-              </h1>
+              <h1 className="text-3xl font-extrabold leading-tight text-bid-dark md:text-5xl">AuctionPulse</h1>
 
               <div className="h-12 md:h-14">
                 <AnimatePresence mode="wait">
@@ -224,12 +157,6 @@ const Home = () => {
 
             <div className="grid grid-cols-1 gap-4 lg:col-span-5">
               <InteractivePulseVisual />
-              <div className="grid grid-cols-2 gap-3">
-                <StatTile label="Live Listings" value={summary.liveListings} />
-                <StatTile label="Upcoming Auctions" value={summary.futureBids} />
-                <StatTile label="Closed" value={summary.closed} />
-                <StatTile label="Tracked" value={watchlist.length} />
-              </div>
             </div>
           </div>
         </section>
@@ -339,13 +266,6 @@ const Home = () => {
     </div>
   );
 };
-
-const StatTile = ({ label, value }) => (
-  <motion.div whileHover={{ y: -3 }} className="surface-card rounded-2xl px-4 py-3 text-slate-900">
-    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</p>
-    <AnimatedNumber value={value} className="mt-1 block text-2xl font-extrabold text-bid-dark" />
-  </motion.div>
-);
 
 const InteractivePulseVisual = () => {
   const pointerX = useMotionValue(0);

@@ -1,59 +1,94 @@
-﻿import React from 'react';
-import { AlertTriangle, Eye, Lock, ShieldCheck } from 'lucide-react';
+import React from 'react';
+import { motion } from 'motion/react';
+import {
+  AlertTriangle,
+  Eye,
+  Lock,
+  MailCheck,
+  ShieldCheck,
+  UserRoundCheck,
+} from 'lucide-react';
 import Reveal from '../components/ui/Reveal';
+
+const safeguards = [
+  {
+    icon: <UserRoundCheck className="text-blue-500" />,
+    title: 'Layered Verification',
+    desc:
+      'Turnstile protection, profile verification, age checks, and email-based confirmation help reduce spam, bots, and low-trust participation.',
+  },
+  {
+    icon: <Lock className="text-indigo-500" />,
+    title: 'Managed Settlement',
+    desc:
+      'Payment and fulfillment are not left loose. AuctionPulse manages verified listing closure, payment state, and order completion in a more controlled flow.',
+  },
+  {
+    icon: <Eye className="text-cyan-500" />,
+    title: 'Verified Listing Oversight',
+    desc:
+      'Listings pass through review before they become upcoming auctions, helping prevent misleading or unsafe products from appearing publicly.',
+  },
+  {
+    icon: <MailCheck className="text-emerald-500" />,
+    title: 'Traceable Communication',
+    desc:
+      'Critical events such as verification, support updates, shipping progress, and promotional messaging follow structured notification and email systems.',
+  },
+  {
+    icon: <AlertTriangle className="text-amber-500" />,
+    title: 'Dispute Support',
+    desc:
+      'If delivery fails or listing quality becomes questionable, support can review records tied to registration, payment, and fulfillment activity.',
+  },
+];
 
 const Safety = () => {
   return (
-    <div className="py-16">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+    <div className="relative overflow-hidden py-16">
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.12),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_30%),linear-gradient(180deg,_rgba(248,250,252,0.98),_rgba(236,253,245,0.92))]" />
+
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center">
-          <div className="mb-4 inline-flex items-center justify-center rounded-full bg-emerald-100 p-3">
-            <ShieldCheck className="h-10 w-10 text-emerald-600" />
-          </div>
-          <h1 className="text-4xl font-extrabold text-bid-dark">Trust & Safety</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-            Security is core to every AuctionPulse transaction. Here is how we protect buyers and sellers.
+          <motion.div
+            animate={{ y: [0, -5, 0] }}
+            transition={{ repeat: Infinity, duration: 4.8, ease: 'easeInOut' }}
+            className="mb-4 inline-flex items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 p-4 text-white shadow-xl shadow-emerald-500/20"
+          >
+            <ShieldCheck className="h-9 w-9" />
+          </motion.div>
+          <h1 className="text-4xl font-extrabold tracking-tight text-bid-dark md:text-5xl">
+            Safety designed into the auction flow
+          </h1>
+          <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-slate-600">
+            AuctionPulse combines identity checks, listing review, payment isolation, and support
+            traceability so both buyers and sellers move through a more disciplined marketplace.
           </p>
         </Reveal>
 
-        <div className="mt-10 space-y-5">
-          <Reveal delay={40}>
-            <SafetyCard
-              icon={<Lock className="text-blue-500" />}
-              title="Managed Settlement"
-              desc="When payment is completed, AuctionPulse settles seller payout and takes direct shipping responsibility for the verified product."
-            />
-          </Reveal>
-          <Reveal delay={90}>
-            <SafetyCard
-              icon={<Eye className="text-indigo-500" />}
-              title="Verified Transactions"
-              desc="All payments are processed by Stripe. Card data is never stored on AuctionPulse servers."
-            />
-          </Reveal>
-          <Reveal delay={130}>
-            <SafetyCard
-              icon={<AlertTriangle className="text-amber-500" />}
-              title="Dispute Resolution"
-              desc="If delivery fails or a listing mismatch occurs, our support team investigates with verification and fulfillment records."
-            />
-          </Reveal>
+        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {safeguards.map((item, index) => (
+            <Reveal key={item.title} delay={index * 55}>
+              <motion.section
+                whileHover={{ y: -4 }}
+                className="surface-card flex h-full gap-4 rounded-3xl p-6"
+              >
+                <div className="mt-1 flex-shrink-0">
+                  <div className="rounded-2xl bg-white p-3 shadow-sm">
+                    {React.cloneElement(item.icon, { size: 24 })}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-7 text-slate-600">{item.desc}</p>
+                </div>
+              </motion.section>
+            </Reveal>
+          ))}
         </div>
       </div>
     </div>
   );
 };
-
-const SafetyCard = ({ icon, title, desc }) => (
-  <div className="surface-card hover-lift flex gap-5 rounded-2xl p-6">
-    <div className="mt-1 flex-shrink-0">
-      <div className="rounded-full bg-white p-3 shadow-sm">{React.cloneElement(icon, { size: 24 })}</div>
-    </div>
-    <div>
-      <h3 className="mb-2 text-xl font-bold text-slate-900">{title}</h3>
-      <p className="leading-relaxed text-slate-600">{desc}</p>
-    </div>
-  </div>
-);
 
 export default Safety;
