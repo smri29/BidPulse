@@ -70,7 +70,7 @@ const AdminNavbar = () => {
     <nav className="admin-navbar sticky top-0 z-50">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/dashboard/admin" className="inline-flex items-center gap-2.5">
-          <img src="/BidPulse.svg" alt="BidPulse" className="h-8 w-auto" />
+          <img src="/AuctionPulse.png" alt="AuctionPulse" className="h-8 w-8 rounded-full object-cover" />
           <span className="admin-badge inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider">
             <Shield size={11} /> Admin
           </span>

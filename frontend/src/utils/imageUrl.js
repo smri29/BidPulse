@@ -1,4 +1,4 @@
-﻿const DEFAULT_AUCTION_IMAGE = 'https://via.placeholder.com/900x600?text=BidPulse+Listing';
+const DEFAULT_AUCTION_IMAGE = 'https://via.placeholder.com/900x600?text=AuctionPulse+Listing';
 
 export const toSafeImageUrl = (rawUrl) => {
   if (!rawUrl || typeof rawUrl !== 'string') return DEFAULT_AUCTION_IMAGE;

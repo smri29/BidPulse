@@ -116,7 +116,7 @@ const AdminAuctions = () => {
       const { data } = await axios.put(`/admin/auctions/${selectedAuction._id}/approve`, payload, config);
       setAuctions((prev) => prev.map((item) => (item._id === selectedAuction._id ? { ...item, ...data } : item)));
       setSelectedAuction((prev) => ({ ...prev, ...data }));
-      toast.success('Listing approved and moved to Future Bids');
+      toast.success('Listing approved and moved to upcoming auctions');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Approval failed');
     }

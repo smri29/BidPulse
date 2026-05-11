@@ -24,7 +24,7 @@ const protect = async (req, res, next) => {
              legacyId: 'static_admin_id_999',
              isStaticAdmin: true,
              name: 'Super Admin',
-             email: process.env.ADMIN_EMAIL || 'admin@BidPulse.local',
+             email: process.env.ADMIN_EMAIL || 'admin@AuctionPulse.local',
              role: 'admin',
              emailVerified: true,
           };

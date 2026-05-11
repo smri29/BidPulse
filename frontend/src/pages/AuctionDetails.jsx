@@ -179,7 +179,7 @@ const AuctionDetails = () => {
   };
 
   const handleConfirmReceived = async () => {
-    if (!window.confirm('Confirm that you received the product from BidPulse?')) return;
+    if (!window.confirm('Confirm that you received the product from AuctionPulse?')) return;
 
     try {
       await axios.post(`/payment/confirm-received/${id}`, {}, { headers: { Authorization: `Bearer ${user.token}` } });
@@ -254,7 +254,7 @@ const AuctionDetails = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                <div className="text-xs text-gray-500 mb-1">Current Highest Bid</div>
+                <div className="text-xs text-gray-500 mb-1">Current Highest Offer</div>
                 <div className="text-3xl font-bold text-bid-purple flex items-center">
                   <DollarSign size={24} strokeWidth={3} />
                   {auction.currentPrice}
@@ -291,7 +291,7 @@ const AuctionDetails = () => {
               {myRegistration && <p>Your registration number: #{myRegistration.sequence}</p>}
               {auction.status === 'ongoing' && (
                 <p>
-                  Active bidders: {auction.activeBidders?.map((bidder) => bidder.name).join(' vs ') || 'TBD'}
+                  Active participants: {auction.activeBidders?.map((bidder) => bidder.name).join(' vs ') || 'TBD'}
                 </p>
               )}
               {auction.status === 'disapproved' && auction.verificationNote ? (
@@ -300,17 +300,17 @@ const AuctionDetails = () => {
             </div>
 
             <div className="mb-6">
-              <h3 className="font-semibold text-gray-900 mb-2">Bid History</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Offer History</h3>
               <div className="space-y-2 max-h-44 overflow-y-auto pr-2">
                 {auction.bids?.length > 0 ? (
                   [...auction.bids].reverse().map((bid, index) => (
                     <div key={index} className="flex justify-between text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                      <span>{bid.bidder?.name || 'Bidder'}</span>
+                      <span>{bid.bidder?.name || 'Participant'}</span>
                       <span className="font-bold">${bid.amount}</span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-400 text-sm">No bids yet.</p>
+                  <p className="text-gray-400 text-sm">No offers yet.</p>
                 )}
               </div>
             </div>
@@ -319,19 +319,19 @@ const AuctionDetails = () => {
           <div className="mt-8 space-y-3">
             {canRegister && (
               <button onClick={handleRegister} className="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700 transition">
-                Register For Bidding
+                Register For Auction
               </button>
             )}
 
             {auction.status === 'future' && isRegistered && (
               <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg text-emerald-800 text-sm">
-                Registered successfully. Reminder email will be sent 5 minutes before bidding starts.
+                Registered successfully. Reminder email will be sent 5 minutes before the auction goes live.
               </div>
             )}
 
             {auction.status === 'ongoing' && !isRegistered && (
               <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg text-blue-800 text-sm">
-                Spectator mode enabled. You can watch this live bidding session.
+                Spectator mode enabled. You can watch this live auction session.
               </div>
             )}
 
@@ -346,7 +346,7 @@ const AuctionDetails = () => {
                   required
                 />
                 <button type="submit" className="bg-bid-purple text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition">
-                  Bid
+                  Place Offer
                 </button>
               </form>
             )}
@@ -365,7 +365,7 @@ const AuctionDetails = () => {
 
             {auction.status === 'no_registrations' && isOwner && (
               <div className="space-y-3 bg-amber-50 border border-amber-200 p-4 rounded-lg">
-                <p className="text-sm text-amber-900">No bidder registrations found. Choose next step:</p>
+                <p className="text-sm text-amber-900">No participant registrations found. Choose the next step:</p>
                 <button
                   onClick={() => handleNoRegistrationDecision('withdraw')}
                   className="w-full bg-gray-900 text-white py-2.5 rounded-lg font-semibold"
@@ -401,7 +401,7 @@ const AuctionDetails = () => {
                 <div className="bg-blue-50 border border-blue-200 p-6 rounded-xl text-center">
                   <Package className="mx-auto h-8 w-8 text-blue-600 mb-2" />
                   <h3 className="text-lg font-bold text-blue-800 mb-1">Shipping in Progress</h3>
-                  <p className="text-sm text-blue-700 mb-3">BidPulse will deliver within 7-14 days.</p>
+                  <p className="text-sm text-blue-700 mb-3">AuctionPulse will deliver within 7-14 days.</p>
                   <button onClick={handleConfirmReceived} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition w-full">
                     Product Received
                   </button>

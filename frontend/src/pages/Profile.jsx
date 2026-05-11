@@ -337,7 +337,7 @@ const Profile = () => {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-amber-800">
-                  <BadgeAlert size={16} /> Verify your profile before you bid or create listings
+                  <BadgeAlert size={16} /> Verify your profile before joining auctions or creating listings
                 </p>
                 <p className="text-sm text-amber-700">
                   Complete your identity details, then verify through OTP or email link sent to your primary email address.
@@ -558,7 +558,7 @@ const Profile = () => {
                 <ShieldCheck className="mx-auto mb-3 text-slate-400" size={28} />
                 <p className="text-sm font-semibold text-slate-800">Your profile verification is pending</p>
                 <p className="mt-2 text-sm text-slate-600">
-                  Complete your identity details to unlock bidding and selling on BidPulse.
+                  Complete your identity details to unlock auction participation and selling on AuctionPulse.
                 </p>
               </div>
             )}
@@ -588,7 +588,7 @@ const Profile = () => {
               <h3 className="mb-4 text-sm font-semibold text-gray-900">Activity Snapshot</h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <Metric label="Listed" value={stats.totalListed} />
-                <Metric label="Placed Bids" value={stats.totalPlacedBids} />
+                <Metric label="Offers Placed" value={stats.totalPlacedBids} />
                 <Metric label="Wins" value={stats.totalWins} />
                 <Metric label="Losses" value={stats.totalLosses} />
               </div>
@@ -599,7 +599,7 @@ const Profile = () => {
 
       <Reveal delay={140} className="mt-6">
         <section className="premium-panel rounded-2xl p-6">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">Recent Bid Activity</h2>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">Recent Auction Activity</h2>
           <div className="max-h-80 space-y-3 overflow-y-auto">
             {activity?.history?.placedBids?.length ? (
               activity.history.placedBids.map((item) => (

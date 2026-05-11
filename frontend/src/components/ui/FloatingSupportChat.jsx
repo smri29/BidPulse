@@ -8,7 +8,7 @@ import { socketUrl } from '../../utils/axiosConfig';
 const createWelcomeMessage = () => ({
   id: 'floating-support-welcome',
   role: 'system',
-  name: 'BidPulse Bot',
+  name: 'AuctionPulse Bot',
   message: 'Welcome to live support. Send a message and our team can reply from the help desk.',
   createdAt: new Date().toISOString(),
 });
@@ -16,7 +16,7 @@ const createWelcomeMessage = () => ({
 const normalizeMessage = (payload, fallbackRole = 'user') => ({
   id: payload?.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
   role: payload?.role || fallbackRole,
-  name: payload?.name || (fallbackRole === 'system' ? 'BidPulse Bot' : 'Support'),
+  name: payload?.name || (fallbackRole === 'system' ? 'AuctionPulse Bot' : 'Support'),
   message: payload?.message || '',
   createdAt: payload?.createdAt || new Date().toISOString(),
 });
@@ -155,7 +155,7 @@ const FloatingSupportChat = () => {
                   <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/10">
                     <LifeBuoy size={16} />
                   </span>
-                  BidPulse Support
+                  AuctionPulse Support
                 </div>
                 <p className="mt-2.5 text-[13px] leading-5 text-slate-200">
                   Ask a quick question here or continue in the full help center.
@@ -207,7 +207,7 @@ const FloatingSupportChat = () => {
                     >
                       <div className="mb-1.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
                         {isUser ? <User size={11} /> : <Bot size={11} />}
-                        {msg.name || (isSystem ? 'BidPulse Bot' : 'Support')}
+                        {msg.name || (isSystem ? 'AuctionPulse Bot' : 'Support')}
                       </div>
                       <p className="leading-5">{msg.message}</p>
                     </div>
@@ -255,7 +255,7 @@ const FloatingSupportChat = () => {
         </span>
         <span className="text-left leading-tight">
           <span className="block">Live Support</span>
-          <span className="block text-[11px] font-medium text-slate-300">Chat with BidPulse</span>
+          <span className="block text-[11px] font-medium text-slate-300">Chat with AuctionPulse</span>
         </span>
       </button>
     </div>

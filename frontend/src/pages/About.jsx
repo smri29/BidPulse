@@ -9,13 +9,13 @@ const About = () => {
         <Reveal>
           <section className="premium-panel rounded-3xl p-8 text-center sm:p-12">
             <p className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-700">
-              About BidPulse
+              About AuctionPulse
             </p>
             <h1 className="mt-4 text-4xl font-extrabold text-bid-dark md:text-5xl">
-              Premium Bidding, Built on Trust
+              Premium Auctions, Built on Trust
             </h1>
             <p className="mx-auto mt-4 max-w-3xl text-slate-600">
-              BidPulse is a verified auction network where every listing is physically checked and every transaction follows transparent, structured bidding.
+              AuctionPulse is a verified auction network where every listing is physically checked and every transaction follows transparent, structured auction participation.
             </p>
           </section>
         </Reveal>
@@ -25,8 +25,8 @@ const About = () => {
             <section className="surface-card rounded-3xl p-7 sm:p-8">
               <h2 className="text-2xl font-bold text-slate-900">Our Mission</h2>
               <p className="mt-4 leading-relaxed text-slate-600">
-                At BidPulse, every product has a real market story. Our mission is to run auctions with integrity by verifying listings, validating participants,
-                and enabling confident decisions in live bidding.
+                At AuctionPulse, every product has a real market story. Our mission is to run auctions with integrity by verifying listings, validating participants,
+                and enabling confident decisions in live auction sessions.
               </p>
               <p className="mt-4 leading-relaxed text-slate-600">
                 Since 2025, we have focused on reducing risk in digital auctions through office verification, transparent registration flow, and managed fulfillment

@@ -265,7 +265,7 @@ exports.confirmCheckoutSuccess = async (req, res) => {
       {
         type: 'success',
         title: 'Payment Completed',
-        message: `Payment completed for "${auction.title}". BidPulse shipping is now in progress.`,
+        message: `Payment completed for "${auction.title}". AuctionPulse shipping is now in progress.`,
         auctionId: auction._id.toString(),
       },
       {
@@ -417,7 +417,7 @@ exports.confirmProductReceived = async (req, res) => {
     if (adminEmail) {
       sendEmailAsync({
         email: adminEmail,
-        subject: `BidPulse order closed: ${auction.title}`,
+        subject: `AuctionPulse order closed: ${auction.title}`,
         message: templates.productReceivedConfirmed({ title: auction.title }),
       });
     }

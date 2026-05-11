@@ -12,7 +12,7 @@ const TEST_REGISTRATION_MINUTES = [5];
 const uploadAuctionImages = async (files) => {
   if (!files?.length) return [];
 
-  const folder = process.env.CLOUDINARY_FOLDER || 'BidPulse';
+  const folder = process.env.CLOUDINARY_FOLDER || 'AuctionPulse';
   const uploads = files.map(
     (file) =>
       new Promise((resolve, reject) => {

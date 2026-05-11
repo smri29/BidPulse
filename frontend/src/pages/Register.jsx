@@ -180,7 +180,7 @@ const Register = () => {
                   <Sparkles className="h-4 w-4" /> MODERN ACCOUNT ACCESS
                 </div>
                 <h1 className="max-w-sm text-4xl font-bold leading-[1.04] text-white md:text-[2.55rem] xl:text-[2.9rem]">
-                  Join BidPulse with a faster, cleaner signup flow.
+                  Join AuctionPulse with a faster, cleaner signup flow.
                 </h1>
                 <p className="mt-5 max-w-md text-lg leading-8 text-slate-100">
                   Create your account with the essentials now. Profile verification details can be completed later, without slowing down onboarding.

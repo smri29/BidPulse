@@ -46,8 +46,8 @@ import { fetchCurrentUser, forceLogout } from './redux/authSlice';
 import { addNotification, setNotificationOwner } from './redux/notificationSlice';
 import { socketUrl } from './utils/axiosConfig';
 
-const GLOBAL_NOTIFY_EVENTS = ['BidPulse:notify', 'rizbid:notify'];
-const AUTH_EXPIRED_EVENTS = ['BidPulse:auth-expired', 'RiZBiD:auth-expired'];
+const GLOBAL_NOTIFY_EVENTS = ['AuctionPulse:notify', 'BidPulse:notify', 'rizbid:notify'];
+const AUTH_EXPIRED_EVENTS = ['AuctionPulse:auth-expired', 'BidPulse:auth-expired', 'RiZBiD:auth-expired'];
 
 function App() {
   const dispatch = useDispatch();
@@ -200,7 +200,7 @@ function App() {
             <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
             <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
 
-            {/* --- Protected Bidder Routes --- */}
+            {/* --- Protected Buyer Routes --- */}
             <Route 
               path="/dashboard/bidder" 
               element={

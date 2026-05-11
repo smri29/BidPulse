@@ -149,7 +149,7 @@ const CreateAuction = () => {
               <Sparkles size={20} /> Submit Product Listing
             </h1>
             <p className="mt-1 text-sm text-emerald-100">
-              BidPulse will inspect and verify this product before publishing it in Future Bids.
+              AuctionPulse will inspect and verify this product before publishing it in upcoming auctions.
             </p>
           </div>
 
@@ -196,7 +196,7 @@ const CreateAuction = () => {
               </Field>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Field label="Starting Bid (USD)" required>
+                <Field label="Starting Price (USD)" required>
                   <input
                     type="number"
                     name="startingPrice"
@@ -254,7 +254,7 @@ const CreateAuction = () => {
 
               <div className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
                 <Info size={14} className="mt-0.5 shrink-0" />
-                If your product is verified and sold, BidPulse charges a 5% commission on the winning amount.
+                If your product is verified and sold, AuctionPulse charges a 5% commission on the final sale amount.
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">

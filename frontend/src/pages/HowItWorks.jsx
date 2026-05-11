@@ -22,19 +22,19 @@ const buyerSteps = [
   {
     icon: <Gavel />,
     title: 'Register First',
-    desc: 'Join Future Bids during fixed registration windows and secure your queue position.',
+    desc: 'Join upcoming auctions during fixed registration windows and secure your queue position.',
     tone: 'from-indigo-600 to-blue-500',
   },
   {
     icon: <CreditCard />,
     title: 'Secure Pay',
-    desc: 'Checkout with Stripe. BidPulse settles seller payout after successful payment.',
+    desc: 'Checkout with Stripe. AuctionPulse settles seller payout after successful payment.',
     tone: 'from-emerald-600 to-teal-500',
   },
   {
     icon: <CheckCircle />,
     title: 'Confirm Receipt',
-    desc: 'BidPulse ships in 7-14 days; winner confirms product receipt to close the order.',
+    desc: 'AuctionPulse ships in 7-14 days; winner confirms product receipt to close the order.',
     tone: 'from-green-600 to-emerald-500',
   },
 ];
@@ -49,19 +49,19 @@ const sellerSteps = [
   {
     icon: <TrendingUp />,
     title: 'Open Registration',
-    desc: 'After approval, listing appears in Future Bids for bidder registration.',
+    desc: 'After approval, the listing appears in upcoming auctions for participant registration.',
     tone: 'from-blue-700 to-indigo-600',
   },
   {
     icon: <Package />,
     title: 'Complete Sale',
-    desc: 'Winner pays, seller receives net amount, and BidPulse handles shipment.',
+    desc: 'Winner pays, seller receives net amount, and AuctionPulse handles shipment.',
     tone: 'from-amber-500 to-orange-500',
   },
   {
     icon: <DollarSign />,
     title: 'Get Payout',
-    desc: 'BidPulse keeps 5% commission and settles seller payout immediately after payment.',
+    desc: 'AuctionPulse keeps 5% commission and settles seller payout immediately after payment.',
     tone: 'from-emerald-600 to-lime-500',
   },
 ];
@@ -71,7 +71,7 @@ const HowItWorks = () => {
     <div className="py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center">
-          <h1 className="text-4xl font-extrabold text-bid-dark md:text-5xl">How BidPulse Works</h1>
+          <h1 className="text-4xl font-extrabold text-bid-dark md:text-5xl">How AuctionPulse Works</h1>
           <p className="mx-auto mt-3 max-w-2xl text-slate-600">
             One secure auction engine for buyers, sellers, and admins with confidence at every stage.
           </p>

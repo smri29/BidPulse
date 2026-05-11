@@ -10,21 +10,21 @@ import AuctionCard from '../components/cards/AuctionCard';
 import Reveal from '../components/ui/Reveal';
 import AnimatedNumber from '../components/ui/AnimatedNumber';
 
-const WATCHLIST_KEY = 'BidPulse_watchlist';
+const WATCHLIST_KEY = 'AuctionPulse_watchlist';
 const LEGACY_WATCHLIST_KEY = 'rizbid_watchlist';
 
 const HERO_MESSAGES = [
   'Verified Auction Intelligence',
-  'Queue-Based Live Bidding',
+  'Queue-Based Live Auctions',
   'Managed Fulfillment You Can Trust',
 ];
 
 const PHASES = [
-  { id: 'future', label: 'Future Bids', statuses: ['future'] },
-  { id: 'ongoing', label: 'Ongoing Bids', statuses: ['ongoing'] },
+  { id: 'future', label: 'Upcoming Auctions', statuses: ['future'] },
+  { id: 'ongoing', label: 'Live Auctions', statuses: ['ongoing'] },
   {
     id: 'previous',
-    label: 'Previous Bids',
+    label: 'Past Auctions',
     statuses: ['completed', 'paid_shipping_pending', 'paid_held_in_escrow', 'closed', 'no_registrations', 'withdrawn', 'disapproved'],
   },
 ];
@@ -163,7 +163,7 @@ const Home = () => {
 
   const registerForBid = async (auctionId) => {
     if (!user?.token) {
-      toast.error('Login required to register for bidding');
+      toast.error('Login required to register for this auction');
       return;
     }
 
@@ -194,7 +194,7 @@ const Home = () => {
               </p>
 
               <h1 className="text-3xl font-extrabold leading-tight text-bid-dark md:text-5xl">
-                BidPulse Live Engine
+                AuctionPulse Live Engine
               </h1>
 
               <div className="h-12 md:h-14">
@@ -226,7 +226,7 @@ const Home = () => {
               <InteractivePulseVisual />
               <div className="grid grid-cols-2 gap-3">
                 <StatTile label="Live Listings" value={summary.liveListings} />
-                <StatTile label="Future Bids" value={summary.futureBids} />
+                <StatTile label="Upcoming Auctions" value={summary.futureBids} />
                 <StatTile label="Closed" value={summary.closed} />
                 <StatTile label="Tracked" value={watchlist.length} />
               </div>
@@ -244,7 +244,7 @@ const Home = () => {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search bids by title or description"
+                placeholder="Search auctions by title or description"
                 className="w-full rounded-xl border border-slate-200 bg-white/90 py-2.5 pl-9 pr-3"
               />
             </div>
@@ -323,10 +323,10 @@ const Home = () => {
       <Reveal delay={160} className="mt-12">
         <section className="surface-card overflow-hidden rounded-2xl">
           <div className="flex items-center gap-2 border-b border-slate-200 bg-white px-6 py-4 text-sm font-semibold text-slate-800">
-            <MapPin size={16} className="text-bid-purple" /> BidPulse Office Location - Dhanmondi, Dhaka, Bangladesh
+            <MapPin size={16} className="text-bid-purple" /> AuctionPulse Office Location - Dhanmondi, Dhaka, Bangladesh
           </div>
           <iframe
-            title="BidPulse location in Dhanmondi, Dhaka, Bangladesh"
+            title="AuctionPulse location in Dhanmondi, Dhaka, Bangladesh"
             src="https://www.google.com/maps?q=Dhanmondi,+Dhaka,+Bangladesh&output=embed"
             className="h-80 w-full"
             loading="lazy"
@@ -335,7 +335,7 @@ const Home = () => {
         </section>
       </Reveal>
 
-      <p className="mt-4 text-xs text-slate-500">Platform commission: 5% from winning amount after successful completion.</p>
+      <p className="mt-4 text-xs text-slate-500">Platform commission: 5% from the final sale amount after successful completion.</p>
     </div>
   );
 };

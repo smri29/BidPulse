@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const STORAGE_KEY_PREFIX = 'BidPulse_notifications';
+const STORAGE_KEY_PREFIX = 'AuctionPulse_notifications';
 const LEGACY_STORAGE_KEY = 'RiZBiD_notifications';
 const GUEST_OWNER_KEY = 'guest';
 

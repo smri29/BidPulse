@@ -17,7 +17,7 @@ import {
 
 const SELLER_MODE_PATHS = ['/dashboard/seller', '/create-auction', '/edit-auction'];
 const BIDDER_MODE_PATHS = ['/dashboard/bidder', '/auction'];
-const MODE_KEY = 'BidPulse_dashboard_mode';
+const MODE_KEY = 'AuctionPulse_dashboard_mode';
 const LEGACY_MODE_KEY = 'RiZBiD_dashboard_mode';
 
 const NAV_LINKS = [
@@ -107,9 +107,9 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 border-b border-white/70 bg-white/82 shadow-[0_18px_35px_-28px_rgba(9,24,56,0.95)] backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="inline-flex items-center gap-2.5">
-          <img src="/BidPulse.svg" alt="BidPulse" className="h-10 w-auto" />
+          <img src="/AuctionPulse.png" alt="AuctionPulse" className="h-10 w-10 rounded-full object-cover" />
           <span className="text-lg font-extrabold tracking-tight bg-gradient-to-r from-blue-700 via-indigo-600 to-cyan-500 bg-clip-text text-transparent text-shimmer">
-            BidPulse
+            AuctionPulse
           </span>
         </Link>
 

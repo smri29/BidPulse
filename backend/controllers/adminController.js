@@ -226,7 +226,7 @@ exports.sendTestEmail = async (_req, res) => {
 
   sendEmailAsync({
     email: targetEmail,
-    subject: 'BidPulse Email Health Check',
+    subject: 'AuctionPulse Email Health Check',
     message: templates.welcome({ name: 'Admin', clientUrl: process.env.CLIENT_URL }),
   });
 

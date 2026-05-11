@@ -59,7 +59,7 @@ const BidderDashboard = () => {
   }, [auctions, registeredFuture.length]);
 
   if (isLoading) {
-    return <div className="p-10 text-center text-slate-500">Loading bidder analytics...</div>;
+    return <div className="p-10 text-center text-slate-500">Loading buyer analytics...</div>;
   }
 
   return (
@@ -67,8 +67,8 @@ const BidderDashboard = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal>
           <section className="premium-panel rounded-2xl p-6 mb-8">
-            <h1 className="text-3xl font-bold text-slate-900">Bidder Dashboard</h1>
-            <p className="mt-1 text-sm text-slate-600">Track registrations, join live turns quickly, and monitor your win momentum.</p>
+            <h1 className="text-3xl font-bold text-slate-900">Buyer Dashboard</h1>
+            <p className="mt-1 text-sm text-slate-600">Track registrations, join live sessions quickly, and monitor your win momentum.</p>
 
             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <MetricCard label="Future Registrations" value={registeredFuture.length} icon={<Clock3 size={16} />} tone="blue" />
@@ -96,7 +96,7 @@ const BidderDashboard = () => {
 
         <Reveal delay={60}>
           <Section
-            title="Future Bids You Registered"
+            title="Upcoming Auctions You Registered"
             emptyText="No future registrations yet."
             items={registeredFuture}
             tagTone="bg-blue-100 text-blue-700"
@@ -105,7 +105,7 @@ const BidderDashboard = () => {
 
         <Reveal delay={90}>
           <Section
-            title="Ongoing Bids You Can Join"
+            title="Live Auctions You Can Join"
             emptyText="No ongoing sessions for you right now."
             items={activeSessions}
             highlightLive
@@ -115,8 +115,8 @@ const BidderDashboard = () => {
 
         <Reveal delay={120}>
           <Section
-            title="Previous / Won Bids History"
-            emptyText="No bidding history yet."
+            title="Previous / Won Auction History"
+            emptyText="No auction history yet."
             items={previousParticipations}
             tagTone="bg-indigo-100 text-indigo-700"
           />
@@ -155,7 +155,7 @@ const Section = ({ title, items, emptyText, highlightLive = false, tagTone = 'bg
               <p className="text-sm text-slate-600">
                 Current: <span className="font-semibold text-emerald-700">${auction.currentPrice}</span>
               </p>
-              <p className="mt-2 text-xs text-slate-500">Registered bidders: {auction.registrations?.length || 0}</p>
+              <p className="mt-2 text-xs text-slate-500">Registered participants: {auction.registrations?.length || 0}</p>
               <div className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-blue-700">
                 <Eye size={14} /> Open Details
               </div>

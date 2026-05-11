@@ -33,7 +33,7 @@ const emitGlobalNotification = (detail) => {
     createdAt: detail.createdAt || new Date().toISOString(),
   };
 
-  dispatchWindowEvent('BidPulse:notify', payload);
+  dispatchWindowEvent('AuctionPulse:notify', payload);
   dispatchWindowEvent('rizbid:notify', payload);
 };
 
@@ -105,14 +105,14 @@ instance.interceptors.response.use(
       localStorage.removeItem('user');
       const now = Date.now();
       const lastEventAt = Number(
-        sessionStorage.getItem('BidPulse_auth_expired_at') ||
+        sessionStorage.getItem('AuctionPulse_auth_expired_at') ||
           sessionStorage.getItem('rizbid_auth_expired_at') ||
           0
       );
       if (now - lastEventAt > 2000) {
-        sessionStorage.setItem('BidPulse_auth_expired_at', String(now));
+        sessionStorage.setItem('AuctionPulse_auth_expired_at', String(now));
         sessionStorage.setItem('rizbid_auth_expired_at', String(now));
-        dispatchWindowEvent('BidPulse:auth-expired');
+        dispatchWindowEvent('AuctionPulse:auth-expired');
         dispatchWindowEvent('RiZBiD:auth-expired');
       }
     }

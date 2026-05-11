@@ -12,7 +12,7 @@ const Safety = () => {
           </div>
           <h1 className="text-4xl font-extrabold text-bid-dark">Trust & Safety</h1>
           <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-            Security is core to every BidPulse transaction. Here is how we protect buyers and sellers.
+            Security is core to every AuctionPulse transaction. Here is how we protect buyers and sellers.
           </p>
         </Reveal>
 
@@ -21,14 +21,14 @@ const Safety = () => {
             <SafetyCard
               icon={<Lock className="text-blue-500" />}
               title="Managed Settlement"
-              desc="When payment is completed, BidPulse settles seller payout and takes direct shipping responsibility for the verified product."
+              desc="When payment is completed, AuctionPulse settles seller payout and takes direct shipping responsibility for the verified product."
             />
           </Reveal>
           <Reveal delay={90}>
             <SafetyCard
               icon={<Eye className="text-indigo-500" />}
               title="Verified Transactions"
-              desc="All payments are processed by Stripe. Card data is never stored on BidPulse servers."
+              desc="All payments are processed by Stripe. Card data is never stored on AuctionPulse servers."
             />
           </Reveal>
           <Reveal delay={130}>

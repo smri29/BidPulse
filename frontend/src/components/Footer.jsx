@@ -13,12 +13,12 @@ const Footer = () => {
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             <div className="space-y-4 lg:col-span-5">
               <Link to="/" className="inline-flex items-center gap-2.5">
-                <img src="/BidPulse.svg" alt="BidPulse" className="h-10 w-auto" />
-                <span className="text-xl font-extrabold text-white">BidPulse</span>
+                <img src="/AuctionPulse.png" alt="AuctionPulse" className="h-10 w-10 rounded-full object-cover" />
+                <span className="text-xl font-extrabold text-white">AuctionPulse</span>
               </Link>
 
               <p className="max-w-md text-sm leading-relaxed text-slate-200">
-                Premium, trust-first bidding with verified listings, transparent price movement, and managed fulfillment.
+                Premium, trust-first auctions with verified listings, transparent price movement, and managed fulfillment.
               </p>
 
               <div className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-800/70 px-3 py-1 text-xs font-semibold text-slate-100">
@@ -52,7 +52,7 @@ const Footer = () => {
             <div className="lg:col-span-3">
               <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-white">Get Started</h3>
               <p className="mb-4 text-sm text-slate-200">
-                Join BidPulse to register for upcoming auctions and receive live bid notifications.
+                Join AuctionPulse to register for upcoming auctions and receive live auction notifications.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Link to="/register" className="btn-premium px-4 py-2 text-sm">Create Account</Link>
@@ -63,7 +63,7 @@ const Footer = () => {
         </div>
 
         <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-slate-800 pt-6 text-xs text-slate-400 md:flex-row">
-          <p>&copy; {new Date().getFullYear()} BidPulse Inc. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} AuctionPulse Inc. All rights reserved.</p>
           <p>Built for transparent, premium digital commerce.</p>
         </div>
       </div>

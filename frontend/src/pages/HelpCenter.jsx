@@ -16,7 +16,7 @@ const HelpCenter = () => {
     {
       id: 'welcome',
       role: 'system',
-      name: 'BidPulse Bot',
+      name: 'AuctionPulse Bot',
       message: 'Welcome to live support. An admin can join this chat shortly.',
       createdAt: new Date().toISOString(),
     },
@@ -64,11 +64,11 @@ const HelpCenter = () => {
       },
       {
         q: 'Is there a fee for selling?',
-        a: 'BidPulse charges 5% commission on completed sales. If no one registers, withdrawal fee is $9.99 or relisting fee is $14.99.',
+        a: 'AuctionPulse charges 5% commission on completed sales. If no one registers, the withdrawal fee is $9.99 or the relisting fee is $14.99.',
       },
       {
-        q: 'Can I cancel a bid?',
-        a: 'Bids are binding. For input errors, contact support immediately with auction ID and bid amount.',
+        q: 'Can I cancel an auction offer?',
+        a: 'Auction offers are binding. For input errors, contact support immediately with the auction ID and offer amount.',
       },
     ],
     []

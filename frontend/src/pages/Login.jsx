@@ -55,8 +55,8 @@ const Login = () => {
           <div className="hidden flex-col justify-between bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-700 p-10 text-white lg:flex">
             <div>
               <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-bold tracking-wider">SECURE ACCESS</div>
-              <h1 className="text-4xl font-bold leading-tight">Welcome back to BidPulse</h1>
-              <p className="mt-4 text-sm text-white/80">Live bidding intelligence, verified listings, and high-integrity auction flow.</p>
+              <h1 className="text-4xl font-bold leading-tight">Welcome back to AuctionPulse</h1>
+              <p className="mt-4 text-sm text-white/80">Live auction intelligence, verified listings, and high-integrity transaction flow.</p>
             </div>
             <div className="text-sm text-white/80">Need an account? <Link to="/register" className="font-bold text-white hover:underline">Create one now</Link></div>
           </div>
@@ -67,7 +67,7 @@ const Login = () => {
                 <LogIn className="h-6 w-6 text-white" />
               </div>
               <h2 className="text-3xl font-bold text-slate-900">Sign In</h2>
-              <p className="mt-1 text-sm text-slate-600">Access your bidder, seller, or admin workflow</p>
+              <p className="mt-1 text-sm text-slate-600">Access your buyer, seller, or admin workflow</p>
             </div>
 
             <form onSubmit={onSubmit} className="space-y-4">

@@ -9,7 +9,7 @@ const AuctionCard = ({ auction, watched = false, onToggleWatch, onRegister, user
     future: 'Future',
     ongoing: 'Live',
     completed: 'Winner Pending Payment',
-    paid_shipping_pending: 'Paid - Shipping by BidPulse',
+    paid_shipping_pending: 'Paid - Shipping by AuctionPulse',
     paid_held_in_escrow: 'Paid in Escrow',
     closed: 'Closed',
     no_registrations: 'No Registrations',

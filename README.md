@@ -1,6 +1,6 @@
-# BidPulse
+# AuctionPulse
 
-BidPulse is a full-stack, real-time auction platform for verified buying and selling. Sellers submit listings, admins review them, bidders register before the session opens, and winners complete payment while BidPulse manages the post-auction flow.
+AuctionPulse is a full-stack, real-time auction platform for verified buying and selling. Sellers submit listings, admins review them, participants register before the session opens, and winners complete payment while AuctionPulse manages the post-auction flow.
 
 ## Stack
 
@@ -19,10 +19,10 @@ BidPulse is a full-stack, real-time auction platform for verified buying and sel
 4. After login, regular users are taken to the profile page.
 5. The user completes profile verification with identity details and a profile picture.
 6. Verification is finalized through either OTP or an email link sent to the user's primary email.
-7. Only verified users can register for auctions, place bids, or create listings.
+7. Only verified users can register for auctions, place offers, or create listings.
 8. Sellers submit listings, admins approve or reject them, and approved listings move into the future auction pipeline.
-9. Bidders register before the registration window closes, then live bidding begins.
-10. The winner pays, BidPulse manages shipping, and the winner confirms product receipt to close the lifecycle.
+9. Participants register before the registration window closes, then the live auction begins.
+10. The winner pays, AuctionPulse manages shipping, and the winner confirms product receipt to close the lifecycle.
 
 ## Current Product Highlights
 
@@ -61,12 +61,12 @@ flowchart LR
 1. Seller creates a listing request.
 2. Admin reviews the request.
 3. If approved, the listing becomes a future auction.
-4. Bidders register during the registration window.
+4. Participants register during the registration window.
 5. If no one registers, the seller can withdraw or relist lower.
-6. If one bidder registers, that bidder can win at the configured starting logic.
-7. If multiple bidders register, live turn-based bidding begins.
+6. If one participant registers, that participant can win at the configured starting logic.
+7. If multiple participants register, a live turn-based auction session begins.
 8. The winner completes Stripe checkout.
-9. BidPulse moves the order into shipping.
+9. AuctionPulse moves the order into shipping.
 10. The winner confirms receipt and the auction closes.
 
 ## Authentication And Verification
@@ -104,7 +104,7 @@ Realtime delivery uses Socket.IO rooms such as:
 
 ## Email System
 
-BidPulse uses a shared email service and template layer:
+AuctionPulse uses a shared email service and template layer:
 
 - `backend/utils/emailService.js`
 - `backend/utils/emailTemplates.js`
@@ -253,13 +253,13 @@ STRIPE_WEBHOOK_SECRET=...
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
-CLOUDINARY_FOLDER=BidPulse
+CLOUDINARY_FOLDER=AuctionPulse
 
 PROMOTIONAL_EMAIL_TIMEZONE=UTC
 
 BREVO_API_KEY=...
 BREVO_SENDER_EMAIL=...
-BREVO_SENDER_NAME=BidPulse Support
+BREVO_SENDER_NAME=AuctionPulse Support
 BREVO_API_URL=https://api.brevo.com/v3/smtp/email
 BREVO_TIMEOUT_MS=15000
 

@@ -8,16 +8,16 @@ const Terms = () => {
         <p className="text-gray-500 mb-8">Last Updated: December 2025</p>
 
         <div className="prose prose-purple text-gray-600">
-            <p>Welcome to BidPulse. By using our website, you agree to these terms.</p>
+            <p>Welcome to AuctionPulse. By using our website, you agree to these terms.</p>
             
             <h3 className="text-gray-900 font-bold mt-6 mb-2">1. User Accounts</h3>
             <p>You are responsible for maintaining the security of your account. You must be at least 18 years old to use this service.</p>
 
-            <h3 className="text-gray-900 font-bold mt-6 mb-2">2. Bidding & Buying</h3>
-            <p>All bids are binding. If you win an auction, you are legally obligated to complete the purchase.</p>
+            <h3 className="text-gray-900 font-bold mt-6 mb-2">2. Auction Participation & Buying</h3>
+            <p>All offers placed during an auction are binding. If you win an auction, you are legally obligated to complete the purchase.</p>
 
             <h3 className="text-gray-900 font-bold mt-6 mb-2">3. Fees</h3>
-            <p>BidPulse charges a commission of 5% on the final sale price of completed auctions. If no bidder registers, withdrawal fee is $9.99 and reduced-price relisting fee is $14.99.</p>
+            <p>AuctionPulse charges a commission of 5% on the final sale price of completed auctions. If no participant registers, the withdrawal fee is $9.99 and the reduced-price relisting fee is $14.99.</p>
             
             <h3 className="text-gray-900 font-bold mt-6 mb-2">4. Prohibited Items</h3>
             <p>We do not allow the sale of illegal goods, weapons, hazardous materials, or counterfeit items.</p>

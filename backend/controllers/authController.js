@@ -50,7 +50,7 @@ const serializeUser = (user) => ({
 const sendProfileVerificationOtpEmail = async (user, otp) => {
   await sendEmail({
     email: user.email,
-    subject: 'BidPulse Profile Verification OTP',
+    subject: 'AuctionPulse Profile Verification OTP',
     message: templates.profileVerificationOtp({ otp }),
   });
 };
@@ -58,7 +58,7 @@ const sendProfileVerificationOtpEmail = async (user, otp) => {
 const sendProfileVerificationLinkEmail = async (user, verificationUrl) => {
   await sendEmail({
     email: user.email,
-    subject: 'BidPulse Profile Verification Link',
+    subject: 'AuctionPulse Profile Verification Link',
     message: templates.profileVerificationLink({ verificationUrl }),
   });
 };
@@ -68,7 +68,7 @@ const uploadAvatarImage = async (fileBuffer) => {
     throw new Error('Profile image upload service is not configured');
   }
 
-  const folder = process.env.CLOUDINARY_FOLDER || 'BidPulse';
+  const folder = process.env.CLOUDINARY_FOLDER || 'AuctionPulse';
 
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -366,7 +366,7 @@ exports.verifyProfileOtp = async (req, res) => {
 
     sendEmailAsync({
       email: user.email,
-      subject: 'BidPulse Profile Verified',
+      subject: 'AuctionPulse Profile Verified',
       message: templates.profileVerified({ name: user.name, clientUrl: process.env.CLIENT_URL }),
     });
 
@@ -405,7 +405,7 @@ exports.verifyProfileLink = async (req, res) => {
 
     sendEmailAsync({
       email: user.email,
-      subject: 'BidPulse Profile Verified',
+      subject: 'AuctionPulse Profile Verified',
       message: templates.profileVerified({ name: user.name, clientUrl: process.env.CLIENT_URL }),
     });
 
@@ -500,7 +500,7 @@ exports.uploadAvatar = async (req, res) => {
       return res.status(503).json({ message: 'Avatar upload service is not configured in production' });
     }
 
-    const folder = process.env.CLOUDINARY_FOLDER || 'BidPulse';
+    const folder = process.env.CLOUDINARY_FOLDER || 'AuctionPulse';
 
     const uploadResult = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
@@ -602,7 +602,7 @@ exports.exportUserDataZip = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename=BidPulse-data-${userId}.zip`);
+    res.setHeader('Content-Disposition', `attachment; filename=AuctionPulse-data-${userId}.zip`);
 
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.on('error', (err) => {
@@ -657,7 +657,7 @@ exports.forgotPassword = async (req, res) => {
     try {
       await sendEmail({
         email: user.email,
-        subject: 'BidPulse Password Reset Token',
+        subject: 'AuctionPulse Password Reset Token',
         message: templates.resetPassword({ resetUrl }),
       });
 

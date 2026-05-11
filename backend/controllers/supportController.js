@@ -53,14 +53,14 @@ exports.createSupportTicket = async (req, res) => {
     if (supportEmail) {
       sendEmailAsync({
         email: supportEmail,
-        subject: `[BidPulse Support] ${cleanSubject}`,
+        subject: `[AuctionPulse Support] ${cleanSubject}`,
         message: templates.supportCreated({ ticketId: ticket._id }),
       });
     }
 
     sendEmailAsync({
       email: cleanEmail,
-      subject: 'BidPulse Support Ticket Received',
+      subject: 'AuctionPulse Support Ticket Received',
       message: templates.supportCreated({ ticketId: ticket._id }),
     });
 
@@ -110,7 +110,7 @@ exports.updateSupportTicketStatus = async (req, res) => {
     if (previousStatus !== status) {
       sendEmailAsync({
         email: ticket.email,
-        subject: `BidPulse Support: Ticket ${status.replace('_', ' ')}`,
+        subject: `AuctionPulse Support: Ticket ${status.replace('_', ' ')}`,
         message: templates.supportStatus({ ticketId: ticket._id, status }),
       });
     }

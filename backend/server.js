@@ -218,7 +218,7 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
         {
         type: 'success',
         title: 'Payment Completed',
-        message: `Payment completed for "${auction.title}". BidPulse shipping is now in progress.`,
+        message: `Payment completed for "${auction.title}". AuctionPulse shipping is now in progress.`,
         auctionId,
         },
         { includeAdmins: true }
@@ -370,7 +370,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/support', supportRoutes);
 
 app.get('/', (_req, res) => {
-  res.send('BidPulse API is running...');
+  res.send('AuctionPulse API is running...');
 });
 
 app.get('/api/health', (_req, res) => {
@@ -500,7 +500,7 @@ cron.schedule('* * * * *', async () => {
       recipientEmails.forEach((email) => {
         sendEmailAsync({
           email,
-          subject: `BidPulse starts in 5 minutes: ${auction.title}`,
+          subject: `AuctionPulse starts in 5 minutes: ${auction.title}`,
           message: templates.biddingStartsSoon({
             title: auction.title,
             startAt: auction.registrationEndAt,

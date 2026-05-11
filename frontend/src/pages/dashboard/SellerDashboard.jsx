@@ -137,7 +137,7 @@ const SellerDashboard = () => {
         auction.title,
         auction.category,
         auction.status,
-        bid.bidder?.name || 'Bidder',
+        bid.bidder?.name || 'Participant',
         bid.amount,
         new Date(bid.time).toLocaleString(),
       ])
@@ -147,7 +147,7 @@ const SellerDashboard = () => {
 
     triggerCsvDownload(
       `seller-bid-history-${new Date().toISOString().slice(0, 10)}.csv`,
-      ['Listing', 'Category', 'Status', 'Bidder', 'Bid Amount', 'Bid Time'],
+      ['Listing', 'Category', 'Status', 'Participant', 'Offer Amount', 'Offer Time'],
       rows
     );
   };
@@ -233,11 +233,11 @@ const SellerDashboard = () => {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-slate-900">Seller Analytics Dashboard</h1>
-                <p className="mt-1 text-sm text-slate-600">Track listing lifecycle, bidding momentum, and payout performance in one view.</p>
+                <p className="mt-1 text-sm text-slate-600">Track listing lifecycle, auction momentum, and payout performance in one view.</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button onClick={exportBidHistoryCsv} className="btn-soft px-4 py-2.5 text-sm text-blue-700" type="button">
-                  <Download size={16} /> Bid History CSV
+                  <Download size={16} /> Offer History CSV
                 </button>
                 <button onClick={exportEarningsCsv} className="btn-soft px-4 py-2.5 text-sm text-indigo-700" type="button">
                   <Download size={16} /> Earnings CSV
@@ -266,7 +266,7 @@ const SellerDashboard = () => {
           <section className="grid grid-cols-1 gap-6 mb-8 xl:grid-cols-3">
             <div className="premium-panel rounded-2xl p-5 xl:col-span-2">
               <h2 className="mb-4 inline-flex items-center gap-2 text-lg font-semibold text-slate-900">
-                <BarChart3 size={17} /> Bid Trend Across Listings
+                <BarChart3 size={17} /> Offer Trend Across Listings
               </h2>
               <LineChart points={bidTrend} />
             </div>
@@ -277,7 +277,7 @@ const SellerDashboard = () => {
               <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
                 <MiniMetric label="Total Listings" value={metrics.totalListings} />
                 <MiniMetric label="Live Listings" value={metrics.liveListings} />
-                <MiniMetric label="Highest Current Bid" value={`$${metrics.topBid.toLocaleString()}`} />
+                <MiniMetric label="Highest Current Offer" value={`$${metrics.topBid.toLocaleString()}`} />
                 <MiniMetric label="Commission Rate" value="5%" />
               </div>
             </div>
@@ -308,16 +308,16 @@ const SellerDashboard = () => {
                     <p className="text-xs text-slate-500 mt-1 uppercase">{listing.status.replaceAll('_', ' ')}</p>
                     <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                       <InsightValue label="Registered" value={listing.registrationCount} />
-                      <InsightValue label="Bids" value={listing.bidCount} />
-                      <InsightValue label="Bid Intensity" value={listing.intensity} />
+                      <InsightValue label="Offers" value={listing.bidCount} />
+                      <InsightValue label="Offer Intensity" value={listing.intensity} />
                       <InsightValue label="Current" value={`$${listing.currentPrice}`} />
                     </div>
                     {listing.lastBid ? (
                       <p className="mt-3 inline-flex items-center gap-1 text-xs text-slate-600">
-                        <Clock3 size={12} /> Last bid: ${listing.lastBid.amount}
+                        <Clock3 size={12} /> Last offer: ${listing.lastBid.amount}
                       </p>
                     ) : (
-                      <p className="mt-3 text-xs text-slate-400">No bids yet</p>
+                      <p className="mt-3 text-xs text-slate-400">No offers yet</p>
                     )}
                   </motion.button>
                 ))}
@@ -345,7 +345,7 @@ const SellerDashboard = () => {
                       <th className="px-6 py-3.5">Price</th>
                       <th className="px-6 py-3.5">Status</th>
                       <th className="px-6 py-3.5">Registered</th>
-                      <th className="px-6 py-3.5">Bids</th>
+                      <th className="px-6 py-3.5">Offers</th>
                       <th className="px-6 py-3.5">Winner</th>
                       <th className="px-6 py-3.5 text-center">Actions</th>
                     </tr>
@@ -427,7 +427,7 @@ const SellerDashboard = () => {
                 </div>
 
                 <div className="lg:col-span-2 rounded-xl border border-slate-200 p-4">
-                  <h3 className="font-semibold text-slate-900 mb-3">Bid Timeline</h3>
+                  <h3 className="font-semibold text-slate-900 mb-3">Offer Timeline</h3>
                   {selectedListing.bids?.length ? (
                     <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                       {[...selectedListing.bids].reverse().map((bid, index) => (
@@ -437,7 +437,7 @@ const SellerDashboard = () => {
                           className="rounded-lg border border-slate-100 p-3 bg-slate-50 flex items-center justify-between"
                         >
                           <div>
-                            <p className="text-sm font-semibold text-slate-900">{bid.bidder?.name || 'Bidder'}</p>
+                            <p className="text-sm font-semibold text-slate-900">{bid.bidder?.name || 'Participant'}</p>
                             <p className="text-xs text-slate-500">{new Date(bid.time).toLocaleString()}</p>
                           </div>
                           <p className="text-sm font-bold text-emerald-700">${bid.amount}</p>
@@ -445,12 +445,12 @@ const SellerDashboard = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-slate-500">No bids on this listing yet.</p>
+                    <p className="text-sm text-slate-500">No offers on this listing yet.</p>
                   )}
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-slate-500">Select a listing from insights or table to view detailed bidding analytics.</p>
+              <p className="text-sm text-slate-500">Select a listing from insights or the table to view detailed auction analytics.</p>
             )}
           </section>
         </Reveal>
