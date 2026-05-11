@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const MIN_TEST_REGISTRATION_WINDOW_HOURS = 2 / 60;
 
 const registrationSchema = new mongoose.Schema(
   {
@@ -62,7 +63,7 @@ const auctionSchema = new mongoose.Schema(
     },
     registrationWindowHours: {
       type: Number,
-      min: 0.05,
+      min: MIN_TEST_REGISTRATION_WINDOW_HOURS,
       required: true,
     },
     registrationStartAt: {

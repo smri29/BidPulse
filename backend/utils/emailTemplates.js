@@ -216,9 +216,9 @@ const templates = {
       eyebrow: 'Auction Alert',
     }),
 
-  biddingStartsSoon: ({ title, startAt, link }) =>
+  biddingStartsSoon: ({ title, startAt, link, minutesUntilStart = 5 }) =>
     wrapEmail({
-      title: 'Auction Starts in 5 Minutes',
+      title: `Auction Starts in ${minutesUntilStart} Minute${minutesUntilStart === 1 ? '' : 's'}`,
       subtitle: title,
       body: `<p>Registration is closing and your live auction room will open soon.</p>
              <p>Start time: <b>${new Date(startAt).toLocaleString()}</b></p>

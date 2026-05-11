@@ -482,17 +482,20 @@ io.on('connection', (socket) => {
 cron.schedule('* * * * *', async () => {
   try {
     const now = new Date();
-    const reminderWindowStart = new Date(now.getTime() - 60 * 1000);
     const reminderWindowEnd = new Date(now.getTime() + 5 * 60 * 1000);
 
     const reminders = await Auction.find({
       status: 'future',
-      registrationEndAt: { $gte: reminderWindowStart, $lte: reminderWindowEnd },
+      registrationEndAt: { $gt: now, $lte: reminderWindowEnd },
       'reminders.registrationReminderSentAt': null,
       'registrations.0': { $exists: true },
     }).populate('registrations.bidder', 'email');
 
     for (const auction of reminders) {
+      const minutesUntilStart = Math.max(
+        1,
+        Math.ceil((new Date(auction.registrationEndAt).getTime() - now.getTime()) / (60 * 1000))
+      );
       const recipientEmails = auction.registrations
         .map((entry) => entry.bidder?.email)
         .filter(Boolean);
@@ -500,10 +503,11 @@ cron.schedule('* * * * *', async () => {
       recipientEmails.forEach((email) => {
         sendEmailAsync({
           email,
-          subject: `AuctionPulse starts in 5 minutes: ${auction.title}`,
+          subject: `AuctionPulse starts in ${minutesUntilStart} minute${minutesUntilStart === 1 ? '' : 's'}: ${auction.title}`,
           message: templates.biddingStartsSoon({
             title: auction.title,
             startAt: auction.registrationEndAt,
+            minutesUntilStart,
             link: `${process.env.CLIENT_URL}/auction/${auction._id}`,
           }),
         });
