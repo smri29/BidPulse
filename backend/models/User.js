@@ -231,7 +231,7 @@ userSchema.methods.generateProfileVerificationOTP = function () {
     this.pendingProfileVerification = {};
   }
   this.pendingProfileVerification.otpHash = crypto.createHash('sha256').update(otp).digest('hex');
-  this.pendingProfileVerification.otpExpire = Date.now() + 5 * 60 * 1000;
+  this.pendingProfileVerification.otpExpire = Date.now() + 10 * 60 * 1000;
   return otp;
 };
 

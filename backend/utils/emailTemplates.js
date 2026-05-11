@@ -77,7 +77,7 @@ const templates = {
       subtitle: 'Use this one-time code to activate registration and participation',
       body: `<p>Your verification code:</p>
              <div style="font-size:30px;font-weight:800;letter-spacing:6px;color:#0f6fff;background:#eff6ff;padding:12px 16px;border-radius:12px;display:inline-block;">${otp}</div>
-             <p style="margin-top:14px;">Code expires in 5 minutes.</p>`,
+             <p style="margin-top:14px;">Code expires in 10 minutes.</p>`,
       accent: '#2563eb',
       eyebrow: 'Security',
     }),
@@ -88,7 +88,7 @@ const templates = {
       subtitle: 'Use this one-time code to complete your account verification',
       body: `<p>Your profile verification code:</p>
              <div style="font-size:30px;font-weight:800;letter-spacing:6px;color:#0f6fff;background:#eff6ff;padding:12px 16px;border-radius:12px;display:inline-block;">${otp}</div>
-             <p style="margin-top:14px;">Code expires in 5 minutes.</p>`,
+             <p style="margin-top:14px;">Code expires in 10 minutes.</p>`,
       accent: '#2563eb',
       eyebrow: 'Security',
     }),

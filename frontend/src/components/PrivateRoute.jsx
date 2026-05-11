@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 const PrivateRoute = ({ children }) => {
   const { user, isLoading } = useSelector((state) => state.auth);
 
-  if (isLoading) return <div className="p-10 text-center">Loading...</div>;
+  if (!user && isLoading) return <div className="p-10 text-center">Loading...</div>;
 
   // If no user is logged in, redirect to Login
   if (!user) {

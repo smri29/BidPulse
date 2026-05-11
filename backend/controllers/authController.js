@@ -308,6 +308,7 @@ exports.startProfileVerification = async (req, res) => {
       return res.json({
         message: 'A profile verification OTP has been sent to your primary email address.',
         verificationMethod: 'otp',
+        otpExpiresInSeconds: 10 * 60,
       });
     }
 

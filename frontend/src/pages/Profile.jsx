@@ -22,7 +22,6 @@ import { toast } from 'react-toastify';
 import { COUNTRIES } from '../constants/countries';
 import {
   getMyActivity,
-  reset,
   startProfileVerification,
   updateProfile,
   uploadAvatar,
@@ -45,13 +44,17 @@ const GENDER_OPTIONS = ['Male', 'Female', 'Other', 'Prefer not to say'];
 
 const Profile = () => {
   const dispatch = useDispatch();
-  const { user, isLoading, activity, isError, isSuccess } = useSelector((state) => state.auth);
+  const { user, isLoading, activity } = useSelector((state) => state.auth);
   const [isEditing, setIsEditing] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [verificationCooldownEndsAt, setVerificationCooldownEndsAt] = useState(null);
   const [verificationCooldownLabel, setVerificationCooldownLabel] = useState('Awaiting Verification');
   const [verificationCountdown, setVerificationCountdown] = useState(0);
+  const [otpExpiresAt, setOtpExpiresAt] = useState(null);
+  const [otpCountdown, setOtpCountdown] = useState(0);
   const [verificationStep, setVerificationStep] = useState('form');
+  const [isStartingVerification, setIsStartingVerification] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [otp, setOtp] = useState('');
   const [verificationForm, setVerificationForm] = useState(initialVerificationForm);
   const [verificationAvatarFile, setVerificationAvatarFile] = useState(null);
@@ -103,12 +106,6 @@ const Profile = () => {
   }, [user]);
 
   useEffect(() => {
-    if (isError || isSuccess) {
-      dispatch(reset());
-    }
-  }, [dispatch, isError, isSuccess]);
-
-  useEffect(() => {
     if (!verificationCooldownEndsAt) {
       setVerificationCountdown(0);
       return undefined;
@@ -127,12 +124,32 @@ const Profile = () => {
     return () => window.clearInterval(intervalId);
   }, [verificationCooldownEndsAt]);
 
+  useEffect(() => {
+    if (!otpExpiresAt) {
+      setOtpCountdown(0);
+      return undefined;
+    }
+
+    const updateCountdown = () => {
+      const remainingSeconds = Math.max(0, Math.ceil((otpExpiresAt - Date.now()) / 1000));
+      setOtpCountdown(remainingSeconds);
+      if (remainingSeconds === 0) {
+        setOtpExpiresAt(null);
+      }
+    };
+
+    updateCountdown();
+    const intervalId = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [otpExpiresAt]);
+
   const stats = useMemo(
     () => activity?.stats || { totalListed: 0, totalPlacedBids: 0, totalWins: 0, totalLosses: 0 },
     [activity?.stats]
   );
 
   const isVerificationCooldownActive = verificationCountdown > 0;
+  const isVerificationBusy = isStartingVerification || isVerifyingOtp;
 
   const verificationAvatarPreview = useMemo(() => {
     if (verificationAvatarFile) {
@@ -197,10 +214,11 @@ const Profile = () => {
   };
 
   const closeVerificationModal = () => {
-    if (isLoading) return;
+    if (isVerificationBusy) return;
     setIsVerificationModalOpen(false);
     setVerificationStep('form');
     setOtp('');
+    setOtpExpiresAt(null);
   };
 
   const handleVerificationFormChange = (event) => {
@@ -220,6 +238,7 @@ const Profile = () => {
 
   const handleStartVerification = (event) => {
     event.preventDefault();
+    setIsStartingVerification(true);
 
     const payload = new FormData();
     payload.append('dob', verificationForm.dob);
@@ -238,7 +257,10 @@ const Profile = () => {
         toast.success(response.message || 'Verification request created');
         setVerificationCooldownEndsAt(Date.now() + 60 * 1000);
         setVerificationCooldownLabel(response.verificationMethod === 'link' ? 'Link Sent' : 'Awaiting Verification');
+        setIsVerificationModalOpen(true);
         if (response.verificationMethod === 'otp') {
+          const expiresInSeconds = Number(response.otpExpiresInSeconds || 10 * 60);
+          setOtpExpiresAt(Date.now() + expiresInSeconds * 1000);
           setVerificationStep('otp');
           return;
         }
@@ -246,11 +268,15 @@ const Profile = () => {
       })
       .catch((error) => {
         toast.error(error || 'Unable to start profile verification');
+      })
+      .finally(() => {
+        setIsStartingVerification(false);
       });
   };
 
   const handleVerifyOtp = (event) => {
     event.preventDefault();
+    setIsVerifyingOtp(true);
     dispatch(verifyProfileOtp(otp))
       .unwrap()
       .then((response) => {
@@ -259,11 +285,16 @@ const Profile = () => {
         setVerificationStep('form');
         setVerificationAvatarFile(null);
         setOtp('');
+        setOtpExpiresAt(null);
       })
-      .catch((error) => toast.error(error || 'Unable to verify OTP'));
+      .catch((error) => toast.error(error || 'Unable to verify OTP'))
+      .finally(() => {
+        setIsVerifyingOtp(false);
+      });
   };
 
   const verificationCountdownText = formatCountdown(verificationCountdown);
+  const otpCountdownText = formatCountdown(otpCountdown);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
@@ -620,8 +651,9 @@ const Profile = () => {
 
       {isVerificationModalOpen && (
         <VerificationModal
-          isLoading={isLoading}
+          isLoading={isVerificationBusy}
           step={verificationStep}
+          otpCountdownText={otpCountdownText}
           otp={otp}
           onOtpChange={setOtp}
           verificationForm={verificationForm}
@@ -640,6 +672,7 @@ const Profile = () => {
 const VerificationModal = ({
   isLoading,
   step,
+  otpCountdownText,
   otp,
   onOtpChange,
   verificationForm,
@@ -714,7 +747,7 @@ const VerificationModal = ({
                 <label className={`cursor-pointer rounded-2xl border p-4 ${verificationForm.verificationMethod === 'otp' ? 'border-sky-500 bg-sky-50' : 'border-slate-200 bg-white'}`}>
                   <input type="radio" name="verificationMethod" value="otp" checked={verificationForm.verificationMethod === 'otp'} onChange={onChange} className="sr-only" />
                   <p className="text-sm font-semibold text-slate-900">OTP Verification</p>
-                  <p className="mt-1 text-xs text-slate-600">We will send a 6-digit code to your primary email. Code expires in 5 minutes.</p>
+                  <p className="mt-1 text-xs text-slate-600">We will send a 6-digit code to your primary email. Code expires in 10 minutes.</p>
                 </label>
                 <label className={`cursor-pointer rounded-2xl border p-4 ${verificationForm.verificationMethod === 'link' ? 'border-sky-500 bg-sky-50' : 'border-slate-200 bg-white'}`}>
                   <input type="radio" name="verificationMethod" value="link" checked={verificationForm.verificationMethod === 'link'} onChange={onChange} className="sr-only" />
@@ -737,7 +770,12 @@ const VerificationModal = ({
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">OTP Sent</p>
           <h2 className="mt-2 text-2xl font-bold text-slate-900">Enter your verification code</h2>
-          <p className="mt-2 text-sm text-slate-600">Check your email for the 6-digit OTP. It expires in 5 minutes.</p>
+          <p className="mt-2 text-sm text-slate-600">
+            Check your email for the 6-digit OTP. It expires in 10 minutes.
+            <span className="ml-2 inline-flex rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700">
+              {otpCountdownText}
+            </span>
+          </p>
 
           <form onSubmit={onVerifyOtp} className="mt-6 space-y-4">
             <input value={otp} onChange={(event) => onOtpChange(event.target.value)} maxLength={6} placeholder="Enter OTP" className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-center text-lg tracking-[0.4em]" />
