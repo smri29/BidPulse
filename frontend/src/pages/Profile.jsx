@@ -41,6 +41,38 @@ const initialVerificationForm = {
 
 const BLOOD_GROUP_OPTIONS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const GENDER_OPTIONS = ['Male', 'Female', 'Other', 'Prefer not to say'];
+const VERIFICATION_UI_STORAGE_PREFIX = 'auctionpulse_profile_verification_ui';
+
+const getVerificationUiStorageKey = (user) => {
+  const stableId = user?._id || user?.id || user?.email;
+  return stableId ? `${VERIFICATION_UI_STORAGE_PREFIX}:${stableId}` : null;
+};
+
+const readVerificationUiState = (user) => {
+  if (typeof window === 'undefined') return null;
+  const storageKey = getVerificationUiStorageKey(user);
+  if (!storageKey) return null;
+
+  try {
+    return JSON.parse(sessionStorage.getItem(storageKey) || 'null');
+  } catch {
+    return null;
+  }
+};
+
+const writeVerificationUiState = (user, state) => {
+  if (typeof window === 'undefined') return;
+  const storageKey = getVerificationUiStorageKey(user);
+  if (!storageKey) return;
+  sessionStorage.setItem(storageKey, JSON.stringify(state));
+};
+
+const clearVerificationUiState = (user) => {
+  if (typeof window === 'undefined') return;
+  const storageKey = getVerificationUiStorageKey(user);
+  if (!storageKey) return;
+  sessionStorage.removeItem(storageKey);
+};
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -106,6 +138,59 @@ const Profile = () => {
   }, [user]);
 
   useEffect(() => {
+    if (!user) return;
+
+    const storedState = readVerificationUiState(user);
+    if (!storedState) return;
+
+    const now = Date.now();
+    const nextCooldownEndsAt =
+      Number.isFinite(storedState.cooldownEndsAt) && storedState.cooldownEndsAt > now
+        ? storedState.cooldownEndsAt
+        : null;
+    const nextOtpExpiresAt =
+      Number.isFinite(storedState.otpExpiresAt) && storedState.otpExpiresAt > now
+        ? storedState.otpExpiresAt
+        : null;
+
+    if (!nextCooldownEndsAt && !nextOtpExpiresAt) {
+      clearVerificationUiState(user);
+      return;
+    }
+
+    if (nextCooldownEndsAt) {
+      setVerificationCooldownEndsAt(nextCooldownEndsAt);
+      setVerificationCooldownLabel(storedState.cooldownLabel || 'Awaiting Verification');
+    }
+
+    if (nextOtpExpiresAt) {
+      setOtpExpiresAt(nextOtpExpiresAt);
+    }
+
+    if (storedState.step === 'otp' && nextOtpExpiresAt) {
+      setVerificationStep('otp');
+      setIsVerificationModalOpen(Boolean(storedState.modalOpen));
+      return;
+    }
+
+    if (storedState.step === 'link' && nextCooldownEndsAt) {
+      setVerificationStep('link');
+      setIsVerificationModalOpen(Boolean(storedState.modalOpen));
+    }
+  }, [user?._id, user?.id, user?.email]);
+
+  useEffect(() => {
+    if (!user?.emailVerified) return;
+
+    setIsVerificationModalOpen(false);
+    setVerificationStep('form');
+    setVerificationCooldownEndsAt(null);
+    setOtpExpiresAt(null);
+    setOtp('');
+    clearVerificationUiState(user);
+  }, [user?.emailVerified]);
+
+  useEffect(() => {
     if (!verificationCooldownEndsAt) {
       setVerificationCountdown(0);
       return undefined;
@@ -142,6 +227,36 @@ const Profile = () => {
     const intervalId = window.setInterval(updateCountdown, 1000);
     return () => window.clearInterval(intervalId);
   }, [otpExpiresAt]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const hasCooldown = Number.isFinite(verificationCooldownEndsAt) && verificationCooldownEndsAt > Date.now();
+    const hasOtpExpiry = Number.isFinite(otpExpiresAt) && otpExpiresAt > Date.now();
+    const hasPendingStep = verificationStep === 'otp' || verificationStep === 'link';
+
+    if (!hasCooldown && !hasOtpExpiry && !hasPendingStep) {
+      clearVerificationUiState(user);
+      return;
+    }
+
+    writeVerificationUiState(user, {
+      cooldownEndsAt: hasCooldown ? verificationCooldownEndsAt : null,
+      cooldownLabel: verificationCooldownLabel,
+      otpExpiresAt: hasOtpExpiry ? otpExpiresAt : null,
+      step: verificationStep,
+      modalOpen: isVerificationModalOpen,
+    });
+  }, [
+    user?._id,
+    user?.id,
+    user?.email,
+    verificationCooldownEndsAt,
+    verificationCooldownLabel,
+    otpExpiresAt,
+    verificationStep,
+    isVerificationModalOpen,
+  ]);
 
   const stats = useMemo(
     () => activity?.stats || { totalListed: 0, totalPlacedBids: 0, totalWins: 0, totalLosses: 0 },
@@ -208,8 +323,14 @@ const Profile = () => {
   };
 
   const openVerificationModal = () => {
-    setVerificationStep('form');
-    setOtp('');
+    if (isVerificationCooldownActive && verificationCooldownLabel === 'Link Sent') {
+      setVerificationStep('link');
+    } else if (otpExpiresAt && otpCountdown > 0) {
+      setVerificationStep('otp');
+    } else {
+      setVerificationStep('form');
+      setOtp('');
+    }
     setIsVerificationModalOpen(true);
   };
 
@@ -283,9 +404,11 @@ const Profile = () => {
         toast.success(response.message || 'Profile verified successfully');
         setIsVerificationModalOpen(false);
         setVerificationStep('form');
+        setVerificationCooldownEndsAt(null);
         setVerificationAvatarFile(null);
         setOtp('');
         setOtpExpiresAt(null);
+        clearVerificationUiState(user);
       })
       .catch((error) => toast.error(error || 'Unable to verify OTP'))
       .finally(() => {
