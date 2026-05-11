@@ -163,6 +163,38 @@ const auctionSchema = new mongoose.Schema(
         default: null,
       },
     },
+    roomActivation: {
+      isActive: {
+        type: Boolean,
+        default: false,
+      },
+      currentBidder: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null,
+      },
+      currentSequence: {
+        type: Number,
+        default: null,
+      },
+      expiresAt: {
+        type: Date,
+        default: null,
+      },
+      lastAssignedAt: {
+        type: Date,
+        default: null,
+      },
+      openedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null,
+      },
+      openedAt: {
+        type: Date,
+        default: null,
+      },
+    },
     feeSummary: {
       commissionRate: {
         type: Number,

@@ -8,6 +8,7 @@ const { validateTurnstileToken } = require('../utils/turnstile');
 const REGISTRATION_WINDOWS = [24, 120, 192, 240, 360, 480];
 const REGISTRATION_DAYS = [1, 5, 8, 10, 15, 20];
 const TEST_REGISTRATION_MINUTES = [2, 5];
+const ROOM_OPEN_TIMEOUT_SECONDS = 30;
 
 const uploadAuctionImages = async (files) => {
   if (!files?.length) return [];
@@ -77,6 +78,33 @@ const startTurnClock = (auction, bidderId) => {
   auction.turnExpiresAt = new Date(Date.now() + auction.turnDurationSeconds * 1000);
 };
 
+const clearRoomActivation = (auction) => {
+  auction.roomActivation = {
+    isActive: false,
+    currentBidder: null,
+    currentSequence: null,
+    expiresAt: null,
+    lastAssignedAt: null,
+    openedBy: null,
+    openedAt: null,
+  };
+};
+
+const assignNextRoomActivator = (auction, sortedRegistrations, now = new Date()) => {
+  const currentSequence = Number(auction.roomActivation?.currentSequence || 0);
+  const nextEntry = sortedRegistrations.find((entry) => entry.sequence > currentSequence) || sortedRegistrations[0];
+
+  auction.roomActivation = {
+    isActive: true,
+    currentBidder: nextEntry.bidder,
+    currentSequence: nextEntry.sequence,
+    expiresAt: new Date(now.getTime() + ROOM_OPEN_TIMEOUT_SECONDS * 1000),
+    lastAssignedAt: now,
+    openedBy: null,
+    openedAt: null,
+  };
+};
+
 const finalizeOngoingAuction = async (auction, winnerId) => {
   const resolvedWinner = winnerId || auction.winner;
   auction.status = 'completed';
@@ -85,6 +113,7 @@ const finalizeOngoingAuction = async (auction, winnerId) => {
   auction.currentTurnBidder = null;
   auction.activeBidders = [];
   auction.waitingBidders = [];
+  clearRoomActivation(auction);
   if (resolvedWinner) {
     auction.winner = resolvedWinner;
   }
@@ -138,6 +167,7 @@ const moveToOngoing = async (auction) => {
 
   if (!sortedRegistrations.length) {
     auction.status = 'no_registrations';
+    clearRoomActivation(auction);
     await auction.save();
 
     const seller = await User.findById(auction.seller).select('email').lean();
@@ -159,6 +189,7 @@ const moveToOngoing = async (auction) => {
     auction.biddingEndedAt = new Date();
     auction.winner = sortedRegistrations[0].bidder;
     auction.currentPrice = auction.startingPrice;
+    clearRoomActivation(auction);
     await auction.save();
     await finalizeOngoingAuction(auction, auction.winner);
     return;
@@ -171,9 +202,54 @@ const moveToOngoing = async (auction) => {
   auction.biddingStartedAt = new Date();
   auction.activeBidders = active;
   auction.waitingBidders = waiting;
+  clearRoomActivation(auction);
   appendNextBidder(auction);
   startTurnClock(auction, auction.activeBidders[0]);
   await auction.save();
+};
+
+const prepareAuctionRoom = async (auction, now = new Date()) => {
+  const sortedRegistrations = [...auction.registrations].sort((a, b) => a.sequence - b.sequence);
+
+  if (!sortedRegistrations.length) {
+    auction.status = 'no_registrations';
+    clearRoomActivation(auction);
+    await auction.save();
+
+    const seller = await User.findById(auction.seller).select('email').lean();
+    if (seller?.email) {
+      sendEmailAsync({
+        email: seller.email,
+        subject: `No registrations: ${auction.title}`,
+        message: templates.noRegistrationOutcome({ title: auction.title }),
+      });
+    }
+
+    return { changed: true, terminal: true };
+  }
+
+  if (sortedRegistrations.length === 1) {
+    auction.status = 'completed';
+    auction.biddingStartedAt = null;
+    auction.biddingEndedAt = new Date();
+    auction.winner = sortedRegistrations[0].bidder;
+    auction.currentPrice = auction.startingPrice;
+    clearRoomActivation(auction);
+    await auction.save();
+    await finalizeOngoingAuction(auction, auction.winner);
+    return { changed: true, terminal: true };
+  }
+
+  const expiresAt = auction.roomActivation?.expiresAt ? new Date(auction.roomActivation.expiresAt) : null;
+  const activationExpired = !expiresAt || Number.isNaN(expiresAt.getTime()) || expiresAt <= now;
+
+  if (!auction.roomActivation?.isActive || !auction.roomActivation?.currentBidder || activationExpired) {
+    assignNextRoomActivator(auction, sortedRegistrations, now);
+    await auction.save();
+    return { changed: true, terminal: false };
+  }
+
+  return { changed: false, terminal: false };
 };
 
 const handleGiveUpCore = async ({ auction, bidderId }) => {
@@ -321,7 +397,9 @@ exports.getAuctionById = async (req, res) => {
       .populate('bids.bidder', 'name email')
       .populate('registrations.bidder', 'name email')
       .populate('activeBidders', 'name email')
-      .populate('waitingBidders', 'name email');
+      .populate('waitingBidders', 'name email')
+      .populate('roomActivation.currentBidder', 'name email')
+      .populate('roomActivation.openedBy', 'name email');
 
     if (!auction) {
       return res.status(404).json({ message: 'Auction not found' });
@@ -442,6 +520,7 @@ exports.updateAuction = async (req, res) => {
       }
       auction.registrationWindowHours = parsedWindow;
       auction.registrationEndAt = getRegistrationEndAt(parsedWindow);
+      clearRoomActivation(auction);
     }
 
     if (req.files?.length) {
@@ -525,6 +604,90 @@ exports.registerForAuction = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });
+  }
+};
+
+exports.openAuctionRoom = async (req, res) => {
+  try {
+    const auction = await Auction.findById(req.params.id);
+    if (!auction) {
+      return res.status(404).json({ message: 'Auction not found' });
+    }
+
+    if (auction.status === 'ongoing') {
+      const liveAuction = await Auction.findById(req.params.id)
+        .populate('seller', 'name email')
+        .populate('winner', 'name email')
+        .populate('bids.bidder', 'name email')
+        .populate('registrations.bidder', 'name email')
+        .populate('activeBidders', 'name email')
+        .populate('waitingBidders', 'name email')
+        .populate('roomActivation.currentBidder', 'name email')
+        .populate('roomActivation.openedBy', 'name email');
+      return res.status(200).json(liveAuction);
+    }
+
+    if (auction.status !== 'future') {
+      return res.status(400).json({ message: 'Auction room cannot be opened for this listing right now' });
+    }
+
+    const now = new Date();
+    if (now < new Date(auction.registrationEndAt)) {
+      return res.status(400).json({ message: 'Registration is still open for this listing' });
+    }
+
+    const myRegistration = auction.registrations.find((entry) => String(entry.bidder) === req.user.id);
+    if (!myRegistration) {
+      return res.status(403).json({ message: 'Only registered participants can open the auction room' });
+    }
+
+    await prepareAuctionRoom(auction, now);
+    const refreshedAuction = await Auction.findById(req.params.id);
+
+    if (!refreshedAuction || refreshedAuction.status !== 'future') {
+      const finalAuction = await Auction.findById(req.params.id)
+        .populate('seller', 'name email')
+        .populate('winner', 'name email')
+        .populate('bids.bidder', 'name email')
+        .populate('registrations.bidder', 'name email')
+        .populate('activeBidders', 'name email')
+        .populate('waitingBidders', 'name email')
+        .populate('roomActivation.currentBidder', 'name email')
+        .populate('roomActivation.openedBy', 'name email');
+      return res.status(200).json(finalAuction);
+    }
+
+    if (String(refreshedAuction.roomActivation?.currentBidder || '') !== req.user.id) {
+      return res.status(403).json({ message: 'It is not your turn to open the auction room yet' });
+    }
+
+    if (
+      !refreshedAuction.roomActivation?.expiresAt ||
+      new Date(refreshedAuction.roomActivation.expiresAt).getTime() <= now.getTime()
+    ) {
+      return res.status(409).json({ message: 'Your opening window has expired. Please wait for the next handoff.' });
+    }
+
+    refreshedAuction.roomActivation.openedBy = req.user._id;
+    refreshedAuction.roomActivation.openedAt = now;
+    await moveToOngoing(refreshedAuction);
+
+    const liveAuction = await Auction.findById(req.params.id)
+      .populate('seller', 'name email')
+      .populate('winner', 'name email')
+      .populate('bids.bidder', 'name email')
+      .populate('registrations.bidder', 'name email')
+      .populate('activeBidders', 'name email')
+      .populate('waitingBidders', 'name email')
+      .populate('roomActivation.currentBidder', 'name email')
+      .populate('roomActivation.openedBy', 'name email');
+
+    const io = req.app.get('io');
+    io.to(req.params.id).emit('bidUpdated', liveAuction);
+
+    return res.status(200).json(liveAuction);
+  } catch (error) {
+    return res.status(500).json({ message: error.message || 'Failed to open auction room' });
   }
 };
 
@@ -680,6 +843,7 @@ exports.handleNoRegistrationDecision = async (req, res) => {
       auction.waitingBidders = [];
       auction.gaveUpBidders = [];
       auction.reminders.registrationReminderSentAt = null;
+      clearRoomActivation(auction);
       auction.feeSummary.noRegistrationFeeApplied = auction.feeSummary.relistFee;
 
       await auction.save();
@@ -727,6 +891,7 @@ exports.adminApproveAuction = async (req, res) => {
     auction.verifiedAt = new Date();
     auction.verificationNote = '';
     auction.registrationStartAt = new Date();
+    clearRoomActivation(auction);
 
     await auction.save();
 
@@ -786,6 +951,7 @@ exports.adminDisapproveAuction = async (req, res) => {
 
 exports.internalJobs = {
   moveToOngoing,
+  prepareAuctionRoom,
   handleGiveUpCore,
   finalizeOngoingAuction,
 };

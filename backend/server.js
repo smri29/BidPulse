@@ -516,33 +516,62 @@ cron.schedule('* * * * *', async () => {
       auction.reminders.registrationReminderSentAt = new Date();
       await auction.save();
     }
+  } catch (error) {
+    console.error('Cron job error:', error.message);
+  }
+});
+
+cron.schedule('*/5 * * * * *', async () => {
+  try {
+    const now = new Date();
 
     const readyToStart = await Auction.find({
       status: 'future',
       registrationEndAt: { $lte: now },
-    });
+    }).select(
+      '_id title seller status registrationEndAt registrationWindowHours startingPrice currentPrice winner currentTurnBidder turnDurationSeconds turnExpiresAt registrations activeBidders waitingBidders gaveUpBidders reminders roomActivation biddingStartedAt biddingEndedAt'
+    );
 
     for (const auction of readyToStart) {
-      await internalJobs.moveToOngoing(auction);
-      const refreshed = await Auction.findById(auction._id).select('status winner');
-      io.to(auction._id.toString()).emit('bidUpdated', { auctionId: auction._id, status: refreshed.status });
+      const result = await internalJobs.prepareAuctionRoom(auction, now);
+      if (result?.changed) {
+        const refreshed = await Auction.findById(auction._id)
+          .populate('seller', 'name email')
+          .populate('winner', 'name email')
+          .populate('bids.bidder', 'name email')
+          .populate('registrations.bidder', 'name email')
+          .populate('activeBidders', 'name email')
+          .populate('waitingBidders', 'name email')
+          .populate('roomActivation.currentBidder', 'name email')
+          .populate('roomActivation.openedBy', 'name email');
+        io.to(auction._id.toString()).emit('bidUpdated', refreshed || { auctionId: auction._id });
+      }
     }
 
     const expiredTurns = await Auction.find({
       status: 'ongoing',
       currentTurnBidder: { $ne: null },
       turnExpiresAt: { $lte: now },
-    }).select('_id currentTurnBidder activeBidders waitingBidders gaveUpBidders winner currentPrice startingPrice status turnDurationSeconds');
+    }).select('_id currentTurnBidder activeBidders waitingBidders gaveUpBidders winner currentPrice startingPrice status turnDurationSeconds roomActivation');
 
     for (const auction of expiredTurns) {
       await internalJobs.handleGiveUpCore({
         auction,
         bidderId: auction.currentTurnBidder,
       });
-      io.to(auction._id.toString()).emit('bidUpdated', { auctionId: auction._id });
+      const refreshed = await Auction.findById(auction._id)
+        .populate('seller', 'name email')
+        .populate('winner', 'name email')
+        .populate('bids.bidder', 'name email')
+        .populate('registrations.bidder', 'name email')
+        .populate('activeBidders', 'name email')
+        .populate('waitingBidders', 'name email')
+        .populate('roomActivation.currentBidder', 'name email')
+        .populate('roomActivation.openedBy', 'name email');
+      io.to(auction._id.toString()).emit('bidUpdated', refreshed || { auctionId: auction._id });
     }
   } catch (error) {
-    console.error('Cron job error:', error.message);
+    console.error('Auction engine cron error:', error.message);
   }
 });
 

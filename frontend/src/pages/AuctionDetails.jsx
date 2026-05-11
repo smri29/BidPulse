@@ -117,6 +117,26 @@ const AuctionDetails = () => {
     }
   };
 
+  const handleOpenAuctionRoom = async () => {
+    if (!user?.token) {
+      toast.error('Please login first');
+      return;
+    }
+
+    try {
+      const { data } = await axios.post(
+        `/auctions/${id}/open-room`,
+        {},
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      setAuction(data);
+      toast.success('Auction room is now live for all registered participants.');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to open auction room');
+      fetchAuction();
+    }
+  };
+
   const handlePlaceBid = async (e) => {
     e.preventDefault();
     if (!user) return toast.error('Please login');
@@ -200,6 +220,11 @@ const AuctionDetails = () => {
     return Math.max(new Date(auction.turnExpiresAt).getTime() - timeNow, 0);
   }, [auction?.turnExpiresAt, timeNow]);
 
+  const roomActivationRemainingMs = useMemo(() => {
+    if (!auction?.roomActivation?.expiresAt) return 0;
+    return Math.max(new Date(auction.roomActivation.expiresAt).getTime() - timeNow, 0);
+  }, [auction?.roomActivation?.expiresAt, timeNow]);
+
   const registrationCountdown = useMemo(() => {
     const totalSec = Math.floor(registrationRemainingMs / 1000);
     const h = Math.floor(totalSec / 3600);
@@ -209,6 +234,13 @@ const AuctionDetails = () => {
   }, [registrationRemainingMs]);
 
   const turnCountdown = useMemo(() => `${Math.floor(turnRemainingMs / 1000)}s`, [turnRemainingMs]);
+
+  const roomActivationCountdown = useMemo(() => {
+    const totalSec = Math.floor(roomActivationRemainingMs / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }, [roomActivationRemainingMs]);
 
   if (loading) return <div className="p-10 text-center">Loading...</div>;
   if (!auction) return <div className="p-10 text-center">Not Found</div>;
@@ -220,11 +252,17 @@ const AuctionDetails = () => {
   const myRegistration = auction.registrations?.find(
     (entry) => String(entry.bidder?._id || entry.bidder) === String(user?._id)
   );
+  const currentRoomActivatorId = String(
+    auction.roomActivation?.currentBidder?._id || auction.roomActivation?.currentBidder || ''
+  );
   const isRegistered = Boolean(myRegistration);
   const isActiveBidder = auction.activeBidders?.some((bidder) => String(bidder?._id || bidder) === String(user?._id));
   const isCurrentTurn = String(auction.currentTurnBidder?._id || auction.currentTurnBidder) === String(user?._id);
+  const registrationClosed = auction.status === 'future' && registrationRemainingMs === 0;
+  const roomActivationActive = Boolean(auction.roomActivation?.isActive && currentRoomActivatorId);
+  const isCurrentRoomActivator = roomActivationActive && currentRoomActivatorId === String(user?._id || '');
 
-  const canRegister = user && auction.status === 'future' && !isOwner && !isRegistered;
+  const canRegister = user && auction.status === 'future' && registrationRemainingMs > 0 && !isOwner && !isRegistered;
   const canBid = user && auction.status === 'ongoing' && isActiveBidder && isCurrentTurn && user.emailVerified;
   const canGiveUp = user && auction.status === 'ongoing' && isActiveBidder;
 
@@ -261,12 +299,19 @@ const AuctionDetails = () => {
                 </div>
               </div>
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                {auction.status === 'future' ? (
+                {auction.status === 'future' && !registrationClosed ? (
                   <>
                     <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
                       <Clock size={14} /> Registration Closes In
                     </div>
                     <div className="text-lg font-bold text-gray-900">{registrationCountdown}</div>
+                  </>
+                ) : auction.status === 'future' && roomActivationActive ? (
+                  <>
+                    <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                      <Clock size={14} /> Open Auction Window
+                    </div>
+                    <div className="text-lg font-bold text-gray-900">{roomActivationCountdown}</div>
                   </>
                 ) : auction.status === 'ongoing' ? (
                   <>
@@ -274,6 +319,11 @@ const AuctionDetails = () => {
                       <Clock size={14} /> Turn Timer
                     </div>
                     <div className="text-lg font-bold text-gray-900">{turnCountdown}</div>
+                  </>
+                ) : auction.status === 'future' ? (
+                  <>
+                    <div className="text-xs text-gray-500 mb-1">Status</div>
+                    <div className="text-lg font-bold text-gray-900">Awaiting Room Opening</div>
                   </>
                 ) : (
                   <>
@@ -326,6 +376,40 @@ const AuctionDetails = () => {
             {auction.status === 'future' && isRegistered && (
               <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg text-emerald-800 text-sm">
                 Registered successfully. Reminder email will be sent 5 minutes before the auction goes live.
+              </div>
+            )}
+
+            {auction.status === 'future' && registrationClosed && roomActivationActive && isCurrentRoomActivator && (
+              <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <p className="text-sm text-blue-900">
+                  It is your turn to open the auction room for everyone. This window expires in{' '}
+                  <b>{roomActivationCountdown}</b>.
+                </p>
+                <button
+                  onClick={handleOpenAuctionRoom}
+                  className="w-full rounded-lg bg-blue-600 py-3 font-bold text-white transition hover:bg-blue-700"
+                >
+                  Open Auction
+                </button>
+              </div>
+            )}
+
+            {auction.status === 'future' && registrationClosed && roomActivationActive && !isCurrentRoomActivator && isRegistered && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                Waiting for registered participant #{auction.roomActivation?.currentSequence} to open the auction room.
+                This handoff expires in <b>{roomActivationCountdown}</b>.
+              </div>
+            )}
+
+            {auction.status === 'future' && registrationClosed && !roomActivationActive && isRegistered && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                Registration is closed. The auction room is preparing to hand off to the next eligible participant.
+              </div>
+            )}
+
+            {auction.status === 'future' && registrationClosed && !isRegistered && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                Registration is closed. Waiting for a registered participant to open the auction room.
               </div>
             )}
 

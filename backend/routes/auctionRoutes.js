@@ -8,6 +8,7 @@ const {
   deleteAuction,
   placeBid,
   registerForAuction,
+  openAuctionRoom,
   giveUpBid,
   handleNoRegistrationDecision,
 } = require('../controllers/auctionController');
@@ -39,6 +40,7 @@ router.put('/:id', protect, handleAuctionImageUpload, updateAuction);
 router.delete('/:id', protect, deleteAuction);
 
 router.post('/:id/register', protect, registerForAuction);
+router.post('/:id/open-room', protect, openAuctionRoom);
 router.post('/:id/bid', protect, placeBid);
 router.post('/:id/give-up', protect, giveUpBid);
 router.post('/:id/no-registration-decision', protect, handleNoRegistrationDecision);
