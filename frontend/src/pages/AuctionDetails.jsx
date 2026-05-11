@@ -437,7 +437,7 @@ const AuctionDetails = () => {
 
             {auction.status === 'ongoing' && isActiveBidder && !isCurrentTurn && (
               <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg text-amber-800 text-sm">
-                Waiting for your turn. Each active turn is 10 seconds.
+                Waiting for your turn. Each active turn is 20 seconds.
               </div>
             )}
 

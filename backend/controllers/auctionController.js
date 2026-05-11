@@ -60,8 +60,8 @@ const resolveRegistrationWindowHours = ({ registrationWindowHours, registrationW
 };
 
 const ensureTurnDefaults = (auction) => {
-  if (!auction.turnDurationSeconds || auction.turnDurationSeconds < 1) {
-    auction.turnDurationSeconds = 10;
+  if (!auction.turnDurationSeconds || auction.turnDurationSeconds < 1 || auction.turnDurationSeconds === 10) {
+    auction.turnDurationSeconds = 20;
   }
 };
 
@@ -722,7 +722,7 @@ exports.placeBid = async (req, res) => {
     }
 
     if (auction.currentTurnBidder && String(auction.currentTurnBidder) !== req.user.id) {
-      return res.status(400).json({ message: 'Not your turn. Wait for your 10-second turn.' });
+      return res.status(400).json({ message: 'Not your turn. Wait for your 20-second turn.' });
     }
 
     if (amount <= auction.currentPrice) {

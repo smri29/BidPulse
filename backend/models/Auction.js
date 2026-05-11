@@ -82,7 +82,7 @@ const auctionSchema = new mongoose.Schema(
     },
     turnDurationSeconds: {
       type: Number,
-      default: 10,
+      default: 20,
     },
     turnExpiresAt: {
       type: Date,
