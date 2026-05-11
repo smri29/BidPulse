@@ -56,8 +56,12 @@ const CreateAuction = () => {
   const onChange = (event) => {
     const { name, value } = event.target;
     if (name === 'registrationWindowDays') {
-      if (value === 'test') {
-        setFormData((prev) => ({ ...prev, registrationWindowDays: '1', registrationTestMinutes: '5' }));
+      if (value === 'test-2' || value === 'test-5') {
+        setFormData((prev) => ({
+          ...prev,
+          registrationWindowDays: '1',
+          registrationTestMinutes: value === 'test-2' ? '2' : '5',
+        }));
         return;
       }
       setFormData((prev) => ({ ...prev, registrationWindowDays: value, registrationTestMinutes: '' }));
@@ -211,11 +215,16 @@ const CreateAuction = () => {
                 <Field label="Registration Period" required>
                   <select
                     name="registrationWindowDays"
-                    value={formData.registrationTestMinutes ? 'test' : formData.registrationWindowDays}
+                    value={
+                      formData.registrationTestMinutes
+                        ? `test-${formData.registrationTestMinutes}`
+                        : formData.registrationWindowDays
+                    }
                     onChange={onChange}
                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5"
                   >
-                    <option value="test">5 minutes (test mode)</option>
+                    <option value="test-2">2 minutes (test mode)</option>
+                    <option value="test-5">5 minutes (test mode)</option>
                     <option value="1">1 day</option>
                     <option value="5">5 days</option>
                     <option value="8">8 days</option>

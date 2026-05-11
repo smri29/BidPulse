@@ -7,7 +7,7 @@ const { validateTurnstileToken } = require('../utils/turnstile');
 
 const REGISTRATION_WINDOWS = [24, 120, 192, 240, 360, 480];
 const REGISTRATION_DAYS = [1, 5, 8, 10, 15, 20];
-const TEST_REGISTRATION_MINUTES = [5];
+const TEST_REGISTRATION_MINUTES = [2, 5];
 
 const uploadAuctionImages = async (files) => {
   if (!files?.length) return [];
@@ -362,7 +362,7 @@ exports.createAuction = async (req, res) => {
 
     const parsedWindow = resolveRegistrationWindowHours(req.body);
     if (!parsedWindow) {
-      return res.status(400).json({ message: 'Registration window must be 5 minutes (test) or one of 1, 5, 8, 10, 15, or 20 days' });
+      return res.status(400).json({ message: 'Registration window must be 2 or 5 minutes (test) or one of 1, 5, 8, 10, 15, or 20 days' });
     }
 
     if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
@@ -438,7 +438,7 @@ exports.updateAuction = async (req, res) => {
     if (req.body.registrationWindowHours || req.body.registrationWindowDays || req.body.registrationWindowMinutes) {
       const parsedWindow = resolveRegistrationWindowHours(req.body);
       if (!parsedWindow) {
-        return res.status(400).json({ message: 'Registration window must be 5 minutes (test) or one of 1, 5, 8, 10, 15, or 20 days' });
+        return res.status(400).json({ message: 'Registration window must be 2 or 5 minutes (test) or one of 1, 5, 8, 10, 15, or 20 days' });
       }
       auction.registrationWindowHours = parsedWindow;
       auction.registrationEndAt = getRegistrationEndAt(parsedWindow);
@@ -707,7 +707,7 @@ exports.adminApproveAuction = async (req, res) => {
     if (registrationWindowDays || registrationWindowMinutes) {
       const parsedWindow = resolveRegistrationWindowHours({ registrationWindowDays, registrationWindowMinutes });
       if (!parsedWindow) {
-        return res.status(400).json({ message: 'Registration window must be 5 minutes (test) or one of 1, 5, 8, 10, 15, or 20 days' });
+      return res.status(400).json({ message: 'Registration window must be 2 or 5 minutes (test) or one of 1, 5, 8, 10, 15, or 20 days' });
       }
       auction.registrationWindowHours = parsedWindow;
     }
