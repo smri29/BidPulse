@@ -2,6 +2,11 @@
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+// Shared API client:
+// - injects auth tokens
+// - emits global notification events
+// - detects session expiry in one place
+
 const instance = axios.create({
   baseURL: apiBaseUrl,
   timeout: 15000,
@@ -56,6 +61,7 @@ export const getApiErrorMessage = (error, fallback = 'Something went wrong. Plea
 };
 
 instance.interceptors.request.use((config) => {
+  // Attach the stored bearer token automatically unless the caller already set one.
   const user = parseStoredUser();
   if (user?.token) {
     config.headers = config.headers || {};
@@ -71,6 +77,7 @@ instance.interceptors.response.use(
     const method = String(response.config?.method || 'get').toLowerCase();
     const requestUrl = String(response.config?.url || '');
     const isAuthEndpoint = requestUrl.includes('/auth/');
+    // Success notifications are shown only for mutating actions, not normal reads.
     const shouldNotify = ['post', 'put', 'patch', 'delete'].includes(method);
     if (shouldNotify && response.data?.message && !isAuthEndpoint) {
       emitGlobalNotification({
@@ -102,6 +109,7 @@ instance.interceptors.response.use(
       serverMessage.includes('user not found');
 
     if (authFailure && !isAuthAction) {
+      // Immediately clear local auth so the app does not continue with a broken session.
       localStorage.removeItem('user');
       const now = Date.now();
       const lastEventAt = Number(
@@ -118,6 +126,7 @@ instance.interceptors.response.use(
     }
 
     if (!authFailure && !isAuthAction) {
+      // Non-auth failures become warning notifications rather than silent failures.
       emitGlobalNotification({
         title: getNotificationTitle(String(error.config?.method || 'get').toLowerCase(), requestUrl, true),
         message: getApiErrorMessage(error),

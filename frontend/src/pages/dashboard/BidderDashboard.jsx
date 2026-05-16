@@ -7,6 +7,7 @@ import { getAllAuctions } from '../../redux/auctionSlice';
 import Reveal from '../../components/ui/Reveal';
 import AnimatedNumber from '../../components/ui/AnimatedNumber';
 
+// Buyer dashboard reframes the auction list from the current user's bidder perspective.
 const BidderDashboard = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -53,6 +54,7 @@ const BidderDashboard = () => {
   );
 
   const registrationCoverage = useMemo(() => {
+    // Simple ratio showing how many available future auctions the user has already registered for.
     const possibleFuture = auctions.filter((item) => item.status === 'future').length;
     if (!possibleFuture) return 0;
     return Math.min(100, Math.round((registeredFuture.length / possibleFuture) * 100));

@@ -49,6 +49,12 @@ import { socketUrl } from './utils/axiosConfig';
 const GLOBAL_NOTIFY_EVENTS = ['AuctionPulse:notify', 'BidPulse:notify', 'rizbid:notify'];
 const AUTH_EXPIRED_EVENTS = ['AuctionPulse:auth-expired', 'BidPulse:auth-expired', 'RiZBiD:auth-expired'];
 
+// Main application shell:
+// 1. defines all routes
+// 2. chooses the correct navbar for admin vs regular users
+// 3. keeps session/user state fresh
+// 4. subscribes to realtime notifications
+// 5. converts global app events into visible toasts/notifications
 function App() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -57,10 +63,12 @@ function App() {
   const isAdminSession = user?.role === 'admin';
 
   useEffect(() => {
+    // Notification history is stored per-user, so swap notification ownership when the session changes.
     dispatch(setNotificationOwner(user || null));
   }, [dispatch, user?._id, user?.id, user?.email, user?.role]);
 
   useEffect(() => {
+    // Rehydrate the latest user/profile state from the backend whenever a token is present.
     if (!user?.token) return;
     lastSessionCheckRef.current = Date.now();
     dispatch(fetchCurrentUser());
@@ -69,6 +77,7 @@ function App() {
   useEffect(() => {
     if (!user?.token) return undefined;
 
+    // Logged-in users open a personal socket connection for server-pushed notifications.
     const socket = io(socketUrl, {
       transports: ['websocket', 'polling'],
       auth: { token: user.token },
@@ -88,6 +97,7 @@ function App() {
   }, [dispatch, user?.token]);
 
   useEffect(() => {
+    // Axios and other shared utilities emit global notification events onto window.
     const handleGlobalNotify = (event) => {
       const detail = event.detail || {};
       if (!detail.message) return;
@@ -106,6 +116,7 @@ function App() {
   }, [dispatch]);
 
   useEffect(() => {
+    // Global auth-expired events centralize forced logout behavior.
     const handleAuthExpired = () => {
       dispatch(forceLogout('Your session ended. Please log in again.'));
       dispatch(addNotification({
@@ -128,6 +139,7 @@ function App() {
   }, [dispatch]);
 
   useEffect(() => {
+    // Browser online/offline events are surfaced to the user as feedback notifications.
     const handleOnline = () => {
       toast.success('Back online', { toastId: 'network-online' });
       dispatch(addNotification({
@@ -156,6 +168,7 @@ function App() {
   }, [dispatch]);
 
   useEffect(() => {
+    // If the tab becomes visible after a while, refresh session state defensively.
     const handleVisibility = () => {
       const now = Date.now();
       const enoughTimePassed = now - lastSessionCheckRef.current > SESSION_RECHECK_INTERVAL_MS;

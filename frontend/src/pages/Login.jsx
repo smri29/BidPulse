@@ -7,6 +7,7 @@ import { Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
 import Reveal from '../components/ui/Reveal';
 import TurnstileWidget from '../components/ui/TurnstileWidget';
 
+// Login page uses the same backend endpoint for normal users and the static admin account.
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [turnstileToken, setTurnstileToken] = useState('');
@@ -26,6 +27,7 @@ const Login = () => {
     }
 
     if (user || isSuccess) {
+      // Admins and regular users land on different first screens after login.
       if (user?.role === 'admin') navigate('/dashboard/admin');
       else navigate('/profile');
     }

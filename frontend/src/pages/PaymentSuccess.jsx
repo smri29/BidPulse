@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
 import axios from '../utils/axiosConfig';
 
+// Stripe redirects here after checkout. The page attempts a final confirmation sync with the backend.
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const [isConfirming, setIsConfirming] = useState(true);

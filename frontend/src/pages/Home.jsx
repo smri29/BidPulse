@@ -10,6 +10,11 @@ import AuctionCard from '../components/cards/AuctionCard';
 import Reveal from '../components/ui/Reveal';
 import { AUCTION_CATEGORY_OPTIONS } from '../constants/auctionCategories';
 
+// Home page responsibilities:
+// 1. introduce the brand
+// 2. fetch and filter auctions
+// 3. manage a local watchlist
+// 4. allow logged-in users to register for future auctions
 const WATCHLIST_KEY = 'AuctionPulse_watchlist';
 const LEGACY_WATCHLIST_KEY = 'rizbid_watchlist';
 
@@ -58,6 +63,7 @@ const Home = () => {
   const [heroMessageIndex, setHeroMessageIndex] = useState(0);
 
   useEffect(() => {
+    // Home loads a broad auction list because it powers searching, filtering, and phase switching.
     dispatch(getAllAuctions({ includeBids: false, includeRegistrations: true, force: true, limit: 200 }));
   }, [dispatch]);
 
@@ -85,6 +91,7 @@ const Home = () => {
   );
 
   const filteredAuctions = useMemo(() => {
+    // Filters stack in this order: phase, category, then free-text search.
     const query = search.trim().toLowerCase();
     return auctions.filter((auction) => {
       const byPhase = phaseStatuses.includes(auction.status);
@@ -113,6 +120,7 @@ const Home = () => {
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
       toast.success(`Registered successfully. Your number is #${data.registrationNumber}`);
+      // Refresh the listing data after registration so counts and button state update immediately.
       dispatch(getAllAuctions({ includeBids: false, includeRegistrations: true, force: true, limit: 200 }));
     } catch (error) {
       toast.error(error.response?.data?.message || 'Registration failed');
@@ -275,6 +283,7 @@ const InteractivePulseVisual = () => {
   const rotateY = useSpring(useTransform(pointerX, [-0.5, 0.5], [-12, 12]), { stiffness: 150, damping: 16 });
 
   const handlePointerMove = (event) => {
+    // Pointer position slightly tilts the hero card for a more premium interactive feel.
     const bounds = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - bounds.left) / bounds.width - 0.5;
     const y = (event.clientY - bounds.top) / bounds.height - 0.5;

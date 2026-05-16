@@ -22,6 +22,7 @@ import {
   X,
 } from 'lucide-react';
 
+// The admin navbar is tuned for moderation work rather than marketplace browsing.
 const ADMIN_LINKS = [
   { to: '/dashboard/admin', label: 'Overview', icon: LayoutDashboard },
   { to: '/admin/users', label: 'Users', icon: Users },
@@ -49,12 +50,15 @@ const AdminNavbar = () => {
   const notificationRef = useRef(null);
 
   useEffect(() => {
+    // Route transitions should clear temporary UI state so the next admin page
+    // does not inherit an old open drawer or dropdown.
     setIsDropdownOpen(false);
     setIsNotificationOpen(false);
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
+    // Notification preview dismissals are still scoped by owner in admin mode.
     setDismissedNotificationIds(readDismissedNotificationIds(ownerKey));
 
     const handleDismissedChange = (event) => {
@@ -68,6 +72,7 @@ const AdminNavbar = () => {
   }, [ownerKey]);
 
   useEffect(() => {
+    // Shared click-away logic for the notification panel and profile menu.
     const handleClickOutside = (event) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setIsNotificationOpen(false);
@@ -100,6 +105,7 @@ const AdminNavbar = () => {
           <div className="admin-link-cluster flex items-center gap-1.5 rounded-2xl p-1.5">
             {ADMIN_LINKS.map((item) => {
               const Icon = item.icon;
+              // "Overview" stays icon-only in desktop mode to keep the nav compact.
               const isActive = location.pathname === item.to;
               return (
                 <Link

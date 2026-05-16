@@ -1,5 +1,6 @@
 const DEFAULT_AUCTION_IMAGE = 'https://via.placeholder.com/900x600?text=AuctionPulse+Listing';
 
+// Shared image fallback helpers keep the auction UI stable even with missing or broken URLs.
 export const toSafeImageUrl = (rawUrl) => {
   if (!rawUrl || typeof rawUrl !== 'string') return DEFAULT_AUCTION_IMAGE;
   const trimmed = rawUrl.trim();
@@ -19,6 +20,7 @@ export const getAuctionImage = (images) => {
 };
 
 export const handleAuctionImageError = (event) => {
+  // Apply the placeholder only once so repeated onError loops do not occur.
   const target = event?.currentTarget;
   if (!target) return;
   if (target.dataset?.fallbackApplied === 'true') return;

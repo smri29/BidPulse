@@ -16,6 +16,7 @@ import {
 import Reveal from '../../components/ui/Reveal';
 import AnimatedNumber from '../../components/ui/AnimatedNumber';
 
+// Admin dashboard summarizes the platform through metrics, recent transactions, and listing-state distribution.
 const AdminDashboard = () => {
   const { user } = useSelector((state) => state.auth);
   const [stats, setStats] = useState(null);

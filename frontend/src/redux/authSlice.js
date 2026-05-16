@@ -4,6 +4,13 @@ import { getApiErrorMessage } from '../utils/axiosConfig';
 
 const getTokenFromState = (thunkAPI) => thunkAPI.getState().auth.user?.token;
 
+// Auth slice owns:
+// - login/register session state
+// - current user refresh
+// - profile updates
+// - profile verification
+// - avatar upload
+// - account activity and account deletion
 export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async (_, thunkAPI) => {
   try {
     const token = getTokenFromState(thunkAPI);
@@ -11,12 +18,14 @@ export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async 
     const response = await axios.get('/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     });
+    // Keep the existing token while replacing the rest of the user object with fresh backend data.
     const currentUser = { ...response.data, token };
     localStorage.setItem('user', JSON.stringify(currentUser));
     return currentUser;
   } catch (error) {
     const status = error.response?.status;
     const serverMessage = String(error.response?.data?.message || '').toLowerCase();
+    // Some 403s are really session/auth problems, so they are treated like logout conditions.
     const shouldLogout =
       status === 401 ||
       (status === 403 &&
@@ -49,6 +58,7 @@ export const register = createAsyncThunk('auth/register', async (userData, thunk
 export const login = createAsyncThunk('auth/login', async (userData, thunkAPI) => {
   try {
     const response = await axios.post('/auth/login', userData);
+    // Persist profile edits immediately so navbar/profile screens stay in sync after refresh.
     if (response.data) {
       localStorage.setItem('user', JSON.stringify(response.data));
     }
@@ -193,6 +203,7 @@ export const logout = createAsyncThunk('auth/logout', async () => {
 
 let user = null;
 try {
+  // Restore the previous session from localStorage if one exists.
   user = JSON.parse(localStorage.getItem('user'));
 } catch (_error) {
   user = null;
@@ -210,12 +221,14 @@ const authSlice = createSlice({
   },
   reducers: {
     reset: (state) => {
+      // reset clears UI flags without clearing the actual logged-in user.
       state.isLoading = false;
       state.isSuccess = false;
       state.isError = false;
       state.message = '';
     },
     forceLogout: (state, action) => {
+      // Used when the backend or interceptor determines the session is no longer valid.
       localStorage.removeItem('user');
       state.user = null;
       state.activity = null;
@@ -241,6 +254,7 @@ const authSlice = createSlice({
           state.isError = true;
           state.message = action.payload?.message || 'Session expired. Please log in again.';
         } else {
+          // Soft refresh failures should not force a logout automatically.
           state.message = '';
         }
       })

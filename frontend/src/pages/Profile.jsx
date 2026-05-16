@@ -30,6 +30,11 @@ import {
 import Reveal from '../components/ui/Reveal';
 import AnimatedNumber from '../components/ui/AnimatedNumber';
 
+// Profile page responsibilities:
+// 1. display and edit user account data
+// 2. drive the profile verification flow
+// 3. upload avatars and manage social/contact/medical fields
+// 4. show simple activity metrics
 const initialVerificationForm = {
   dob: '',
   country: '',
@@ -74,6 +79,7 @@ const clearVerificationUiState = (user) => {
   sessionStorage.removeItem(storageKey);
 };
 
+// Verification modal state is stored in sessionStorage so a page refresh does not fully erase the flow.
 const Profile = () => {
   const dispatch = useDispatch();
   const { user, isLoading, activity } = useSelector((state) => state.auth);
@@ -113,6 +119,7 @@ const Profile = () => {
 
   useEffect(() => {
     if (!user) return;
+    // Seed editable form state from the latest session user.
     setFormData({
       name: user.name || '',
       address: user.address || '',
@@ -167,6 +174,7 @@ const Profile = () => {
       setOtpExpiresAt(nextOtpExpiresAt);
     }
 
+    // Restore the exact verification step if the page reloads mid-flow.
     if (storedState.step === 'otp' && nextOtpExpiresAt) {
       setVerificationStep('otp');
       setIsVerificationModalOpen(Boolean(storedState.modalOpen));
@@ -182,6 +190,7 @@ const Profile = () => {
   useEffect(() => {
     if (!user?.emailVerified) return;
 
+    // Once verification succeeds, clear all temporary verification UI state.
     setIsVerificationModalOpen(false);
     setVerificationStep('form');
     setVerificationCooldownEndsAt(null);
@@ -197,6 +206,7 @@ const Profile = () => {
     }
 
     const updateCountdown = () => {
+      // Use ceil so the label does not visually expire one second too early.
       const remainingSeconds = Math.max(0, Math.ceil((verificationCooldownEndsAt - Date.now()) / 1000));
       setVerificationCountdown(remainingSeconds);
       if (remainingSeconds === 0) {
@@ -216,6 +226,7 @@ const Profile = () => {
     }
 
     const updateCountdown = () => {
+      // This mirrors the backend OTP expiry so the UI and server agree on validity.
       const remainingSeconds = Math.max(0, Math.ceil((otpExpiresAt - Date.now()) / 1000));
       setOtpCountdown(remainingSeconds);
       if (remainingSeconds === 0) {
@@ -241,6 +252,8 @@ const Profile = () => {
     }
 
     writeVerificationUiState(user, {
+      // Persist enough UI state to survive refreshes without falsely marking
+      // verification complete or losing an in-progress OTP/link step.
       cooldownEndsAt: hasCooldown ? verificationCooldownEndsAt : null,
       cooldownLabel: verificationCooldownLabel,
       otpExpiresAt: hasOtpExpiry ? otpExpiresAt : null,
@@ -313,6 +326,7 @@ const Profile = () => {
 
   const handleSave = (event) => {
     event.preventDefault();
+    // Normal profile editing is separate from verification; it updates general account fields only.
     dispatch(updateProfile(formData))
       .unwrap()
       .then(() => {
@@ -323,6 +337,7 @@ const Profile = () => {
   };
 
   const openVerificationModal = () => {
+    // Reopen the most relevant step if the user already started verification.
     if (isVerificationCooldownActive && verificationCooldownLabel === 'Link Sent') {
       setVerificationStep('link');
     } else if (otpExpiresAt && otpCountdown > 0) {
@@ -361,6 +376,7 @@ const Profile = () => {
     event.preventDefault();
     setIsStartingVerification(true);
 
+    // FormData is required because verification may include a newly uploaded avatar image.
     const payload = new FormData();
     payload.append('dob', verificationForm.dob);
     payload.append('country', verificationForm.country);
@@ -376,6 +392,7 @@ const Profile = () => {
       .unwrap()
       .then((response) => {
         toast.success(response.message || 'Verification request created');
+        // Cooldown prevents rapid duplicate sends while email delivery is still relevant.
         setVerificationCooldownEndsAt(Date.now() + 60 * 1000);
         setVerificationCooldownLabel(response.verificationMethod === 'link' ? 'Link Sent' : 'Awaiting Verification');
         setIsVerificationModalOpen(true);

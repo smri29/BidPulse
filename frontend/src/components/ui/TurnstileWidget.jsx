@@ -5,6 +5,8 @@ const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api
 
 let turnstileScriptPromise = null;
 
+// Cloudflare Turnstile is loaded lazily and shared through one promise so
+// multiple forms do not inject duplicate scripts into the page.
 const loadTurnstileScript = () => {
   if (typeof window === 'undefined') {
     return Promise.reject(new Error('Window is not available'));
@@ -58,6 +60,7 @@ const TurnstileWidget = forwardRef(function TurnstileWidget(
   }, [onVerify, onExpire, onError]);
 
   useImperativeHandle(ref, () => ({
+    // Parent forms can reset the widget after an expired token or failed submit.
     reset() {
       if (window.turnstile && widgetIdRef.current !== null) {
         window.turnstile.reset(widgetIdRef.current);
@@ -79,6 +82,7 @@ const TurnstileWidget = forwardRef(function TurnstileWidget(
         }
 
         if (widgetIdRef.current !== null) {
+          // Recreate the widget cleanly if the component is re-mounted with new props.
           turnstile.remove(widgetIdRef.current);
           widgetIdRef.current = null;
         }
@@ -87,6 +91,8 @@ const TurnstileWidget = forwardRef(function TurnstileWidget(
           sitekey: siteKey,
           theme: 'light',
           size: 'flexible',
+          // Success, expiry, and load failure are separated so the caller can
+          // react with the correct recovery message.
           callback: (token) => {
             setLoadError('');
             onVerifyRef.current?.(token);
@@ -109,6 +115,7 @@ const TurnstileWidget = forwardRef(function TurnstileWidget(
 
     return () => {
       cancelled = true;
+      // Remove the rendered widget instance during cleanup to avoid leftovers.
       if (window.turnstile && widgetIdRef.current !== null) {
         window.turnstile.remove(widgetIdRef.current);
         widgetIdRef.current = null;

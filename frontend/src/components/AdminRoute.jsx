@@ -13,6 +13,7 @@ const AdminRoute = ({ children }) => {
     );
   }
 
+  // AdminRoute is the client-side gate for admin-only screens.
   if (!user || user.role !== 'admin') {
     return <Navigate to="/login" replace />;
   }

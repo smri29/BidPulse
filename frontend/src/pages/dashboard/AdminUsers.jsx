@@ -24,6 +24,7 @@ import axios from '../../utils/axiosConfig';
 import Reveal from '../../components/ui/Reveal';
 import AnimatedNumber from '../../components/ui/AnimatedNumber';
 
+// Admin users page combines moderation actions with a drill-down activity report modal.
 const AdminUsers = () => {
   const { user } = useSelector((state) => state.auth);
   const [users, setUsers] = useState([]);
@@ -88,6 +89,7 @@ const AdminUsers = () => {
   }, [filteredUsers.length, users]);
 
   const handleViewHistory = async (userId) => {
+    // Full user history is fetched lazily so the initial admin table stays lightweight.
     setIsReportLoading(true);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };

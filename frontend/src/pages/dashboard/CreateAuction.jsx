@@ -8,6 +8,7 @@ import { addNotification } from '../../redux/notificationSlice';
 import TurnstileWidget from '../../components/ui/TurnstileWidget';
 import { AUCTION_CATEGORY_OPTIONS } from '../../constants/auctionCategories';
 
+// Create-auction page prepares a seller submission that later enters admin verification.
 const MAX_IMAGES = 3;
 
 const CreateAuction = () => {
@@ -91,6 +92,7 @@ const CreateAuction = () => {
       return;
     }
 
+    // Multipart payload is required because the backend expects images plus text fields together.
     const payload = new FormData();
     payload.append('title', formData.title.trim());
     payload.append('description', formData.description.trim());

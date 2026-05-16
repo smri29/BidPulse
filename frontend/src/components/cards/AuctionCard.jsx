@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Clock, DollarSign, Star, Users } from 'lucide-react';
 import { getAuctionImage, handleAuctionImageError } from '../../utils/imageUrl';
 
+// Auction cards compress status, timing, engagement, and key actions into one tile.
 const AuctionCard = ({ auction, watched = false, onToggleWatch, onRegister, userId }) => {
   const statusLabelMap = {
     pending_verification: 'Under Review',
@@ -23,6 +24,7 @@ const AuctionCard = ({ auction, watched = false, onToggleWatch, onRegister, user
   const [timeNow, setTimeNow] = useState(Date.now());
 
   useEffect(() => {
+    // Only future listings need a live registration countdown.
     if (!isFuture) return undefined;
     const timer = window.setInterval(() => setTimeNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
@@ -31,6 +33,7 @@ const AuctionCard = ({ auction, watched = false, onToggleWatch, onRegister, user
   const registrationCountdown = useMemo(() => {
     if (!isFuture || !auction.registrationEndAt) return '';
 
+    // Convert milliseconds into readable day/hour/minute/second units for the card UI.
     const remainingMs = Math.max(new Date(auction.registrationEndAt).getTime() - timeNow, 0);
     const totalSeconds = Math.floor(remainingMs / 1000);
     const days = Math.floor(totalSeconds / 86400);
@@ -64,6 +67,7 @@ const AuctionCard = ({ auction, watched = false, onToggleWatch, onRegister, user
         <button
           onClick={(e) => {
             e.preventDefault();
+            // Stop the surrounding card/link navigation when toggling watchlist state.
             if (onToggleWatch) onToggleWatch(auction._id);
           }}
           className={`absolute bottom-3 right-3 rounded-full border p-2 shadow-sm ${
@@ -108,6 +112,8 @@ const AuctionCard = ({ auction, watched = false, onToggleWatch, onRegister, user
 
           {isFuture ? (
             <button
+              // Registration is disabled if there is no signed-in buyer, the viewer
+              // is the seller, or the user has already claimed a registration slot.
               disabled={!onRegister || !userId || isSeller || alreadyRegistered}
               onClick={() => onRegister?.(auction._id)}
               className="btn-premium w-full py-2 text-sm disabled:opacity-55"

@@ -20,6 +20,7 @@ import {
 import Reveal from '../components/ui/Reveal';
 import TurnstileWidget from '../components/ui/TurnstileWidget';
 
+// Registration page gives immediate visual feedback on password quality before backend validation happens.
 const getPasswordChecks = (value) => ({
   minLength: value.length >= 8,
   hasNumber: /\d/.test(value),

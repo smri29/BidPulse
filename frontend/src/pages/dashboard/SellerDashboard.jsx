@@ -21,6 +21,7 @@ import { getAuctionImage, handleAuctionImageError } from '../../utils/imageUrl';
 import Reveal from '../../components/ui/Reveal';
 import AnimatedNumber from '../../components/ui/AnimatedNumber';
 
+// Seller dashboard emphasizes listing analytics, payout estimates, and exportable reports.
 const SellerDashboard = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -57,6 +58,7 @@ const SellerDashboard = () => {
     const totalRegistrations = myAuctions.reduce((sum, a) => sum + (a.registrations?.length || 0), 0);
     const totalBids = myAuctions.reduce((sum, a) => sum + (a.bids?.length || 0), 0);
 
+    // Seller earnings use the platform's 95% seller share after 5% commission.
     const releasedEarnings = myAuctions
       .filter((a) => a.status === 'closed')
       .reduce((sum, a) => sum + a.currentPrice * 0.95, 0);
@@ -79,6 +81,7 @@ const SellerDashboard = () => {
   }, [myAuctions]);
 
   const statusDistribution = useMemo(() => {
+    // This helps sellers see where inventory is concentrated in the lifecycle.
     const map = {};
     myAuctions.forEach((a) => {
       map[a.status] = (map[a.status] || 0) + 1;
@@ -98,6 +101,7 @@ const SellerDashboard = () => {
           createdAt: new Date(a.createdAt).getTime(),
           bidCount: a.bids?.length || 0,
         }))
+        // Chronological ordering makes the trend feel like a growth timeline.
         .sort((a, b) => a.createdAt - b.createdAt),
     [myAuctions]
   );
@@ -108,6 +112,7 @@ const SellerDashboard = () => {
         .map((a) => {
           const registrationCount = a.registrations?.length || 0;
           const bidCount = a.bids?.length || 0;
+          // Intensity estimates average bidding pressure per registered participant.
           const intensity = registrationCount > 0 ? (bidCount / registrationCount).toFixed(2) : '0.00';
           const lastBid = bidCount > 0 ? a.bids[bidCount - 1] : null;
           return { ...a, registrationCount, bidCount, intensity, lastBid };
@@ -118,6 +123,8 @@ const SellerDashboard = () => {
   );
 
   const triggerCsvDownload = (filename, headers, rows) => {
+    // Export is generated fully on the client because the dashboard already
+    // has the necessary data and this avoids extra reporting endpoints.
     const csvRows = [
       headers.join(','),
       ...rows.map((r) => r.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')),
@@ -177,6 +184,7 @@ const SellerDashboard = () => {
   };
 
   const exportSummaryPdf = async () => {
+    // PDF export is generated on the client so sellers can download a quick summary instantly.
     const { jsPDF } = await import('jspdf');
     const doc = new jsPDF();
     const lineHeight = 7;

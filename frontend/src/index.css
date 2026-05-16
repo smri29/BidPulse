@@ -4,6 +4,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+Global frontend visual system
+1. brand colors and typography
+2. shared surfaces, buttons, and admin theme variants
+3. reusable motion and hover helpers
+4. page-shell backgrounds and atmospheric gradients
+*/
+
 :root {
   --surface-bg: #eef2f8;
   --surface-overlay: rgba(255, 255, 255, 0.72);

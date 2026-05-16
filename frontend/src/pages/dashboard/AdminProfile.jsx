@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import axios from '../../utils/axiosConfig';
 import { Shield, Mail, Calendar, Activity, CheckCircle2, History, Package } from 'lucide-react';
 
+// Admin profile is mainly an identity + recent platform history summary rather than a normal editable profile.
 const AdminProfile = () => {
   const { user } = useSelector((state) => state.auth);
   const [stats, setStats] = useState(null);

@@ -1,6 +1,8 @@
 const DISMISSED_STORAGE_PREFIX = 'AuctionPulse_notificationPopoverHidden';
 export const NOTIFICATION_POPOVER_EVENT = 'auctionpulse:notification-popover-hidden-change';
 
+// Popover dismissal is separate from full deletion.
+// A notification can be hidden from the bell preview while still existing in the notifications page.
 export const getDismissedStorageKey = (ownerKey) =>
   `${DISMISSED_STORAGE_PREFIX}:${ownerKey || 'guest'}`;
 

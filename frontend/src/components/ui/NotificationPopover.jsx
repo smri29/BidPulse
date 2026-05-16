@@ -9,6 +9,8 @@ import {
   readDismissedNotificationIds,
 } from '../../utils/notificationPopover';
 
+// This popover is only a compact preview. Dismissing here hides an item from
+// the mini list without deleting it from the full notifications page.
 const iconForType = (type) => {
   if (type === 'success') return <CheckCircle size={16} />;
   if (type === 'warning') return <AlertTriangle size={16} />;
@@ -37,6 +39,7 @@ const NotificationPopover = ({ onClose, variant = 'default' }) => {
       [...notifications]
         .filter((item) => !dismissedIds.includes(item.id))
         .sort((a, b) => {
+          // Keep unread items first, then sort newest to oldest within each group.
           if (a.read !== b.read) return a.read ? 1 : -1;
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         })
@@ -56,6 +59,7 @@ const NotificationPopover = ({ onClose, variant = 'default' }) => {
 
   const dismissFromPopover = (notificationId) => {
     if (dismissedIds.includes(notificationId)) return;
+    // Preview dismissal is local state persistence, not a destructive delete.
     persistDismissed([...dismissedIds, notificationId]);
   };
 
@@ -98,6 +102,7 @@ const NotificationPopover = ({ onClose, variant = 'default' }) => {
                   dragConstraints={{ left: 0, right: 0 }}
                   dragElastic={0.18}
                   onDragEnd={(_, info) => {
+                    // A clear sideways swipe acts like "hide from preview".
                     if (Math.abs(info.offset.x) > 90) {
                       dismissFromPopover(item.id);
                     }

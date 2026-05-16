@@ -7,6 +7,8 @@ const getConfig = (token) => ({
   },
 });
 
+// Auction slice focuses on collection-level listing operations used across
+// the homepage and dashboards.
 export const createAuction = createAsyncThunk(
   'auctions/create',
   async (auctionData, thunkAPI) => {
@@ -19,6 +21,7 @@ export const createAuction = createAsyncThunk(
       return response.data;
     } catch (error) {
       const message =
+        // Large image uploads are the main case where timeout messaging needs to be more descriptive.
         error.code === 'ECONNABORTED'
           ? 'Upload is taking longer than expected. Please check your seller dashboard before retrying.'
           : error.response?.data?.message || error.message;
@@ -67,6 +70,7 @@ const auctionSlice = createSlice({
   },
   reducers: {
     reset: (state) => {
+      // reset is mainly used by the create-auction page after submission attempts.
       state.isLoading = false;
       state.isSuccess = false;
       state.isError = false;

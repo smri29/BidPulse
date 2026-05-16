@@ -16,6 +16,7 @@ import axios, { socketUrl } from '../../utils/axiosConfig';
 import Reveal from '../../components/ui/Reveal';
 import AnimatedNumber from '../../components/ui/AnimatedNumber';
 
+// Admin support page merges ticket queue management with the live support-room chat monitor.
 const AdminSupport = () => {
   const { user } = useSelector((state) => state.auth);
   const [tickets, setTickets] = useState([]);

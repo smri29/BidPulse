@@ -1,7 +1,8 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { animate } from 'motion';
 import { useInView } from 'motion/react';
 
+// Dashboard KPI helper that counts up once the number scrolls into view.
 const AnimatedNumber = ({ value = 0, duration = 0.9, className = '' }) => {
   const nodeRef = useRef(null);
   const currentValueRef = useRef(0);
@@ -11,6 +12,7 @@ const AnimatedNumber = ({ value = 0, duration = 0.9, className = '' }) => {
   useEffect(() => {
     if (!isInView) return undefined;
 
+    // API values may arrive as strings, so coerce safely before animating.
     const safeValue = Number.isFinite(Number(value)) ? Number(value) : 0;
     const controls = animate(currentValueRef.current, safeValue, {
       duration,

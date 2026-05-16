@@ -29,6 +29,7 @@ const getOwnerKey = (user) => {
 const getStorageKey = (ownerKey) => `${STORAGE_KEY_PREFIX}:${ownerKey || GUEST_OWNER_KEY}`;
 
 const getInitialOwnerKey = () => {
+  // Notification storage is scoped to whichever user is currently restored from localStorage.
   const storedUser = parseJson(localStorage.getItem('user'));
   return getOwnerKey(storedUser);
 };
@@ -62,6 +63,7 @@ const notificationSlice = createSlice({
   },
   reducers: {
     setNotificationOwner: (state, action) => {
+      // Switching accounts on the same browser should switch notification history too.
       const nextOwnerKey = getOwnerKey(action.payload);
       if (state.ownerKey === nextOwnerKey) return;
 
@@ -69,6 +71,7 @@ const notificationSlice = createSlice({
       state.items = loadNotifications(nextOwnerKey);
     },
     addNotification: (state, action) => {
+      // Normalize all incoming events to a consistent notification shape.
       const payload = {
         id: action.payload.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
         title: action.payload.title || 'Update',
@@ -79,6 +82,7 @@ const notificationSlice = createSlice({
       };
 
       const last = state.items[0];
+      // Ignore near-identical duplicates arriving within a very small time window.
       if (
         last &&
         last.title === payload.title &&

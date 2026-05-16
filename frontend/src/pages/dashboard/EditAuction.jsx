@@ -8,6 +8,7 @@ import { AUCTION_CATEGORY_OPTIONS } from '../../constants/auctionCategories';
 
 const MAX_IMAGES = 3;
 
+// Edit-auction lets sellers update pre-live listing data; backend enforces deeper status restrictions.
 const EditAuction = () => {
   const { id } = useParams();
   const navigate = useNavigate();

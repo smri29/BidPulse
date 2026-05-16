@@ -7,6 +7,10 @@ import { Clock, DollarSign, ArrowLeft, CheckCircle, Package, Truck, X, Lock, Use
 import { toast } from 'react-toastify';
 import { getAuctionImage, handleAuctionImageError } from '../utils/imageUrl';
 
+// Auction details responsibilities:
+// 1. show one auction in full detail
+// 2. react to realtime state changes
+// 3. handle registration, room opening, bidding, give-up, payment, and receipt confirmation
 const AuctionDetails = () => {
   const { id } = useParams();
   const { user } = useSelector((state) => state.auth);
@@ -33,6 +37,7 @@ const AuctionDetails = () => {
       const res = await axios.get(`/auctions/${id}`);
       let nextAuction = res.data;
 
+      // If the current user is the winner and payment state may be stale, try a reconciliation sync.
       const isWinnerForAuction =
         user?.token &&
         String(nextAuction.winner?._id || nextAuction.winner || '') === String(user?._id || '') &&
@@ -64,6 +69,7 @@ const AuctionDetails = () => {
   };
 
   useEffect(() => {
+    // These client-side timers drive registration, room-opening, and turn countdown displays.
     const timer = setInterval(() => setTimeNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -76,6 +82,7 @@ const AuctionDetails = () => {
       socketRef.current = null;
     }
 
+    // Join the auction-specific socket room so the page updates when bids or state change.
     const socket = io(socketUrl, {
       transports: ['websocket', 'polling'],
       auth: user?.token ? { token: user.token } : undefined,
@@ -185,6 +192,7 @@ const AuctionDetails = () => {
   const handlePayment = async (e) => {
     e.preventDefault();
     try {
+      // Shipping details are collected here before redirecting to Stripe checkout.
       const { data } = await axios.post(
         `/payment/checkout/${id}`,
         { shippingAddress: shippingDetails },
@@ -226,6 +234,8 @@ const AuctionDetails = () => {
   }, [auction?.roomActivation?.expiresAt, timeNow]);
 
   const registrationCountdown = useMemo(() => {
+    // Registration windows may be long in production or very short in testing,
+    // so this formatter keeps the display readable across both cases.
     const totalSec = Math.floor(registrationRemainingMs / 1000);
     const h = Math.floor(totalSec / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
@@ -236,6 +246,7 @@ const AuctionDetails = () => {
   const turnCountdown = useMemo(() => `${Math.floor(turnRemainingMs / 1000)}s`, [turnRemainingMs]);
 
   const roomActivationCountdown = useMemo(() => {
+    // Room activation is a short bridge state, so mm:ss is enough detail here.
     const totalSec = Math.floor(roomActivationRemainingMs / 1000);
     const m = Math.floor(totalSec / 60);
     const s = totalSec % 60;
@@ -262,6 +273,7 @@ const AuctionDetails = () => {
   const roomActivationActive = Boolean(auction.roomActivation?.isActive && currentRoomActivatorId);
   const isCurrentRoomActivator = roomActivationActive && currentRoomActivatorId === String(user?._id || '');
 
+  // These booleans centralize the page's switching logic so button visibility is easier to explain.
   const canRegister = user && auction.status === 'future' && registrationRemainingMs > 0 && !isOwner && !isRegistered;
   const canBid = user && auction.status === 'ongoing' && isActiveBidder && isCurrentTurn && user.emailVerified;
   const canGiveUp = user && auction.status === 'ongoing' && isActiveBidder;

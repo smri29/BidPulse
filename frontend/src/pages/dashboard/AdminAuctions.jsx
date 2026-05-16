@@ -11,6 +11,7 @@ import AnimatedNumber from '../../components/ui/AnimatedNumber';
 
 const REGISTRATION_DAY_OPTIONS = [1, 5, 8, 10, 15, 20];
 
+// Admin auctions page is the moderation workspace for approving, disapproving, or deleting listings.
 const AdminAuctions = () => {
   const { user } = useSelector((state) => state.auth);
   const [auctions, setAuctions] = useState([]);
@@ -51,6 +52,7 @@ const AdminAuctions = () => {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return auctions.filter((a) => {
+      // Moderation filters are client-side for immediate repeated review after one fetch.
       const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
       const matchesSearch =
         !q ||
@@ -91,9 +93,11 @@ const AdminAuctions = () => {
 
   const openDetails = async (auctionId) => {
     try {
+      // Detailed auction data is loaded lazily into a modal for moderation decisions.
       const { data } = await axios.get(`/auctions/${auctionId}`);
       setSelectedAuction(data);
       const hours = Number(data.registrationWindowHours) || 24;
+      // Very short test windows are stored as fractional hours, so convert them back to minutes for the form.
       const testMinutes = hours < 1 ? String(Math.round(hours * 60)) : '';
       const days = Math.round(hours / 24);
       setRegistrationWindowDays(String(REGISTRATION_DAY_OPTIONS.includes(days) ? days : 1));
@@ -108,6 +112,7 @@ const AdminAuctions = () => {
   const handleApprove = async () => {
     if (!selectedAuction) return;
     try {
+      // Admin can approve with either a relative window or a custom end-datetime override.
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       const payload = {
         registrationWindowDays: registrationTestMinutes ? undefined : Number(registrationWindowDays),

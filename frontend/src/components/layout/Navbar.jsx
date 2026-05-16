@@ -19,6 +19,8 @@ import {
   X,
 } from 'lucide-react';
 
+// The public navbar also remembers whether the signed-in user last preferred
+// buyer mode or seller mode so the dashboard shortcut feels consistent.
 const SELLER_MODE_PATHS = ['/dashboard/seller', '/create-auction', '/edit-auction'];
 const BIDDER_MODE_PATHS = ['/dashboard/bidder', '/auction'];
 const MODE_KEY = 'AuctionPulse_dashboard_mode';
@@ -69,11 +71,14 @@ const Navbar = () => {
 
   const modeFromPath = getModeFromPath(location.pathname);
   const preferredMode = useMemo(() => readPreferredMode(), []);
+  // A route-derived mode is the strongest signal. Otherwise we use the last
+  // stored preference to decide which dashboard entry point should be highlighted.
   const activeMode = modeFromPath || preferredMode;
   const isSellerMode = activeMode === 'seller';
   const dashboardPath = isSellerMode ? '/dashboard/seller' : '/dashboard/bidder';
 
   useEffect(() => {
+    // Persist the active working mode whenever the URL clearly indicates it.
     if (modeFromPath) persistPreferredMode(modeFromPath);
   }, [modeFromPath]);
 
@@ -84,6 +89,8 @@ const Navbar = () => {
   }, [location.pathname]);
 
   useEffect(() => {
+    // Hidden notification preview state is saved per owner, so switching users
+    // on the same browser does not share dismissals.
     setDismissedNotificationIds(readDismissedNotificationIds(ownerKey));
 
     const handleDismissedChange = (event) => {
@@ -97,6 +104,7 @@ const Navbar = () => {
   }, [ownerKey]);
 
   useEffect(() => {
+    // Close temporary overlays when clicking outside them to mimic native menus.
     const handleClickOutside = (event) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setIsNotificationOpen(false);

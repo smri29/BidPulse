@@ -7,7 +7,7 @@ const PrivateRoute = ({ children }) => {
 
   if (!user && isLoading) return <div className="p-10 text-center">Loading...</div>;
 
-  // If no user is logged in, redirect to Login
+  // PrivateRoute blocks guests from account-only pages.
   if (!user) {
     return <Navigate to="/login" replace />;
   }

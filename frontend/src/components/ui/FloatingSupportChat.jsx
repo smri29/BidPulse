@@ -5,6 +5,8 @@ import { io } from 'socket.io-client';
 import { useSelector } from 'react-redux';
 import { socketUrl } from '../../utils/axiosConfig';
 
+// Floating support provides lightweight realtime help without forcing users
+// away from the page they are currently using.
 const createWelcomeMessage = () => ({
   id: 'floating-support-welcome',
   role: 'system',
@@ -22,6 +24,7 @@ const normalizeMessage = (payload, fallbackRole = 'user') => ({
 });
 
 const appendIfNotDuplicate = (messages, incomingMessage) => {
+  // Socket reconnects can replay the same message payload, so duplicates are filtered.
   const isDuplicate = messages.some((existingMessage) => {
     const sameRole = existingMessage.role === incomingMessage.role;
     const sameName = existingMessage.name === incomingMessage.name;
@@ -51,6 +54,7 @@ const FloatingSupportChat = () => {
   const shouldRender = Boolean(user?.token) && user?.role !== 'admin';
   const isHelpPage = location.pathname === '/help';
   const isAdminRoute = location.pathname.startsWith('/admin');
+  // Hide the floating widget on screens where a fuller support experience already exists.
   const isVisible = shouldRender && !isHelpPage && !isAdminRoute;
 
   const statusLabel = useMemo(
@@ -73,6 +77,7 @@ const FloatingSupportChat = () => {
     socketRef.current = socket;
 
     const joinSupportRoom = () => {
+      // The backend only needs lightweight identity details for display purposes.
       socket.emit('support:join', {
         name: user?.name || 'Guest User',
         role: user?.role || 'user',
@@ -94,6 +99,7 @@ const FloatingSupportChat = () => {
         appendIfNotDuplicate(prev, normalizeMessage(payload, payload?.role || 'user'))
       );
       if (!isOpenRef.current) {
+        // Collapsed chat converts new activity into a badge count.
         setUnreadCount((prev) => prev + 1);
       }
     });
@@ -133,6 +139,7 @@ const FloatingSupportChat = () => {
     const trimmed = chatInput.trim();
     if (!trimmed) return;
 
+    // Messages are not appended optimistically; the socket echo becomes the single source of truth.
     socketRef.current?.emit('support:message', {
       name: user?.name || 'Guest User',
       role: user?.role || 'user',
@@ -189,6 +196,7 @@ const FloatingSupportChat = () => {
               {chatMessages.map((msg) => {
                 const isSystem = msg.role === 'system';
                 const isAdmin = msg.role === 'admin';
+                // Bubble alignment mirrors common chat conventions.
                 const isUser = !isSystem && !isAdmin;
 
                 return (

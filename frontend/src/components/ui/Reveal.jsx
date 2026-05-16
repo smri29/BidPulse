@@ -1,5 +1,6 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
+// Reusable scroll-reveal wrapper for cards and sections across the frontend.
 const Reveal = ({
   as: Tag = 'div',
   className = '',
@@ -15,6 +16,7 @@ const Reveal = ({
     if (!ref.current) return undefined;
 
     if (!('IntersectionObserver' in window)) {
+      // Older browsers simply show the content immediately instead of hiding it forever.
       setVisible(true);
       return undefined;
     }
@@ -23,6 +25,7 @@ const Reveal = ({
       ([entry]) => {
         if (entry.isIntersecting) {
           setVisible(true);
+          // Most sections animate once; repeat reveals are opt-in.
           if (once) observer.unobserve(entry.target);
         } else if (!once) {
           setVisible(false);
