@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const birthdayEmailLogSchema = new mongoose.Schema(
   {
+    // Birthday messages are limited to once per user per calendar year.
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

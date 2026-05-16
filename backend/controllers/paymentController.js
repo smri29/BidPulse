@@ -3,11 +3,19 @@ const Auction = require('../models/Auction');
 const { sendEmailAsync } = require('../utils/emailService');
 const templates = require('../utils/emailTemplates');
 
+// ---------------------------------------------------------------------------
+// Payment controller responsibilities
+// 1. Create Stripe checkout sessions for auction winners
+// 2. Confirm and reconcile successful payments
+// 3. Move auctions into shipping and final closed states
+// ---------------------------------------------------------------------------
+
 const emitRealtimeNotification = (req, payload, options = {}) => {
   try {
     const io = req.app.get('io');
     if (!io) return;
 
+    // Same payload can target the winner, seller, and admins without duplicate socket emits.
     const userIds = Array.from(
       new Set(
         (Array.isArray(options.userIds) ? options.userIds : [options.userIds])
@@ -52,6 +60,7 @@ exports.createCheckoutSession = async (req, res) => {
       return res.status(400).json({ message: 'Payment has already been completed for this auction' });
     }
 
+    // This prevents users from repeatedly creating overlapping Stripe sessions for the same order.
     if (auction.payment?.status === 'checkout_created') {
       return res.status(409).json({ message: 'A payment session is already active. Complete it or wait for expiration before retrying.' });
     }
@@ -61,6 +70,7 @@ exports.createCheckoutSession = async (req, res) => {
     }
 
     if (shippingAddress) {
+      // Shipping details are captured before redirecting to Stripe so the platform can fulfill after payment.
       auction.shippingDetails = shippingAddress;
     }
 
@@ -81,11 +91,13 @@ exports.createCheckoutSession = async (req, res) => {
       ],
       mode: 'payment',
       payment_intent_data: {
+        // Metadata gives webhook handlers enough context to map the payment back to the auction.
         metadata: {
           auctionId: auction._id.toString(),
           winnerId: req.user.id.toString(),
         },
       },
+      // Success URL feeds the frontend enough context to run a confirmation fallback after checkout.
       success_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/payment/success?session_id={CHECKOUT_SESSION_ID}&auction_id=${auction._id}`,
       cancel_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/auction/${auction._id}`,
       metadata: {
@@ -96,6 +108,7 @@ exports.createCheckoutSession = async (req, res) => {
     });
 
     auction.payment = {
+      // checkout_created prevents the UI from spawning overlapping Stripe sessions.
       ...auction.payment,
       status: 'checkout_created',
       amount: auction.currentPrice,
@@ -138,6 +151,7 @@ exports.confirmCheckoutSuccess = async (req, res) => {
       return res.status(400).json({ message: 'sessionId and auctionId are required' });
     }
 
+    // Success-page confirmation is a fallback for when webhook delivery is delayed.
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     if (!session) {
       return res.status(404).json({ message: 'Stripe session not found' });
@@ -147,6 +161,7 @@ exports.confirmCheckoutSuccess = async (req, res) => {
       return res.status(400).json({ message: 'Payment is not completed yet for this session' });
     }
 
+    // Stripe metadata is used as a defensive consistency check before mutating local order state.
     const metadataAuctionId = session.metadata?.auctionId;
     const metadataWinnerId = session.metadata?.winnerId;
     if (metadataAuctionId && String(metadataAuctionId) !== String(auctionId)) {
@@ -170,6 +185,7 @@ exports.confirmCheckoutSuccess = async (req, res) => {
       return res.status(200).json({ message: 'Payment already confirmed', auctionStatus: auction.status });
     }
 
+    // Success-page confirmation mirrors webhook math so delayed webhooks do not block fulfillment.
     const totalAmount = Number(auction.currentPrice || 0);
     const commission = Number((totalAmount * 0.05).toFixed(2));
     const sellerPayout = Number((totalAmount - commission).toFixed(2));
@@ -295,6 +311,7 @@ exports.reconcileWinnerPayment = async (req, res) => {
       return res.status(200).json({ message: 'Payment already reconciled', auctionStatus: auction.status });
     }
 
+    // Reconciliation relies on the Stripe session id saved when checkout was first created.
     const sessionId = auction.payment?.stripeSessionId;
     if (!sessionId) {
       return res.status(400).json({ message: 'No checkout session found for this auction' });
@@ -309,6 +326,7 @@ exports.reconcileWinnerPayment = async (req, res) => {
     const commission = Number((totalAmount * 0.05).toFixed(2));
     const sellerPayout = Number((totalAmount - commission).toFixed(2));
 
+    // Avoid duplicate seller transfers by respecting already recorded payout state/timestamps.
     let payoutStatus = auction.payment?.payoutStatus || 'manual_required';
     if (auction.seller?.stripeAccountId && !auction.payment?.payoutAt) {
       try {
@@ -387,6 +405,7 @@ exports.confirmProductReceived = async (req, res) => {
       return res.status(400).json({ message: 'Product receipt has already been confirmed' });
     }
 
+    // Buyer confirmation closes the lifecycle from the platform point of view.
     auction.status = 'closed';
     auction.shipping = {
       ...auction.shipping,

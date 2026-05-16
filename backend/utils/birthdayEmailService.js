@@ -3,6 +3,11 @@ const BirthdayEmailLog = require('../models/BirthdayEmailLog');
 const templates = require('./emailTemplates');
 const { sendEmailAsync } = require('./emailService');
 
+// ---------------------------------------------------------------------------
+// Birthday email service
+// Finds verified users with a matching birthday and ensures one send per year.
+// ---------------------------------------------------------------------------
+
 const normalizeDateParts = (date = new Date()) => ({
   day: date.getUTCDate(),
   month: date.getUTCMonth() + 1,
@@ -19,6 +24,7 @@ const sendDailyBirthdayEmails = async ({ date, clientUrl, forceSend = false, dry
   const { day, month, year } = normalizeDateParts(effectiveDate);
   const effectiveClientUrl = clientUrl || process.env.CLIENT_URL || 'http://localhost:5173';
 
+  // Birthdays are limited to verified users so the message reflects trusted, completed accounts.
   const recipients = await User.find({
     emailVerified: true,
     email: { $exists: true, $ne: '' },
@@ -27,6 +33,7 @@ const sendDailyBirthdayEmails = async ({ date, clientUrl, forceSend = false, dry
     .select('_id name email dob')
     .lean();
 
+  // Match on UTC month/day so yearly comparisons stay stable across server restarts.
   const matchingRecipients = recipients.filter((recipient) => {
     const dob = new Date(recipient.dob);
     return dob.getUTCDate() === day && dob.getUTCMonth() + 1 === month;

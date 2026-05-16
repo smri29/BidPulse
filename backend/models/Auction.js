@@ -1,8 +1,16 @@
 const mongoose = require('mongoose');
 const MIN_TEST_REGISTRATION_WINDOW_HOURS = 2 / 60;
 
+// ---------------------------------------------------------------------------
+// Auction model
+// 1. Stores seller-submitted listing data
+// 2. Tracks registration order and live-bidding queue state
+// 3. Tracks payment, shipping, and lifecycle transitions
+// ---------------------------------------------------------------------------
+
 const registrationSchema = new mongoose.Schema(
   {
+    // Sequence records registration order, which later drives room-opening priority.
     bidder: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -22,6 +30,7 @@ const registrationSchema = new mongoose.Schema(
 
 const bidSchema = new mongoose.Schema(
   {
+    // Each bid captures bidder, amount, and the exact moment the offer was placed.
     bidder: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -164,6 +173,7 @@ const auctionSchema = new mongoose.Schema(
       },
     },
     roomActivation: {
+      // Before a live session starts, registered users receive a short rotating window to open the room.
       isActive: {
         type: Boolean,
         default: false,
@@ -196,6 +206,7 @@ const auctionSchema = new mongoose.Schema(
       },
     },
     feeSummary: {
+      // These values are stored on each auction so business rules are snapshot with the listing.
       commissionRate: {
         type: Number,
         default: 0.05,
@@ -222,6 +233,7 @@ const auctionSchema = new mongoose.Schema(
       phone: String,
     },
     payment: {
+      // Payment status tracks checkout creation, success, and failure independently of shipping state.
       status: {
         type: String,
         enum: ['pending', 'checkout_created', 'paid', 'failed'],
@@ -270,6 +282,7 @@ const auctionSchema = new mongoose.Schema(
       },
     },
     shipping: {
+      // Shipping is owned by AuctionPulse after winner payment succeeds.
       status: {
         type: String,
         enum: ['pending_dispatch', 'in_transit', 'received_confirmed'],

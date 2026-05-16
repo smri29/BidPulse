@@ -2,6 +2,13 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
+// ---------------------------------------------------------------------------
+// User model
+// 1. Stores identity, auth, and verification state
+// 2. Stores profile data used across buyer/seller/admin dashboards
+// 3. Provides helper methods for password reset and verification tokens
+// ---------------------------------------------------------------------------
+
 const socialLinksSchema = new mongoose.Schema(
   {
     facebook: { type: String, default: '' },
@@ -23,6 +30,7 @@ const socialProfileEntrySchema = new mongoose.Schema(
 
 const pendingProfileVerificationSchema = new mongoose.Schema(
   {
+    // These values are staged first and copied into the permanent user profile only after verification.
     dob: Date,
     location: { type: String, default: '' },
     mobile: { type: String, default: '' },
@@ -193,11 +201,13 @@ const userSchema = new mongoose.Schema({
   },
 });
 
+// Common admin/reporting filters are indexed because these fields are queried frequently.
 userSchema.index({ role: 1 });
 userSchema.index({ isBanned: 1 });
 userSchema.index({ emailVerified: 1 });
 
 userSchema.pre('save', async function () {
+  // Hash only when the password actually changed so profile edits stay cheap.
   if (!this.isModified('password')) {
     return;
   }
@@ -210,6 +220,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 userSchema.methods.getResetPasswordToken = function () {
+  // Store only the hash in the database; the raw token is sent to the user.
   const resetToken = crypto.randomBytes(20).toString('hex');
 
   this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
@@ -219,6 +230,7 @@ userSchema.methods.getResetPasswordToken = function () {
 };
 
 userSchema.methods.generateEmailVerificationOTP = function () {
+  // Legacy signup OTP flow still exists in the model even though the app now verifies via profile flow.
   const otp = `${Math.floor(100000 + Math.random() * 900000)}`;
   this.emailVerificationOTP = crypto.createHash('sha256').update(otp).digest('hex');
   this.emailVerificationOTPExpire = Date.now() + 5 * 60 * 1000;
@@ -226,6 +238,7 @@ userSchema.methods.generateEmailVerificationOTP = function () {
 };
 
 userSchema.methods.generateProfileVerificationOTP = function () {
+  // OTP is hashed before storage so leaked DB data cannot be used directly.
   const otp = `${Math.floor(100000 + Math.random() * 900000)}`;
   if (!this.pendingProfileVerification) {
     this.pendingProfileVerification = {};
@@ -236,6 +249,7 @@ userSchema.methods.generateProfileVerificationOTP = function () {
 };
 
 userSchema.methods.generateProfileVerificationLinkToken = function () {
+  // Email verification link tokens follow the same hash-before-storage pattern as password resets.
   const token = crypto.randomBytes(20).toString('hex');
   if (!this.pendingProfileVerification) {
     this.pendingProfileVerification = {};

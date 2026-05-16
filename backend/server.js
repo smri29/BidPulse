@@ -34,6 +34,17 @@ const STATIC_ADMIN_DB_ID = '000000000000000000000999';
 const DEFAULT_DEV_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:4173'];
 const isProduction = (process.env.NODE_ENV || 'development') === 'production';
 
+// ---------------------------------------------------------------------------
+// Server responsibilities
+// 1. Boot the Express API and database connection
+// 2. Configure security, parsing, and cross-origin access
+// 3. Expose HTTP routes and readiness endpoints
+// 4. Handle realtime notifications and support chat over Socket.IO
+// 5. Run background auction, email, and reminder jobs
+// 6. Process Stripe webhooks as an external payment event source
+// ---------------------------------------------------------------------------
+
+// Accept both single-origin and comma-separated origin env vars so deployment is flexible.
 const parseAllowedOrigins = () => {
   const baseOrigins = [process.env.CLIENT_URL, process.env.CORS_ORIGIN]
     .filter(Boolean)
@@ -59,6 +70,7 @@ if (allowedOrigins.length === 0 && isProduction) {
   console.warn('CORS warning: no allowed origins configured. Browser cross-origin requests will be rejected.');
 }
 
+// Boot infrastructure before creating routes so shared dependencies exist at request time.
 connectDB();
 verifyEmailTransport();
 
@@ -73,6 +85,7 @@ const io = new Server(server, {
 });
 
 const emitNotificationToUsers = (userIds, payload, options = {}) => {
+  // Deduplicate recipients so the same user does not receive repeated socket events.
   const uniqueUserIds = Array.from(
     new Set((Array.isArray(userIds) ? userIds : [userIds]).filter(Boolean).map((id) => String(id)))
   );
@@ -87,6 +100,10 @@ const emitNotificationToUsers = (userIds, payload, options = {}) => {
 };
 
 app.set('io', io);
+
+// ---------------------------------------------------------------------------
+// Stripe webhook endpoint
+// ---------------------------------------------------------------------------
 
 // Stripe webhook must run before express.json middleware.
 app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
@@ -105,6 +122,7 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
   }
 
   if (event.type === 'checkout.session.completed') {
+    // Webhook is the primary source of truth for successful checkout completion.
     const session = event.data.object;
     const auctionId = session.metadata?.auctionId;
     const winnerId = session.metadata?.winnerId;
@@ -119,10 +137,12 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
         return res.json({ received: true });
       }
 
+      // Ignore duplicate webhook deliveries after payment state is already finalized.
       if (auction.payment?.status === 'paid' || ['paid_shipping_pending', 'closed'].includes(auction.status)) {
         return res.json({ received: true });
       }
 
+      // AuctionPulse keeps a 5% commission and sends the remaining 95% to the seller.
       const totalAmount = Number(auction.currentPrice || 0);
       const commission = Number((totalAmount * 0.05).toFixed(2));
       const sellerPayout = Number((totalAmount - commission).toFixed(2));
@@ -143,6 +163,7 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
       }
 
       auction.status = 'paid_shipping_pending';
+      // Payment and shipping state are updated together because fulfillment starts after checkout.
       auction.payment = {
         ...auction.payment,
         status: 'paid',
@@ -229,6 +250,7 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
   }
 
   if (event.type === 'checkout.session.expired' || event.type === 'checkout.session.async_payment_failed') {
+    // These events let the app recover gracefully when a checkout session is abandoned or fails.
     const session = event.data.object;
     const auctionId = session.metadata?.auctionId;
     const winnerId = session.metadata?.winnerId;
@@ -292,6 +314,7 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
   }
 
   if (event.type === 'payment_intent.payment_failed') {
+    // Payment intent failure gives a more detailed provider-side failure reason than session expiry.
     const paymentIntent = event.data.object;
     const auctionId = paymentIntent.metadata?.auctionId;
     const winnerId = paymentIntent.metadata?.winnerId;
@@ -345,6 +368,10 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
   return res.json({ received: true });
 });
 
+// ---------------------------------------------------------------------------
+// Standard HTTP middleware stack
+// ---------------------------------------------------------------------------
+
 app.use(cors({
   origin(origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -368,6 +395,10 @@ app.use('/api/auctions', auctionRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/support', supportRoutes);
+
+// ---------------------------------------------------------------------------
+// Basic health and fallback routes
+// ---------------------------------------------------------------------------
 
 app.get('/', (_req, res) => {
   res.send('AuctionPulse API is running...');
@@ -409,6 +440,10 @@ app.use((err, _req, res, _next) => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Socket.IO authentication and room management
+// ---------------------------------------------------------------------------
+
 io.use(async (socket, next) => {
   try {
     const rawAuthToken = socket.handshake?.auth?.token;
@@ -419,6 +454,7 @@ io.use(async (socket, next) => {
         : '';
     const token = rawAuthToken || headerToken;
 
+    // Guest sockets are allowed; authenticated sockets simply receive richer scoped updates.
     if (!token || !process.env.JWT_SECRET) return next();
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -443,6 +479,7 @@ io.use(async (socket, next) => {
 });
 
 io.on('connection', (socket) => {
+  // Join user-scoped and role-scoped rooms so notifications can be targeted precisely.
   if (socket.data?.userId) {
     socket.join(`user:${socket.data.userId}`);
   }
@@ -454,10 +491,12 @@ io.on('connection', (socket) => {
   }
 
   socket.on('joinAuction', (auctionId) => {
+    // Each auction uses its database id as the realtime room name.
     socket.join(auctionId);
   });
 
   socket.on('support:join', ({ name, role }) => {
+    // Support chat is currently a shared room for lightweight live assistance.
     socket.join('support-room');
     io.to('support-room').emit('support:system', {
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -479,11 +518,16 @@ io.on('connection', (socket) => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Background jobs
+// ---------------------------------------------------------------------------
+
 cron.schedule('* * * * *', async () => {
   try {
     const now = new Date();
     const reminderWindowEnd = new Date(now.getTime() + 5 * 60 * 1000);
 
+    // Send reminders only once, only for future auctions, and only when at least one bidder registered.
     const reminders = await Auction.find({
       status: 'future',
       registrationEndAt: { $gt: now, $lte: reminderWindowEnd },
@@ -525,6 +569,7 @@ cron.schedule('*/5 * * * * *', async () => {
   try {
     const now = new Date();
 
+    // Move eligible future auctions into room handoff mode once registration closes.
     const readyToStart = await Auction.find({
       status: 'future',
       registrationEndAt: { $lte: now },
@@ -548,6 +593,7 @@ cron.schedule('*/5 * * * * *', async () => {
       }
     }
 
+    // If an active bidder runs out of turn time, the system treats it the same as giving up.
     const expiredTurns = await Auction.find({
       status: 'ongoing',
       currentTurnBidder: { $ne: null },
@@ -642,6 +688,10 @@ setTimeout(async () => {
   }
 }, 25000);
 
+// ---------------------------------------------------------------------------
+// Startup and shutdown
+// ---------------------------------------------------------------------------
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
@@ -649,6 +699,7 @@ server.listen(PORT, () => {
 
 const shutdown = async (signal) => {
   console.log(`Received ${signal}. Starting graceful shutdown...`);
+  // Stop accepting new requests first, then close database connections cleanly.
   server.close(async () => {
     try {
       await mongoose.connection.close(false);

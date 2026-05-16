@@ -4,11 +4,20 @@ const { sendEmailAsync } = require('../utils/emailService');
 const templates = require('../utils/emailTemplates');
 const { sendMonthlyPromotionalEmails } = require('../utils/promotionalCampaignService');
 
+// ---------------------------------------------------------------------------
+// Admin controller responsibilities
+// 1. Platform-wide analytics and monitoring
+// 2. Global user management
+// 3. Global auction management helpers
+// 4. Manual operational tasks like test emails and promo triggers
+// ---------------------------------------------------------------------------
+
 // @desc    Get Platform Stats (Admin Only)
 // @route   GET /api/admin/stats
 // @access  Private/Admin
 exports.getAdminStats = async (_req, res) => {
   try {
+    // Stats are aggregated from the live auction collection rather than from a separate reporting table.
     const [totalUsers, totalAuctions, financialSummary, shippingPendingSummary, recentTransactions] = await Promise.all([
       User.countDocuments(),
       Auction.countDocuments(),
@@ -37,6 +46,7 @@ exports.getAdminStats = async (_req, res) => {
         .lean(),
     ]);
 
+    // Revenue math follows the platform's 5% commission business rule.
     const totalVolume = financialSummary[0]?.totalVolume || 0;
     const totalCommission = totalVolume * 0.05;
     const totalPayouts = totalVolume - totalCommission;
@@ -61,6 +71,7 @@ exports.getAdminStats = async (_req, res) => {
 // @access  Private/Admin
 exports.getAllUsers = async (req, res) => {
   try {
+    // Pagination keeps the admin panel responsive even as the user base grows.
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
     const skip = (page - 1) * limit;
@@ -89,6 +100,7 @@ exports.getAllUsers = async (req, res) => {
 // @access  Private/Admin
 exports.banUser = async (req, res) => {
   try {
+    // Ban endpoint is a toggle to keep admin workflow fast.
     const user = await User.findById(req.params.id);
     if (user) {
       user.isBanned = !user.isBanned;
@@ -126,6 +138,7 @@ exports.getUserHistory = async (req, res) => {
   try {
     const userId = req.params.id;
 
+    // User history combines profile, selling, and buying views for moderation and support review.
     const user = await User.findById(userId).select('-password').lean();
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -169,6 +182,7 @@ exports.getUserHistory = async (req, res) => {
 // @access  Private/Admin
 exports.getAllAuctionsAdmin = async (req, res) => {
   try {
+    // Admin listing view is intentionally broad and includes seller identity for moderation decisions.
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
     const skip = (page - 1) * limit;
@@ -202,6 +216,7 @@ exports.getAllAuctionsAdmin = async (req, res) => {
 // @access  Private/Admin
 exports.deleteAnyAuction = async (req, res) => {
   try {
+    // Admin delete is a hard remove and bypasses seller ownership checks.
     const auction = await Auction.findById(req.params.id);
     if (auction) {
       await auction.deleteOne();
@@ -218,6 +233,7 @@ exports.deleteAnyAuction = async (req, res) => {
 // @route   POST /api/admin/test-email
 // @access  Private/Admin
 exports.sendTestEmail = async (_req, res) => {
+  // Operational helper lets admins verify the configured mail transport from the UI.
   const targetEmail = process.env.ADMIN_EMAIL || process.env.SUPPORT_EMAIL || process.env.EMAIL_USERNAME || process.env.EMAIL_USER;
 
   if (!targetEmail) {
@@ -240,6 +256,7 @@ exports.triggerPromotionalCampaign = async (req, res) => {
   try {
     const { month, year, dayOfMonth, dryRun = false, forceSend = false } = req.body || {};
 
+    // Inputs are validated here before the lower-level campaign service runs recipient iteration.
     if (month !== undefined) {
       const parsedMonth = Number(month);
       if (!Number.isInteger(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
@@ -277,5 +294,3 @@ exports.triggerPromotionalCampaign = async (req, res) => {
     return res.status(500).json({ message: error.message || 'Failed to trigger promotional campaign' });
   }
 };
-
-

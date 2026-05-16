@@ -44,6 +44,7 @@ const wrapEmail = ({ title, subtitle, body, accent = '#0f6fff', footerNote, eyeb
 };
 
 const PROMOTIONAL_CAMPAIGNS = [
+  // One campaign object per month keeps recurring marketing content consistent and easy to audit.
   { month: 1, subject: 'January Kickoff: Verified Deals to Start the Year', title: 'January Promotion', subtitle: 'Start the year with office-verified premium listings', body: 'Browse newly verified products and register early to lock your queue advantage this month.', accent: '#2563eb' },
   { month: 2, subject: 'February Spotlight: Limited Upcoming Auctions Open', title: 'February Promotion', subtitle: 'High-interest listings are now open for registration', body: 'Upcoming auctions are filling quickly. Register before windows close and stay ready for live sessions.', accent: '#dc2626' },
   { month: 3, subject: 'March Momentum: Upgrade Season Starts on AuctionPulse', title: 'March Promotion', subtitle: 'Spring inventory refresh with verified electronics and collectibles', body: 'Track your categories, compare history, and register for products that match your upgrade plan.', accent: '#059669' },
@@ -60,6 +61,12 @@ const PROMOTIONAL_CAMPAIGNS = [
 
 const getPromotionalCampaignByMonth = (month) =>
   PROMOTIONAL_CAMPAIGNS.find((campaign) => campaign.month === month) || PROMOTIONAL_CAMPAIGNS[0];
+
+// ---------------------------------------------------------------------------
+// Email template catalog
+// Templates are grouped here so email wording, colors, and branding stay consistent
+// across auth, support, auction, payment, and marketing workflows.
+// ---------------------------------------------------------------------------
 
 const templates = {
   welcome: ({ name, clientUrl }) =>

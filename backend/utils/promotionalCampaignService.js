@@ -3,6 +3,11 @@ const PromotionalEmailLog = require('../models/PromotionalEmailLog');
 const templates = require('./emailTemplates');
 const { sendEmailAsync } = require('./emailService');
 
+// ---------------------------------------------------------------------------
+// Promotional email service
+// Picks the campaign month, checks send history, and dispatches/records each send.
+// ---------------------------------------------------------------------------
+
 const normalizeMonth = (value) => {
   const month = Number(value);
   if (!Number.isInteger(month) || month < 1 || month > 12) return null;
@@ -39,6 +44,7 @@ const sendMonthlyPromotionalEmails = async ({
   const effectiveDayOfMonth = normalizePromotionalSendDay(dayOfMonth, now);
   const effectiveClientUrl = clientUrl || process.env.CLIENT_URL || 'http://localhost:5173';
 
+  // Promotional mail intentionally includes all users with an email, not only verified/active ones.
   const recipients = await User.find({
     email: { $exists: true, $ne: '' },
   })

@@ -1,6 +1,8 @@
 const Auction = require('../models/Auction');
 const User = require('../models/User');
 
+// Legacy controller retained from an older auction model; active app flow now uses auctionController.js.
+// It is kept only so older code references remain understandable during project history review.
 // @desc    Place a new bid
 // @route   POST /api/bids/:auctionId
 // @access  Private (Bidder)

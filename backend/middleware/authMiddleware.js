@@ -2,6 +2,12 @@
 const User = require('../models/User');
 const STATIC_ADMIN_DB_ID = '000000000000000000000999';
 
+// ---------------------------------------------------------------------------
+// Auth middleware
+// protect: verifies JWT and attaches req.user
+// authorize: checks req.user.role against allowed roles
+// ---------------------------------------------------------------------------
+
 const protect = async (req, res, next) => {
   let token;
 
@@ -10,13 +16,13 @@ const protect = async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     try {
-      // Get token from header
+      // Bearer token is the only supported API auth mechanism.
       token = req.headers.authorization.split(' ')[1];
 
-      // Verify token
+      // Verify JWT and hydrate req.user for downstream controllers.
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // --- FIX: HANDLE STATIC ADMIN ---
+      // Static admin credentials are handled without a MongoDB user record.
       if (decoded.id === 'static_admin_id_999') {
          req.user = {
              id: STATIC_ADMIN_DB_ID,
@@ -32,7 +38,7 @@ const protect = async (req, res, next) => {
       }
       // -------------------------------
 
-      // Get user from the token
+      // Regular users are loaded from MongoDB so role and ban state stay current.
       req.user = await User.findById(decoded.id).select('-password');
 
       if (!req.user) {
@@ -51,6 +57,7 @@ const protect = async (req, res, next) => {
 
 const authorize = (...roles) => {
   return (req, res, next) => {
+    // Authorization is role-based after authentication is already complete.
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         message: `User role ${req.user.role} is not authorized to access this route`,

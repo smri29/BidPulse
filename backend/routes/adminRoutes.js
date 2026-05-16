@@ -14,7 +14,8 @@ const {
 const { adminApproveAuction, adminDisapproveAuction } = require('../controllers/auctionController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Protect all routes: Must be Logged In + Role must be 'admin'
+// Every admin route requires both authentication and the admin role.
+// These routes expose operational controls over users, auctions, metrics, and campaign tooling.
 
 // Stats
 router.get('/stats', protect, authorize('admin'), getAdminStats);

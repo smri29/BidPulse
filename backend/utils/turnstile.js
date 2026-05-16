@@ -1,6 +1,8 @@
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
+// Cloudflare Turnstile is used on the backend as the final authority for anti-bot verification.
 const validateTurnstileToken = async ({ token, remoteip }) => {
+  // Returns a normalized result object so controllers can respond consistently.
   const secret = process.env.TURNSTILE_SECRET_KEY;
 
   if (!secret) {

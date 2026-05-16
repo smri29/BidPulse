@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const promotionalEmailLogSchema = new mongoose.Schema(
   {
+    // This log prevents the same user from receiving the same campaign window twice.
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

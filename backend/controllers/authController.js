@@ -11,13 +11,23 @@ const { PassThrough } = require('stream');
 const cloudinary = require('../config/cloudinary');
 const { validateTurnstileToken } = require('../utils/turnstile');
 
+// ---------------------------------------------------------------------------
+// Auth controller responsibilities
+// 1. Account creation and login
+// 2. Profile verification via OTP or secure link
+// 3. Profile edits, avatar upload, and activity export
+// 4. Password reset lifecycle
+// ---------------------------------------------------------------------------
+
 const generateToken = (id) => {
+  // JWT payload only stores the user id; role and profile state are fetched from DB when needed.
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE,
   });
 };
 
 const serializeUser = (user) => ({
+  // Frontend session state expects a fresh token whenever profile data is returned after auth actions.
   _id: user._id,
   name: user.name,
   email: user.email,
@@ -47,6 +57,7 @@ const serializeUser = (user) => ({
   token: generateToken(user._id),
 });
 
+// Transactional email helpers are split out so the main handlers stay focused on control flow.
 const sendProfileVerificationOtpEmail = async (user, otp) => {
   await sendEmail({
     email: user.email,
@@ -75,6 +86,7 @@ const uploadAvatarImage = async (fileBuffer) => {
       {
         folder,
         resource_type: 'image',
+        // Face-focused crop produces consistent profile cards across the UI.
         transformation: [{ width: 512, height: 512, crop: 'fill', gravity: 'face' }],
       },
       (error, result) => {
@@ -88,6 +100,7 @@ const uploadAvatarImage = async (fileBuffer) => {
 };
 
 const isAtLeast18 = (dateValue) => {
+  // Age calculation is based on year difference and then corrected by month/day boundary.
   const dob = new Date(dateValue);
   if (Number.isNaN(dob.getTime())) return false;
 
@@ -105,6 +118,7 @@ const clearPendingProfileVerification = (user) => {
 };
 
 const finalizeProfileVerification = async (user) => {
+  // Verification promotes staged data into the real profile only after OTP/link proof succeeds.
   const pending = user.pendingProfileVerification;
 
   if (!pending?.dob || !pending?.location || !pending?.mobile || !pending?.idNumber || !pending?.avatarUrl) {
@@ -127,10 +141,15 @@ const finalizeProfileVerification = async (user) => {
   return user;
 };
 
+// ---------------------------------------------------------------------------
+// Account registration and login
+// ---------------------------------------------------------------------------
+
 exports.register = async (req, res) => {
   const { name, email, password, turnstileToken } = req.body;
 
   try {
+    // Prefer Cloudflare/client forwarded IPs when available so Turnstile validation sees the real user origin.
     const remoteip =
       req.headers['cf-connecting-ip'] ||
       String(req.headers['x-forwarded-for'] || '')
@@ -139,6 +158,7 @@ exports.register = async (req, res) => {
         .find(Boolean) ||
       req.ip;
 
+    // Registration is protected by Turnstile to reduce bot account creation.
     const turnstileValidation = await validateTurnstileToken({
       token: turnstileToken || req.body['cf-turnstile-response'],
       remoteip,
@@ -156,6 +176,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // New users are created as regular unverified users. They verify later from the profile page.
     const user = await User.create({
       name,
       email,
@@ -189,6 +210,7 @@ exports.login = async (req, res) => {
         .find(Boolean) ||
       req.ip;
 
+    // Login is also protected because admin access shares this same endpoint.
     const turnstileValidation = await validateTurnstileToken({
       token: turnstileToken || req.body['cf-turnstile-response'],
       remoteip,
@@ -203,6 +225,7 @@ exports.login = async (req, res) => {
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPass = process.env.ADMIN_PASS;
 
+    // Static admin login bypasses MongoDB and is meant for single-super-admin control access.
     if (adminEmail && adminPass && email === adminEmail && password === adminPass) {
       return res.json({
         _id: 'static_admin_id_999',
@@ -216,6 +239,7 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Password is excluded by default in the model, so login explicitly requests it.
     const user = await User.findOne({ email }).select('+password');
 
     if (user?.isBanned) {
@@ -233,12 +257,18 @@ exports.login = async (req, res) => {
 };
 
 exports.sendVerificationOTP = async (req, res) => {
+  // Legacy signup-verification flow intentionally stays disabled to push all users into profile verification.
   return res.status(410).json({ message: 'Use the profile verification flow from the Profile page.' });
 };
 
 exports.verifyEmailOTP = async (req, res) => {
+  // Legacy signup-verification flow intentionally stays disabled to push all users into profile verification.
   return res.status(410).json({ message: 'Use the profile verification flow from the Profile page.' });
 };
+
+// ---------------------------------------------------------------------------
+// Profile verification flow
+// ---------------------------------------------------------------------------
 
 exports.startProfileVerification = async (req, res) => {
   try {
@@ -248,6 +278,7 @@ exports.startProfileVerification = async (req, res) => {
 
     const { dob, country, primaryContact, emergencyContact, idNumber, verificationMethod } = req.body;
 
+    // These are the minimum identity attributes required before a user can buy or sell.
     if (!dob || !country || !primaryContact || !idNumber || !verificationMethod) {
       return res.status(400).json({ message: 'All required verification fields must be provided' });
     }
@@ -264,6 +295,7 @@ exports.startProfileVerification = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    // Reuse an existing avatar when present, otherwise require a fresh uploaded image.
     let avatarUrl = user.avatarUrl || '';
     if (req.file) {
       try {
@@ -278,6 +310,7 @@ exports.startProfileVerification = async (req, res) => {
       return res.status(400).json({ message: 'Profile picture is required for verification' });
     }
 
+    // Verification data is staged first so incomplete or unverified profiles never become permanent.
     user.pendingProfileVerification = {
       dob: new Date(dob),
       location: String(country).trim(),
@@ -294,12 +327,14 @@ exports.startProfileVerification = async (req, res) => {
     };
 
     if (verificationMethod === 'otp') {
+      // OTP flow keeps the user in-session and completes verification from the profile page.
       const otp = user.generateProfileVerificationOTP();
       await user.save();
 
       try {
         await sendProfileVerificationOtpEmail(user, otp);
       } catch (emailError) {
+        // If email dispatch fails, clear the staged verification request so the UI can restart cleanly.
         clearPendingProfileVerification(user);
         await user.save();
         return res.status(503).json({ message: `Unable to send verification OTP right now. ${emailError.message}` });
@@ -312,6 +347,7 @@ exports.startProfileVerification = async (req, res) => {
       });
     }
 
+    // Link flow is useful when the user prefers email-click confirmation instead of manual OTP entry.
     const linkToken = user.generateProfileVerificationLinkToken();
     await user.save();
 
@@ -355,6 +391,7 @@ exports.verifyProfileOtp = async (req, res) => {
 
     const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
 
+    // OTP must match the stored hash and still be within the expiry window.
     if (
       pending.otpHash !== hashedOtp ||
       !pending.otpExpire ||
@@ -365,6 +402,7 @@ exports.verifyProfileOtp = async (req, res) => {
 
     await finalizeProfileVerification(user);
 
+    // Verification success triggers a confirmation email but does not block the API response.
     sendEmailAsync({
       email: user.email,
       subject: 'AuctionPulse Profile Verified',
@@ -389,6 +427,7 @@ exports.verifyProfileLink = async (req, res) => {
     }
 
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    // Secure link verification looks up the user by hashed token rather than exposing the raw token in storage.
     const user = await User.findOne({
       'pendingProfileVerification.linkTokenHash': hashedToken,
       'pendingProfileVerification.linkExpire': { $gt: Date.now() },
@@ -417,6 +456,7 @@ exports.verifyProfileLink = async (req, res) => {
 };
 
 exports.getMe = async (req, res) => {
+  // Static admin is synthesized because it does not exist as a MongoDB record.
   if (req.user.isStaticAdmin) {
     return res.status(200).json({
       _id: 'static_admin_id_999',
@@ -434,11 +474,16 @@ exports.getMe = async (req, res) => {
   return res.status(200).json(user);
 };
 
+// ---------------------------------------------------------------------------
+// Profile maintenance
+// ---------------------------------------------------------------------------
+
 exports.updateUserDetails = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
     if (user) {
+      // Most fields are permissive profile fields. Only provided values replace existing ones.
       user.name = req.body.name || user.name;
       user.mobile = req.body.mobile || user.mobile;
       user.location = req.body.location || user.location;
@@ -468,6 +513,7 @@ exports.updateUserDetails = async (req, res) => {
         ...(req.body.socialLinks || {}),
       };
       if (Array.isArray(req.body.socialProfiles)) {
+        // Social profiles are normalized before save so the UI always receives trimmed values.
         user.socialProfiles = req.body.socialProfiles
           .map((entry) => ({
             name: typeof entry?.name === 'string' ? entry.name.trim() : '',
@@ -477,6 +523,7 @@ exports.updateUserDetails = async (req, res) => {
       }
 
       if (req.body.password) {
+        // Password hashing is still handled centrally by the model pre-save hook.
         user.password = req.body.password;
       }
 
@@ -508,6 +555,7 @@ exports.uploadAvatar = async (req, res) => {
         {
           folder,
           resource_type: 'image',
+          // Keep avatar outputs visually consistent across profile, navbar, and admin tables.
           transformation: [{ width: 512, height: 512, crop: 'fill', gravity: 'face' }],
         },
         (error, result) => {
@@ -536,6 +584,7 @@ exports.getUserActivity = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    // Activity is grouped from multiple auction perspectives: seller, bidder, and winner.
     const [listedAuctions, placedBidAuctions, wonAuctions] = await Promise.all([
       Auction.find({ seller: userId })
         .select('title currentPrice status createdAt registrationEndAt')
@@ -551,6 +600,7 @@ exports.getUserActivity = async (req, res) => {
         .lean(),
     ]);
 
+    // A user may appear multiple times in raw bid lookups, so deduplicate by auction id.
     const uniquePlaced = [];
     const seen = new Set();
     for (const auction of placedBidAuctions) {
@@ -566,6 +616,7 @@ exports.getUserActivity = async (req, res) => {
         String(auction.winner || '') !== String(userId)
     );
 
+    // feedbackScore is a simple derived metric to give the UI a quick reputation-style indicator.
     const stats = {
       totalListed: listedAuctions.length,
       totalPlacedBids: uniquePlaced.length,
@@ -593,6 +644,7 @@ exports.exportUserDataZip = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    // The export bundles the key user-owned data domains the platform stores today.
     const [user, listedAuctions, bidAuctions, supportTickets] = await Promise.all([
       User.findById(userId).select('-password -resetPasswordToken -emailVerificationOTP').lean(),
       Auction.find({ seller: userId }).lean(),
@@ -614,6 +666,7 @@ exports.exportUserDataZip = async (req, res) => {
     output.pipe(res);
     archive.pipe(output);
 
+    // Export data is split by concern so users can inspect it without custom tooling.
     archive.append(JSON.stringify(user, null, 2), { name: 'profile.json' });
     archive.append(JSON.stringify(listedAuctions, null, 2), { name: 'listed_auctions.json' });
     archive.append(JSON.stringify(bidAuctions, null, 2), { name: 'bid_activity.json' });
@@ -640,6 +693,10 @@ exports.deleteUserAccount = async (req, res) => {
   }
 };
 
+// ---------------------------------------------------------------------------
+// Password reset lifecycle
+// ---------------------------------------------------------------------------
+
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -650,6 +707,7 @@ exports.forgotPassword = async (req, res) => {
       return res.status(404).json({ message: 'No user found with this email' });
     }
 
+    // Generate raw token for email and store only the hashed version in MongoDB.
     const resetToken = user.getResetPasswordToken();
     await user.save({ validateBeforeSave: false });
 
@@ -665,6 +723,7 @@ exports.forgotPassword = async (req, res) => {
       return res.status(200).json({ success: true, message: 'Email sent' });
     } catch (err) {
       console.error(err);
+      // Roll back reset state if email delivery fails so stale tokens do not remain valid.
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
       await user.save({ validateBeforeSave: false });
@@ -677,6 +736,7 @@ exports.forgotPassword = async (req, res) => {
 };
 
 exports.resetPassword = async (req, res) => {
+  // Incoming reset token from the URL is hashed before lookup to match the DB storage format.
   const resetPasswordToken = crypto.createHash('sha256').update(req.params.resetToken).digest('hex');
 
   try {

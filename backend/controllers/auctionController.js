@@ -10,10 +10,19 @@ const REGISTRATION_DAYS = [1, 5, 8, 10, 15, 20];
 const TEST_REGISTRATION_MINUTES = [2, 5];
 const ROOM_OPEN_TIMEOUT_SECONDS = 30;
 
+// ---------------------------------------------------------------------------
+// Auction controller responsibilities
+// 1. Listing creation and moderation lifecycle
+// 2. Registration and room-opening logic
+// 3. Live turn-based bidding engine
+// 4. Seller decisions when no participants register
+// ---------------------------------------------------------------------------
+
 const uploadAuctionImages = async (files) => {
   if (!files?.length) return [];
 
   const folder = process.env.CLOUDINARY_FOLDER || 'AuctionPulse';
+  // Upload each image in parallel and normalize them to a practical display size.
   const uploads = files.map(
     (file) =>
       new Promise((resolve, reject) => {
@@ -38,6 +47,7 @@ const uploadAuctionImages = async (files) => {
 const getRegistrationEndAt = (hours) => new Date(Date.now() + hours * 60 * 60 * 1000);
 
 const resolveRegistrationWindowHours = ({ registrationWindowHours, registrationWindowDays, registrationWindowMinutes }) => {
+  // Test windows take priority so development demos can move quickly.
   if (
     registrationWindowMinutes !== undefined &&
     registrationWindowMinutes !== null &&
@@ -54,18 +64,21 @@ const resolveRegistrationWindowHours = ({ registrationWindowHours, registrationW
     return parsedDays * 24;
   }
 
+  // Legacy plain-hour support remains for compatibility, but the UI now mostly uses day/minute inputs.
   const parsedWindow = Number(registrationWindowHours);
   if (!REGISTRATION_WINDOWS.includes(parsedWindow)) return null;
   return parsedWindow;
 };
 
 const ensureTurnDefaults = (auction) => {
+  // Legacy 10-second values are normalized so current sessions always use 20 seconds.
   if (!auction.turnDurationSeconds || auction.turnDurationSeconds < 1 || auction.turnDurationSeconds === 10) {
     auction.turnDurationSeconds = 20;
   }
 };
 
 const appendNextBidder = (auction) => {
+  // Keep exactly two active bidders when possible; overflow stays queued in waitingBidders.
   while (auction.activeBidders.length < 2 && auction.waitingBidders.length > 0) {
     const nextBidder = auction.waitingBidders.shift();
     auction.activeBidders.push(nextBidder);
@@ -74,11 +87,13 @@ const appendNextBidder = (auction) => {
 
 const startTurnClock = (auction, bidderId) => {
   ensureTurnDefaults(auction);
+  // Turn expiry is absolute time so both cron jobs and the UI can compare against the same value.
   auction.currentTurnBidder = bidderId;
   auction.turnExpiresAt = new Date(Date.now() + auction.turnDurationSeconds * 1000);
 };
 
 const clearRoomActivation = (auction) => {
+  // Reset the pre-live opening handoff whenever a listing is edited, restarted, or completed.
   auction.roomActivation = {
     isActive: false,
     currentBidder: null,
@@ -91,6 +106,7 @@ const clearRoomActivation = (auction) => {
 };
 
 const assignNextRoomActivator = (auction, sortedRegistrations, now = new Date()) => {
+  // Room-opening rights rotate by registration sequence, wrapping to the first registrant when needed.
   const currentSequence = Number(auction.roomActivation?.currentSequence || 0);
   const nextEntry = sortedRegistrations.find((entry) => entry.sequence > currentSequence) || sortedRegistrations[0];
 
@@ -106,6 +122,7 @@ const assignNextRoomActivator = (auction, sortedRegistrations, now = new Date())
 };
 
 const finalizeOngoingAuction = async (auction, winnerId) => {
+  // This function closes the bidding engine and fans out all result emails.
   const resolvedWinner = winnerId || auction.winner;
   auction.status = 'completed';
   auction.biddingEndedAt = new Date();
@@ -119,6 +136,7 @@ const finalizeOngoingAuction = async (auction, winnerId) => {
   }
   await auction.save();
 
+  // Fetch the human-readable participants after save so email templates can use names and addresses.
   const [seller, winner, registeredUsers] = await Promise.all([
     User.findById(auction.seller).select('email name').lean(),
     resolvedWinner ? User.findById(resolvedWinner).select('email name').lean() : null,
@@ -147,6 +165,7 @@ const finalizeOngoingAuction = async (auction, winnerId) => {
     });
   }
 
+  // Everyone who registered gets an outcome email, except the winner who already received a dedicated mail.
   registeredUsers.forEach((participant) => {
     if (!participant?.email) return;
     if (winner?.email && participant.email === winner.email) return;
@@ -166,6 +185,7 @@ const moveToOngoing = async (auction) => {
   const sortedRegistrations = [...auction.registrations].sort((a, b) => a.sequence - b.sequence);
 
   if (!sortedRegistrations.length) {
+    // A listing with zero registrations moves into a seller-decision state instead of live bidding.
     auction.status = 'no_registrations';
     clearRoomActivation(auction);
     await auction.save();
@@ -195,6 +215,7 @@ const moveToOngoing = async (auction) => {
     return;
   }
 
+  // First two registrants become active bidders; the rest wait in queue order.
   const active = sortedRegistrations.slice(0, 2).map((entry) => entry.bidder);
   const waiting = sortedRegistrations.slice(2).map((entry) => entry.bidder);
 
@@ -209,6 +230,7 @@ const moveToOngoing = async (auction) => {
 };
 
 const prepareAuctionRoom = async (auction, now = new Date()) => {
+  // This pre-live phase decides who gets the short opening window before bidding truly begins.
   const sortedRegistrations = [...auction.registrations].sort((a, b) => a.sequence - b.sequence);
 
   if (!sortedRegistrations.length) {
@@ -253,6 +275,7 @@ const prepareAuctionRoom = async (auction, now = new Date()) => {
 };
 
 const handleGiveUpCore = async ({ auction, bidderId }) => {
+  // Give-up and timeout both funnel through the same elimination logic.
   const activeBefore = auction.activeBidders.map(String);
   if (!activeBefore.includes(String(bidderId))) {
     throw new Error('Only active bidders can give up right now');
@@ -266,6 +289,7 @@ const handleGiveUpCore = async ({ auction, bidderId }) => {
   appendNextBidder(auction);
 
   if (auction.activeBidders.length === 0) {
+    // If everyone drops out, preserve any already-established winner when possible.
     const fallbackWinner = auction.winner || null;
     if (fallbackWinner) {
       await finalizeOngoingAuction(auction, fallbackWinner);
@@ -288,6 +312,7 @@ const handleGiveUpCore = async ({ auction, bidderId }) => {
     return;
   }
 
+  // If the current-turn bidder was removed, shift the turn to the first remaining active bidder.
   const currentTurnStillActive = auction.activeBidders.some(
     (id) => String(id) === String(auction.currentTurnBidder)
   );
@@ -314,6 +339,7 @@ exports.getAllAuctions = async (req, res) => {
     const query = {};
 
     if (status) {
+      // "previous" is a UI convenience alias for all terminal/non-live auction states.
       if (status === 'previous') {
         query.status = { $in: ['completed', 'paid_shipping_pending', 'paid_held_in_escrow', 'closed', 'withdrawn', 'no_registrations', 'disapproved'] };
       } else if (status.includes(',')) {
@@ -337,6 +363,7 @@ exports.getAllAuctions = async (req, res) => {
     const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 200);
     const skip = (parsedPage - 1) * parsedLimit;
 
+    // Large nested arrays are optional so list endpoints stay lightweight by default.
     const projection = {
       ...(includeBids === 'true' ? {} : { bids: 0 }),
       ...(includeRegistrations === 'true' ? {} : { registrations: 0, activeBidders: 0, waitingBidders: 0 }),
@@ -356,6 +383,7 @@ exports.getAllAuctions = async (req, res) => {
 
 exports.getAuctionSummary = async (_req, res) => {
   try {
+    // Summary endpoint is optimized for dashboard cards and homepage counters.
     const grouped = await Auction.aggregate([
       { $group: { _id: '$status', count: { $sum: 1 } } },
     ]);
@@ -391,6 +419,7 @@ exports.getAuctionSummary = async (_req, res) => {
 
 exports.getAuctionById = async (req, res) => {
   try {
+    // Detail endpoint eagerly populates all key actors because the auction page needs names immediately.
     const auction = await Auction.findById(req.params.id)
       .populate('seller', 'name email')
       .populate('winner', 'name email')
@@ -427,6 +456,7 @@ exports.createAuction = async (req, res) => {
         .find(Boolean) ||
       req.ip;
 
+    // Listing creation is protected because it is an expensive, spam-sensitive workflow.
     const turnstileValidation = await validateTurnstileToken({
       token: turnstileToken || req.body['cf-turnstile-response'],
       remoteip,
@@ -438,6 +468,7 @@ exports.createAuction = async (req, res) => {
         .json({ message: turnstileValidation.message, errorCodes: turnstileValidation.errorCodes });
     }
 
+    // Seller can provide either a production day window or a short demo/test window.
     const parsedWindow = resolveRegistrationWindowHours(req.body);
     if (!parsedWindow) {
       return res.status(400).json({ message: 'Registration window must be 2 or 5 minutes (test) or one of 1, 5, 8, 10, 15, or 20 days' });
@@ -464,6 +495,7 @@ exports.createAuction = async (req, res) => {
       registrationEndAt: getRegistrationEndAt(parsedWindow),
       images: uploadedImages,
       seller: req.user._id,
+      // New listings never go live immediately; admin must inspect and approve them first.
       status: 'pending_verification',
       verificationStatus: 'pending',
     });
@@ -494,6 +526,7 @@ exports.updateAuction = async (req, res) => {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
+    // Sellers may edit only before the live engine meaningfully progresses.
     const editableStatuses = ['pending_verification', 'future', 'no_registrations', 'disapproved'];
     if (!editableStatuses.includes(auction.status) && req.user.role !== 'admin') {
       return res.status(400).json({ message: 'This listing can no longer be edited' });
@@ -520,6 +553,7 @@ exports.updateAuction = async (req, res) => {
       }
       auction.registrationWindowHours = parsedWindow;
       auction.registrationEndAt = getRegistrationEndAt(parsedWindow);
+      // Changing the registration window invalidates any previously prepared room-opening handoff state.
       clearRoomActivation(auction);
     }
 
@@ -552,6 +586,7 @@ exports.deleteAuction = async (req, res) => {
     }
 
     if (auction.status === 'ongoing' && req.user.role !== 'admin') {
+      // Sellers are blocked from deleting a session once live bidding is already underway.
       return res.status(400).json({ message: 'Cannot delete listing during an ongoing bid' });
     }
 
@@ -588,6 +623,7 @@ exports.registerForAuction = async (req, res) => {
       return res.status(400).json({ message: 'You are already registered for this bid' });
     }
 
+    // Sequence number is later reused as the room-opening priority order.
     const sequence = auction.registrations.length + 1;
     auction.registrations.push({
       bidder: req.user.id,
@@ -615,6 +651,7 @@ exports.openAuctionRoom = async (req, res) => {
     }
 
     if (auction.status === 'ongoing') {
+      // If the room is already live, just return the current auction state instead of re-opening.
       const liveAuction = await Auction.findById(req.params.id)
         .populate('seller', 'name email')
         .populate('winner', 'name email')
@@ -636,6 +673,7 @@ exports.openAuctionRoom = async (req, res) => {
       return res.status(400).json({ message: 'Registration is still open for this listing' });
     }
 
+    // Only registered participants are allowed to trigger the room-opening handoff.
     const myRegistration = auction.registrations.find((entry) => String(entry.bidder) === req.user.id);
     if (!myRegistration) {
       return res.status(403).json({ message: 'Only registered participants can open the auction room' });
@@ -645,6 +683,7 @@ exports.openAuctionRoom = async (req, res) => {
     const refreshedAuction = await Auction.findById(req.params.id);
 
     if (!refreshedAuction || refreshedAuction.status !== 'future') {
+      // prepareAuctionRoom may have already completed the auction in edge cases like 0 or 1 registrant.
       const finalAuction = await Auction.findById(req.params.id)
         .populate('seller', 'name email')
         .populate('winner', 'name email')
@@ -668,6 +707,7 @@ exports.openAuctionRoom = async (req, res) => {
       return res.status(409).json({ message: 'Your opening window has expired. Please wait for the next handoff.' });
     }
 
+    // Opening the room by the currently assigned participant turns the session into a live auction.
     refreshedAuction.roomActivation.openedBy = req.user._id;
     refreshedAuction.roomActivation.openedAt = now;
     await moveToOngoing(refreshedAuction);
@@ -729,6 +769,7 @@ exports.placeBid = async (req, res) => {
       return res.status(400).json({ message: 'Bid must be higher than current price' });
     }
 
+    // Latest valid bid becomes both the current price and the provisional winner.
     auction.bids.push({
       bidder: req.user.id,
       amount,
@@ -737,6 +778,7 @@ exports.placeBid = async (req, res) => {
     auction.currentPrice = amount;
     auction.winner = req.user.id;
 
+    // Turn alternates between currently active bidders. Waiting bidders are only promoted after give-up/timeout.
     const nextTurnBidder = auction.activeBidders.find((bidderId) => String(bidderId) !== req.user.id);
     if (nextTurnBidder) {
       startTurnClock(auction, nextTurnBidder);
@@ -807,6 +849,7 @@ exports.handleNoRegistrationDecision = async (req, res) => {
     }
 
     if (action === 'withdraw') {
+      // The seller can exit the pipeline and pay the lower withdrawal fee.
       auction.status = 'withdrawn';
       auction.feeSummary.noRegistrationFeeApplied = auction.feeSummary.firstListingWithdrawalFee;
       await auction.save();
@@ -818,6 +861,7 @@ exports.handleNoRegistrationDecision = async (req, res) => {
     }
 
     if (action === 'relist') {
+      // Relisting resets the auction lifecycle and charges the higher relist fee.
       const newPrice = Number(reducedStartingPrice);
       if (Number.isNaN(newPrice) || newPrice <= 0) {
         return res.status(400).json({ message: 'Provide a valid reduced starting price' });
@@ -837,6 +881,7 @@ exports.handleNoRegistrationDecision = async (req, res) => {
       auction.turnExpiresAt = null;
       auction.currentTurnBidder = null;
       auction.winner = null;
+      // Relist wipes live-session history because it becomes a fresh bidding cycle.
       auction.bids = [];
       auction.registrations = [];
       auction.activeBidders = [];
@@ -877,6 +922,7 @@ exports.adminApproveAuction = async (req, res) => {
     }
 
     if (registrationEndAt) {
+      // Admin can override the calculated window with an exact end time when needed.
       const customEnd = new Date(registrationEndAt);
       if (Number.isNaN(customEnd.getTime()) || customEnd <= new Date()) {
         return res.status(400).json({ message: 'Custom registration end time must be a valid future date-time' });
@@ -886,6 +932,7 @@ exports.adminApproveAuction = async (req, res) => {
       auction.registrationEndAt = getRegistrationEndAt(auction.registrationWindowHours);
     }
 
+    // Admin approval turns the listing into a publicly visible future auction.
     auction.verificationStatus = 'approved';
     auction.status = 'future';
     auction.verifiedAt = new Date();
@@ -925,6 +972,7 @@ exports.adminDisapproveAuction = async (req, res) => {
       return res.status(404).json({ message: 'Auction not found' });
     }
 
+    // Disapproval preserves the listing record but blocks it from entering the auction pipeline.
     auction.verificationStatus = 'rejected';
     auction.status = 'disapproved';
     auction.verificationNote = String(reason).trim();
@@ -950,6 +998,7 @@ exports.adminDisapproveAuction = async (req, res) => {
 };
 
 exports.internalJobs = {
+  // Exported for cron-driven automation without duplicating auction engine logic.
   moveToOngoing,
   prepareAuctionRoom,
   handleGiveUpCore,

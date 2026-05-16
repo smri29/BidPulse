@@ -17,7 +17,9 @@ const { auctionImageUpload } = require('../middleware/uploadMiddleware');
 
 const router = express.Router();
 
+// Auction image parsing is wrapped so clients receive friendly API errors instead of raw Multer errors.
 const handleAuctionImageUpload = (req, res, next) => {
+  // Normalize Multer errors into clean API responses for the frontend.
   auctionImageUpload.array('images', 3)(req, res, (err) => {
     if (!err) return next();
     if (err.code === 'LIMIT_FILE_SIZE') {
@@ -34,7 +36,7 @@ router.get('/', getAllAuctions);
 router.get('/summary/stats', getAuctionSummary);
 router.get('/:id', getAuctionById);
 
-// Protected Routes
+// Protected routes cover seller actions and live auction participation.
 router.post('/', protect, handleAuctionImageUpload, createAuction);
 router.put('/:id', protect, handleAuctionImageUpload, updateAuction);
 router.delete('/:id', protect, deleteAuction);

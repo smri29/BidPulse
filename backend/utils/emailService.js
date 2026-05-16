@@ -25,6 +25,7 @@ const sendWithBrevo = async (options) => {
     throw new Error('BREVO_SENDER_EMAIL is missing');
   }
 
+  // Provider calls use explicit timeouts so email outages fail fast and do not hang requests.
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -122,6 +123,7 @@ const getEmailConfig = () => {
   };
 
   if (host) {
+    // Raw SMTP mode is used when host details are supplied explicitly.
     return {
       ...baseConfig,
       host,
@@ -181,6 +183,7 @@ const getTransporter = (config) => {
 };
 
 const sendEmail = async (options) => {
+  // Delivery preference is API-first, then SMTP fallback.
   if (hasBrevoConfig()) {
     await sendWithBrevo(options);
     return;
@@ -219,6 +222,7 @@ const sendEmail = async (options) => {
 };
 
 const sendEmailAsync = (options, logger = console) => {
+  // Fire-and-forget helper prevents non-critical email failures from breaking main business flows.
   sendEmail(options).catch((error) => {
     logger.error('Email send failed:', error.message, {
       to: options?.email,
@@ -228,6 +232,7 @@ const sendEmailAsync = (options, logger = console) => {
 };
 
 const verifyEmailTransport = async () => {
+  // Startup verification is advisory: errors are logged but the server still boots.
   if (hasBrevoConfig()) {
     const apiKey = process.env.BREVO_API_KEY;
     const timeoutMs = Number(process.env.BREVO_TIMEOUT_MS || 10000);

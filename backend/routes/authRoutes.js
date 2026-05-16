@@ -22,6 +22,7 @@ const { imageUpload } = require('../middleware/uploadMiddleware');
 const { createRateLimiter } = require('../middleware/rateLimitMiddleware');
 
 const router = express.Router();
+// Different auth-related actions have different abuse profiles, so each gets its own limiter.
 const authLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 60, keyPrefix: 'auth' });
 const otpLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10, keyPrefix: 'otp' });
 const passwordLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10, keyPrefix: 'password' });
@@ -34,6 +35,12 @@ const handleAvatarUpload = (req, res, next) => {
     return res.status(400).json({ message: err.message || 'Invalid avatar upload' });
   });
 };
+
+// ---------------------------------------------------------------------------
+// Authentication and account routes
+// Public: register, login, forgot/reset password
+// Private: current user, profile updates, avatar, verification, export, activity
+// ---------------------------------------------------------------------------
 
 router.post('/register', authLimiter, register);
 router.post('/login', authLimiter, login);

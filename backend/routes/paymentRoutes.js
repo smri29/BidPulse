@@ -10,6 +10,8 @@ const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
+// All payment routes require authentication because they act on winner-owned order state.
+// Two checkout paths exist for compatibility; both point to the same controller.
 router.post('/checkout/:auctionId', protect, createCheckoutSession);
 router.post('/create-checkout-session/:auctionId', protect, createCheckoutSession);
 router.post('/confirm-success', protect, confirmCheckoutSuccess);

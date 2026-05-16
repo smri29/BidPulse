@@ -4,7 +4,7 @@ const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Public: View history
+// Legacy route file kept for historical reference; main bidding now flows through /api/auctions/:id/bid.
 router.get('/:auctionId', getBids);
 
 // Private: Place bid

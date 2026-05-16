@@ -4,6 +4,13 @@ const templates = require('../utils/emailTemplates');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// ---------------------------------------------------------------------------
+// Support controller responsibilities
+// 1. Accept public support requests
+// 2. Let admins review and update support ticket state
+// 3. Send customer-facing support status emails
+// ---------------------------------------------------------------------------
+
 const sanitizeText = (value) =>
   String(value || '')
     .replace(/[\u0000-\u001F\u007F]/g, ' ')
@@ -21,6 +28,7 @@ exports.createSupportTicket = async (req, res) => {
     const cleanSubject = sanitizeText(subject);
     const cleanMessage = sanitizeText(message);
 
+    // Validation is intentionally strict because this endpoint is public and spam-prone.
     if (!cleanName || !cleanEmail || !cleanSubject || !cleanMessage) {
       return res.status(400).json({ message: 'All fields are required' });
     }
@@ -41,6 +49,7 @@ exports.createSupportTicket = async (req, res) => {
       return res.status(400).json({ message: 'Message must be between 15 and 3000 characters' });
     }
 
+    // Ticket body is sanitized and normalized before persistence and email fanout.
     const ticket = await SupportTicket.create({
       name: cleanName,
       email: cleanEmail,
@@ -58,6 +67,7 @@ exports.createSupportTicket = async (req, res) => {
       });
     }
 
+    // Customer receives an acknowledgement immediately after ticket creation.
     sendEmailAsync({
       email: cleanEmail,
       subject: 'AuctionPulse Support Ticket Received',
@@ -78,6 +88,7 @@ exports.createSupportTicket = async (req, res) => {
 // @access  Private/Admin
 exports.getSupportTickets = async (req, res) => {
   try {
+    // Admin UI can request a specific status or fetch the entire queue.
     const status = req.query.status;
     const query = status && status !== 'all' ? { status } : {};
 
@@ -108,6 +119,7 @@ exports.updateSupportTicketStatus = async (req, res) => {
     await ticket.save();
 
     if (previousStatus !== status) {
+      // Only notify the user when the status meaningfully changed.
       sendEmailAsync({
         email: ticket.email,
         subject: `AuctionPulse Support: Ticket ${status.replace('_', ' ')}`,

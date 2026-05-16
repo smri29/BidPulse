@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const supportTicketSchema = new mongoose.Schema(
   {
+    // Public support requests can exist even when there is no authenticated user session.
     name: {
       type: String,
       required: true,

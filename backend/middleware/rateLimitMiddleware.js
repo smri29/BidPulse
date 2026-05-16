@@ -2,7 +2,9 @@ const buckets = new Map();
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 let lastCleanupAt = 0;
 
+// Simple in-memory rate limiting is enough for low-scale abuse protection on sensitive endpoints.
 const cleanupExpiredBuckets = (now) => {
+  // Opportunistic cleanup keeps the in-memory limiter bounded without a dedicated timer.
   if (now - lastCleanupAt < CLEANUP_INTERVAL_MS && buckets.size < 1500) return;
   lastCleanupAt = now;
 
@@ -15,6 +17,7 @@ const cleanupExpiredBuckets = (now) => {
 
 const createRateLimiter = ({ windowMs = 60 * 1000, max = 30, keyPrefix = 'global' } = {}) => {
   return (req, res, next) => {
+    // IP-based limiter is simple but effective for auth, OTP, and support endpoints.
     const ip = req.headers['x-forwarded-for']?.split(',')?.[0]?.trim() || req.socket.remoteAddress || 'unknown';
     const key = `${keyPrefix}:${ip}`;
     const now = Date.now();
