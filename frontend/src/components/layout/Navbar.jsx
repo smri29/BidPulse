@@ -33,6 +33,8 @@ const NAV_LINKS = [
   { to: '/safety', label: 'Safety' },
 ];
 
+// Dashboard mode persistence helpers
+// These functions remember whether the user last worked in buyer mode or seller mode.
 const readPreferredMode = () => {
   if (typeof window === 'undefined') return 'bidder';
   const stored = localStorage.getItem(MODE_KEY) || localStorage.getItem(LEGACY_MODE_KEY);
@@ -44,6 +46,8 @@ const persistPreferredMode = (mode) => {
   localStorage.setItem(LEGACY_MODE_KEY, mode);
 };
 
+// Route-to-mode resolver
+// Some routes clearly belong to seller workflows while others belong to buyer workflows.
 const getModeFromPath = (path) => {
   if (SELLER_MODE_PATHS.some((sellerPath) => path.startsWith(sellerPath))) return 'seller';
   if (BIDDER_MODE_PATHS.some((bidderPath) => path.startsWith(bidderPath))) return 'bidder';
@@ -127,6 +131,8 @@ const Navbar = () => {
     navigate('/');
   };
 
+  // Buyer/seller dashboard switch
+  // This flips the remembered mode and redirects to the matching dashboard.
   const handleSwitchMode = () => {
     const nextMode = isSellerMode ? 'bidder' : 'seller';
     persistPreferredMode(nextMode);

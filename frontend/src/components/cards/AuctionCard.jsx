@@ -30,6 +30,8 @@ const AuctionCard = ({ auction, watched = false, onToggleWatch, onRegister, user
     return () => window.clearInterval(timer);
   }, [isFuture]);
 
+  // Product-card countdown formatter
+  // This keeps future-auction cards updated with a human-readable registration timer.
   const registrationCountdown = useMemo(() => {
     if (!isFuture || !auction.registrationEndAt) return '';
 
@@ -86,6 +88,8 @@ const AuctionCard = ({ auction, watched = false, onToggleWatch, onRegister, user
         <h3 className="truncate text-lg font-bold text-slate-900">{auction.title}</h3>
 
         <div className="flex items-center justify-between gap-3">
+          {/* Card price presentation
+              The icon supplies the currency symbol and the utility class controls the amount color. */}
           <div className="inline-flex items-center text-lg font-extrabold text-bid-purple">
             <DollarSign size={18} strokeWidth={3} />
             {auction.currentPrice}

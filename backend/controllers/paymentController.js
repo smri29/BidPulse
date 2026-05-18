@@ -37,6 +37,8 @@ const emitRealtimeNotification = (req, payload, options = {}) => {
 };
 
 // @desc    Create Stripe Checkout Session & Save Shipping Address
+// Stripe checkout creation flow
+// Winner-only payment, shipping capture, Stripe session creation, and temporary checkout state are handled here.
 exports.createCheckoutSession = async (req, res) => {
   const { shippingAddress } = req.body;
 
@@ -74,6 +76,8 @@ exports.createCheckoutSession = async (req, res) => {
       auction.shippingDetails = shippingAddress;
     }
 
+    // Stripe line item math
+    // Stripe expects the smallest currency unit, so the displayed amount is multiplied by 100.
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -140,6 +144,8 @@ exports.createCheckoutSession = async (req, res) => {
 };
 
 // @desc    Confirm Stripe success page result (webhook fallback)
+// Post-checkout confirmation fallback
+// If the webhook is delayed, the frontend success page can still finalize local payment state safely.
 exports.confirmCheckoutSuccess = async (req, res) => {
   try {
     if (!process.env.STRIPE_SECRET_KEY) {

@@ -70,6 +70,8 @@ const resolveRegistrationWindowHours = ({ registrationWindowHours, registrationW
   return parsedWindow;
 };
 
+// Turn-timer defaults
+// This keeps every live auction aligned on the same turn duration unless explicitly changed.
 const ensureTurnDefaults = (auction) => {
   // Legacy 10-second values are normalized so current sessions always use 20 seconds.
   if (!auction.turnDurationSeconds || auction.turnDurationSeconds < 1 || auction.turnDurationSeconds === 10) {
@@ -85,6 +87,8 @@ const appendNextBidder = (auction) => {
   }
 };
 
+// Turn clock assignment
+// A bidder's active turn is represented by an absolute expiry timestamp.
 const startTurnClock = (auction, bidderId) => {
   ensureTurnDefaults(auction);
   // Turn expiry is absolute time so both cron jobs and the UI can compare against the same value.
@@ -440,6 +444,8 @@ exports.getAuctionById = async (req, res) => {
   }
 };
 
+// Listing creation flow
+// Seller submits data, Turnstile is verified, images are uploaded, and the listing starts in pending verification.
 exports.createAuction = async (req, res) => {
   const { title, description, category, startingPrice, turnstileToken } = req.body;
 
@@ -731,6 +737,8 @@ exports.openAuctionRoom = async (req, res) => {
   }
 };
 
+// Live bid placement flow
+// This is one of the core auction rules sections: role checks, turn checks, price validation, and turn rotation.
 exports.placeBid = async (req, res) => {
   try {
     if (!req.user.emailVerified) {
@@ -765,6 +773,8 @@ exports.placeBid = async (req, res) => {
       return res.status(400).json({ message: 'Not your turn. Wait for your 20-second turn.' });
     }
 
+    // Core anti-underbid rule
+    // Every new bid must be strictly greater than the current price.
     if (amount <= auction.currentPrice) {
       return res.status(400).json({ message: 'Bid must be higher than current price' });
     }
@@ -831,6 +841,8 @@ exports.giveUpBid = async (req, res) => {
   }
 };
 
+// No-registration fallback flow
+// If nobody joins, the seller must either withdraw the product or relist it at a lower starting price.
 exports.handleNoRegistrationDecision = async (req, res) => {
   try {
     const { action, reducedStartingPrice } = req.body;

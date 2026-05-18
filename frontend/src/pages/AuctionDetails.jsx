@@ -144,6 +144,8 @@ const AuctionDetails = () => {
     }
   };
 
+  // Bid submission
+  // The frontend sends the proposed amount, but the backend remains the final authority on bid validity.
   const handlePlaceBid = async (e) => {
     e.preventDefault();
     if (!user) return toast.error('Please login');
@@ -218,6 +220,8 @@ const AuctionDetails = () => {
     }
   };
 
+  // Countdown base values
+  // These raw remaining-millisecond values drive the registration, room-opening, and turn timers.
   const registrationRemainingMs = useMemo(() => {
     if (!auction?.registrationEndAt) return 0;
     return Math.max(new Date(auction.registrationEndAt).getTime() - timeNow, 0);
@@ -273,7 +277,8 @@ const AuctionDetails = () => {
   const roomActivationActive = Boolean(auction.roomActivation?.isActive && currentRoomActivatorId);
   const isCurrentRoomActivator = roomActivationActive && currentRoomActivatorId === String(user?._id || '');
 
-  // These booleans centralize the page's switching logic so button visibility is easier to explain.
+  // Action visibility matrix
+  // These booleans are the main frontend switching logic for register, bid, and give-up controls.
   const canRegister = user && auction.status === 'future' && registrationRemainingMs > 0 && !isOwner && !isRegistered;
   const canBid = user && auction.status === 'ongoing' && isActiveBidder && isCurrentTurn && user.emailVerified;
   const canGiveUp = user && auction.status === 'ongoing' && isActiveBidder;
@@ -431,6 +436,8 @@ const AuctionDetails = () => {
               </div>
             )}
 
+            {/* Live bidding input
+                The min attribute prevents obvious underbids in the UI, while the backend enforces the real rule. */}
             {auction.status === 'ongoing' && canBid && (
               <form onSubmit={handlePlaceBid} className="flex gap-3">
                 <input

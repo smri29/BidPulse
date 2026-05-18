@@ -142,6 +142,7 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, 
         return res.json({ received: true });
       }
 
+      // Payment split calculation
       // AuctionPulse keeps a 5% commission and sends the remaining 95% to the seller.
       const totalAmount = Number(auction.currentPrice || 0);
       const commission = Number((totalAmount * 0.05).toFixed(2));
@@ -565,6 +566,8 @@ cron.schedule('* * * * *', async () => {
   }
 });
 
+// Core auction engine cron
+// Runs every 5 seconds to move auctions into room-opening mode and to expire late turns.
 cron.schedule('*/5 * * * * *', async () => {
   try {
     const now = new Date();

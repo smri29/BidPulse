@@ -15,6 +15,8 @@ const { sendMonthlyPromotionalEmails } = require('../utils/promotionalCampaignSe
 // @desc    Get Platform Stats (Admin Only)
 // @route   GET /api/admin/stats
 // @access  Private/Admin
+// Admin analytics summary
+// This gathers total users, total auctions, platform volume, commission, payouts, and shipping-flow funds.
 exports.getAdminStats = async (_req, res) => {
   try {
     // Stats are aggregated from the live auction collection rather than from a separate reporting table.

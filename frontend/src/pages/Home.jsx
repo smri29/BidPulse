@@ -24,6 +24,8 @@ const HERO_MESSAGES = [
   'Managed Fulfillment You Can Trust',
 ];
 
+// Homepage auction tabs
+// These status groups power the Upcoming, Live, and Past auction sections.
 const PHASES = [
   { id: 'future', label: 'Upcoming Auctions', statuses: ['future'] },
   { id: 'ongoing', label: 'Live Auctions', statuses: ['ongoing'] },
@@ -79,6 +81,8 @@ const Home = () => {
     return () => window.clearInterval(intervalId);
   }, []);
 
+  // Category dropdown options
+  // Start with the predefined list, then merge in any categories found in fetched data.
   const categories = useMemo(() => {
     const set = new Set(['All', ...AUCTION_CATEGORY_OPTIONS]);
     auctions.forEach((item) => item.category && set.add(item.category));
@@ -90,6 +94,8 @@ const Home = () => {
     [activePhase]
   );
 
+  // Main homepage filtering pipeline
+  // The final list depends on selected phase tab, selected category, and free-text search.
   const filteredAuctions = useMemo(() => {
     // Filters stack in this order: phase, category, then free-text search.
     const query = search.trim().toLowerCase();
@@ -197,6 +203,8 @@ const Home = () => {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
+            {/* Phase-switching buttons
+                Clicking one of these changes activePhase, which changes the allowed statuses. */}
             {PHASES.map((phase) => {
               const Icon = phase.id === 'future' ? CalendarClock : phase.id === 'ongoing' ? Radio : History;
               return (
