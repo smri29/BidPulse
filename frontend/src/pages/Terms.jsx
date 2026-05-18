@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Reveal from '../components/ui/Reveal';
 
+// Terms page groups the most important platform rules into readable topic sections.
 const sections = [
   {
     icon: <FileCheck size={20} />,

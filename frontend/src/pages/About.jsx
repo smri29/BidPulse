@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Award, Globe, Gavel, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import Reveal from '../components/ui/Reveal';
 
+// About page explains the marketplace mission, trust model, and product direction.
 const pillars = [
   {
     icon: <ShieldCheck size={20} />,
@@ -31,6 +32,7 @@ const stats = [
   { icon: <Award size={28} />, number: '#1', label: 'Trust-Led Direction' },
 ];
 
+// This page is mostly structured narrative content rather than interactive business logic.
 const About = () => {
   return (
     <div className="relative overflow-hidden py-14">

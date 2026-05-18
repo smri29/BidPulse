@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Reveal from '../components/ui/Reveal';
 
+// Safety page highlights the trust controls that sit around auctions and payments.
 const safeguards = [
   {
     icon: <UserRoundCheck className="text-blue-500" />,
@@ -43,6 +44,7 @@ const safeguards = [
   },
 ];
 
+// This page is communication-focused, so grouped safeguard cards are the main structure.
 const Safety = () => {
   return (
     <div className="relative overflow-hidden py-16">

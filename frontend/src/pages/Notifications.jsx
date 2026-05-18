@@ -3,6 +3,8 @@ import { Bell, CheckCircle, AlertTriangle, DollarSign, Clock, Trash2 } from 'luc
 import { useDispatch, useSelector } from 'react-redux';
 import { markAllNotificationsRead, markNotificationRead, clearNotifications } from '../redux/notificationSlice';
 
+// Full notification history page.
+// Unlike the navbar preview, this page shows the broader ordered feed and bulk actions.
 const Notifications = () => {
   const dispatch = useDispatch();
   const notifications = useSelector((state) => state.notifications.items);

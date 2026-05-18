@@ -11,6 +11,7 @@ const AdminProfile = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      // Profile pulls a small overview set rather than every admin record because this page is identity-focused.
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       const [statsRes, auctionsRes] = await Promise.all([
         axios.get('/admin/stats', config),
@@ -24,6 +25,7 @@ const AdminProfile = () => {
   }, [user?.token]);
 
   const historyItems = useMemo(() => {
+    // Combine recent transactions with recent listings into one readable timeline.
     const tx = (stats?.recentTransactions || []).map((item) => ({
       id: `tx-${item._id}`,
       type: 'Closed sale',

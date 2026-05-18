@@ -1,3 +1,5 @@
+/* Minimal legacy stylesheet kept from the starter scaffold.
+   The active visual system is defined in index.css. */
 #root {
   min-height: 100vh;
 }

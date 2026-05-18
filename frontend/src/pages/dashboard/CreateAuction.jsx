@@ -40,6 +40,7 @@ const CreateAuction = () => {
   );
 
   const onChange = (event) => {
+    // Registration window UI supports either normal day windows or short test/demo windows.
     const { name, value } = event.target;
     if (name === 'registrationWindowDays') {
       if (value === 'test-2' || value === 'test-5') {
@@ -57,6 +58,7 @@ const CreateAuction = () => {
   };
 
   const onSelectImages = (event) => {
+    // Images are capped and type-checked before upload to avoid malformed listing submissions.
     const selectedFiles = Array.from(event.target.files || []);
     if (!selectedFiles.length) return;
 
@@ -75,6 +77,7 @@ const CreateAuction = () => {
   };
 
   const onSubmit = (event) => {
+    // Seller submission is packed into multipart form data because it contains both text fields and images.
     event.preventDefault();
 
     if (!user?.emailVerified) {

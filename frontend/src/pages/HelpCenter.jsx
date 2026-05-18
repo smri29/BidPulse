@@ -15,6 +15,7 @@ import { toast } from 'react-toastify';
 import axios, { socketUrl } from '../utils/axiosConfig';
 import Reveal from '../components/ui/Reveal';
 
+// Help center combines FAQ content, ticket submission, and a richer live-support interface.
 const HelpCenter = () => {
   const { user } = useSelector((state) => state.auth);
   const [activeSupport, setActiveSupport] = useState('email');
@@ -39,6 +40,8 @@ const HelpCenter = () => {
   });
 
   useEffect(() => {
+    // Help-center chat uses the same support room concept as the floating widget,
+    // but this page keeps the fuller conversation visible while the user stays here.
     if (!socketRef.current) {
       socketRef.current = io(socketUrl, { transports: ['websocket', 'polling'] });
     }
@@ -88,6 +91,7 @@ const HelpCenter = () => {
   };
 
   const submitTicket = async (e) => {
+    // Ticket submission is for structured support issues that should remain reviewable later.
     e.preventDefault();
     setSending(true);
 
@@ -103,6 +107,7 @@ const HelpCenter = () => {
   };
 
   const sendLiveMessage = (e) => {
+    // Live chat is the faster path for short questions while tickets are the formal support path.
     e.preventDefault();
     const trimmed = chatInput.trim();
     if (!trimmed) return;

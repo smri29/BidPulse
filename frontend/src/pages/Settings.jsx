@@ -8,6 +8,7 @@ import axios from '../utils/axiosConfig';
 import { updateProfile, deleteAccount } from '../redux/authSlice';
 import Reveal from '../components/ui/Reveal';
 
+// Settings page groups account-maintenance actions into tabs instead of mixing them into the main profile page.
 const TABS = [
   { id: 'security', label: 'Login & Security', icon: Lock },
   { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -31,6 +32,7 @@ const Settings = () => {
   };
 
   const handleSavePassword = (e) => {
+    // Frontend checks confirm-password first, then dispatches the backend update request.
     e.preventDefault();
     if (passwords.newPassword !== passwords.confirmPassword) {
       toast.error('New passwords do not match');
@@ -47,6 +49,7 @@ const Settings = () => {
   };
 
   const handleExportData = async () => {
+    // Data export downloads the backend-generated ZIP archive of user-owned records.
     try {
       const response = await axios.get('/auth/export-data', {
         headers: { Authorization: `Bearer ${user.token}` },
@@ -68,6 +71,7 @@ const Settings = () => {
     }
   };
 
+  // Account deletion uses both a UI confirmation and backend mutation for safety.
   const handleDeleteAccount = () => {
     if (window.confirm('ARE YOU SURE? This action cannot be undone. Download your data first if needed.')) {
       dispatch(deleteAccount())

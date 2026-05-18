@@ -1,3 +1,4 @@
+// Shared category list used by seller forms and category-filter UIs.
 export const AUCTION_CATEGORY_OPTIONS = [
   'Electronics',
   'Smartphones & Tablets',

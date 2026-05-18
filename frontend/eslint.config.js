@@ -3,6 +3,7 @@ import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
+// Frontend lint rules covering JS syntax, browser globals, React hooks, and React Refresh safety.
 export default [
   { ignores: ['dist'] },
   {

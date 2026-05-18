@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+// Fallback page for unmatched routes.
 const NotFound = () => (
   <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 text-center">
     <h1 className="text-4xl font-bold text-gray-900">404</h1>

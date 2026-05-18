@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import Reveal from '../components/ui/Reveal';
 
+// These step arrays split the marketplace explanation into buyer and seller journeys.
 const buyerSteps = [
   {
     icon: <Search size={22} />,
@@ -67,6 +68,7 @@ const sellerSteps = [
   },
 ];
 
+// How-it-works is the public process explainer for both sides of the marketplace.
 const HowItWorks = () => {
   return (
     <div className="relative overflow-hidden py-14">

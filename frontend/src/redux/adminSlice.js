@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from '../utils/axiosConfig';
 
+// Legacy admin slice placeholder.
+// Most admin pages currently fetch directly instead of relying on this store branch.
 // Fetch all users
 export const getAllUsers = createAsyncThunk(
   'admin/getAllUsers',

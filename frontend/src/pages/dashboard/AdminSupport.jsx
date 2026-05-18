@@ -32,6 +32,7 @@ const AdminSupport = () => {
   );
 
   const ticketMetrics = useMemo(() => {
+    // Metrics summarize both structured tickets and ephemeral live-chat activity.
     const open = tickets.filter((item) => item.status === 'open').length;
     const inProgress = tickets.filter((item) => item.status === 'in_progress').length;
     const resolved = tickets.filter((item) => item.status === 'resolved').length;
@@ -46,6 +47,7 @@ const AdminSupport = () => {
   }, [chatMessages.length, tickets]);
 
   const filteredTickets = useMemo(() => {
+    // Admin can narrow tickets by both status and free-text participant/content search.
     const query = ticketSearch.trim().toLowerCase();
     return tickets.filter((ticket) => {
       const matchesQuery =
@@ -80,6 +82,7 @@ const AdminSupport = () => {
     }
 
     const socket = socketRef.current;
+    // Admin joins the same support room as users but appears with the admin role.
     socket.emit('support:join', { name: user?.name || 'Support Admin', role: 'admin' });
     socket.on('support:message', (payload) => setChatMessages((prev) => [...prev, payload]));
     socket.on('support:system', (payload) =>

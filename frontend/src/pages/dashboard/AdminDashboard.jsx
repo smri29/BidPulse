@@ -31,6 +31,7 @@ const AdminDashboard = () => {
     const config = { headers: { Authorization: `Bearer ${user.token}` } };
 
     const fetchData = async ({ initial = false } = {}) => {
+      // Overview loads both global stats and the broader auction list so visual summaries can be derived client-side.
       if (initial) setLoading(true);
       try {
         const [statsRes, auctionsRes] = await Promise.all([
@@ -60,6 +61,7 @@ const AdminDashboard = () => {
   }, [user?.token]);
 
   const statusDistribution = useMemo(() => {
+    // Distribution powers the status summary/chart blocks for operational visibility.
     const map = {};
     auctions.forEach((a) => {
       map[a.status] = (map[a.status] || 0) + 1;
@@ -72,6 +74,7 @@ const AdminDashboard = () => {
   }, [auctions]);
 
   const commissionTrend = useMemo(() => {
+    // Recent closed transactions are converted into commission points using the 5% platform rule.
     const tx = stats?.recentTransactions || [];
     const latest = [...tx].reverse();
     return latest.map((item, index) => ({

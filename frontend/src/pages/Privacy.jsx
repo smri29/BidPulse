@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Reveal from '../components/ui/Reveal';
 
+// Privacy page explains what operational data the platform stores and why it exists.
 const sections = [
   {
     icon: <Database size={20} />,

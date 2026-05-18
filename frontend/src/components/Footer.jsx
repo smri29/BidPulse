@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import { MapPin, Sparkles } from 'lucide-react';
 
+// Footer acts as the closing brand/navigation surface for the public site.
 const Footer = () => {
   return (
     <footer className="relative mt-auto overflow-hidden border-t border-slate-800 bg-slate-950 text-slate-300">

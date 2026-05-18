@@ -4,11 +4,13 @@ import axios from '../utils/axiosConfig';;
 import { toast } from 'react-toastify';
 import { Mail, ArrowLeft, KeyRound } from 'lucide-react';
 
+// Forgot-password starts the reset flow by emailing a one-time reset link.
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (e) => {
+    // This step only requests the reset email; password change happens on the token page later.
     e.preventDefault();
     setLoading(true);
 

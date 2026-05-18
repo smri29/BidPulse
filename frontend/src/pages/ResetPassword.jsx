@@ -4,6 +4,7 @@ import axios from '../utils/axiosConfig';;
 import { toast } from 'react-toastify';
 import { Lock, CheckCircle, KeyRound } from 'lucide-react';
 
+// Reset-password completes the password reset after the user opens the emailed token link.
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

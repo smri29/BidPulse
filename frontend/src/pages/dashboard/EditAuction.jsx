@@ -38,6 +38,7 @@ const EditAuction = () => {
 
   useEffect(() => {
     const fetchAuction = async () => {
+      // Edit screen preloads the listing and rejects access if the current user is not the owner.
       try {
         const response = await axios.get(`/auctions/${id}`);
         const auction = response.data;
@@ -73,6 +74,7 @@ const EditAuction = () => {
   }, [id, navigate, user?._id]);
 
   const onChange = (event) => {
+    // Editing reuses the same day-vs-test-window switch pattern as listing creation.
     const { name, value } = event.target;
     if (name === 'registrationWindowDays') {
       if (value === 'test-2' || value === 'test-5') {
@@ -104,6 +106,7 @@ const EditAuction = () => {
   };
 
   const onSubmit = async (event) => {
+    // Edit submission mirrors create-auction but uses the update endpoint and preserves unchanged images.
     event.preventDefault();
     setSaving(true);
     try {

@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import axios from '../utils/axiosConfig';
 import { fetchCurrentUser } from '../redux/authSlice';
 
+// This page finishes the email-link variant of profile verification.
 const ProfileVerificationLink = () => {
   const { token } = useParams();
   const navigate = useNavigate();

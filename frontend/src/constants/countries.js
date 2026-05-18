@@ -1,3 +1,4 @@
+// Shared country list used in profile and verification flows.
 export const COUNTRIES = [
   'Afghanistan',
   'Albania',
