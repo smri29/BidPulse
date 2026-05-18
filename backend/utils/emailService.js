@@ -1,6 +1,10 @@
 ﻿const nodemailer = require('nodemailer');
 
 const transporters = new Map();
+// Email service strategy
+// 1. Try API providers first (Brevo, then Resend)
+// 2. Fall back to SMTP/Nodemailer
+// 3. Cache transporters so repeated sends do not rebuild connections
 
 const getEmailIdentity = () => ({
   user: process.env.EMAIL_USERNAME || process.env.EMAIL_USER,
@@ -10,6 +14,8 @@ const getEmailIdentity = () => ({
 const hasBrevoConfig = () => Boolean(process.env.BREVO_API_KEY);
 const hasResendConfig = () => Boolean(process.env.RESEND_API_KEY);
 
+// Brevo provider adapter.
+// This path is preferred when Brevo credentials are available.
 const sendWithBrevo = async (options) => {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.EMAIL_USERNAME || process.env.EMAIL_USER;
@@ -62,6 +68,7 @@ const sendWithBrevo = async (options) => {
   }
 };
 
+// Resend is the second API-first option if Brevo is not configured.
 const sendWithResend = async (options) => {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
@@ -110,6 +117,8 @@ const sendWithResend = async (options) => {
 };
 
 const getEmailConfig = () => {
+  // SMTP configuration is built dynamically from env vars so deployments can choose
+  // explicit host settings or a simpler named-service configuration.
   const { user, pass } = getEmailIdentity();
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 587);
@@ -145,6 +154,7 @@ const getEmailConfig = () => {
 };
 
 const buildTransportConfigs = () => {
+  // Multiple transport configs allow graceful fallback when one SMTP mode is flaky.
   const primary = getEmailConfig();
   const configs = [primary];
 
@@ -167,6 +177,7 @@ const buildTransportConfigs = () => {
 };
 
 const getTransporter = (config) => {
+  // Transporters are memoized by a stable config key to reuse connections safely.
   const key = JSON.stringify({
     host: config.host || '',
     port: config.port || '',
@@ -205,6 +216,7 @@ const sendEmail = async (options) => {
 
   for (const config of configs) {
     try {
+      // Try each SMTP transport in order until one succeeds.
       const activeTransporter = getTransporter(config);
       await activeTransporter.sendMail({
         from: `AuctionPulse Support <${fromUser}>`,
@@ -304,6 +316,7 @@ const verifyEmailTransport = async () => {
   const configs = buildTransportConfigs();
   for (const config of configs) {
     try {
+      // SMTP verification checks that the configured transport can authenticate/connect.
       const activeTransporter = getTransporter(config);
       await activeTransporter.verify();
       console.log(`Email transport verified successfully (${config.host || config.service}:${config.port || ''})`);

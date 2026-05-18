@@ -40,5 +40,6 @@ const supportTicketSchema = new mongoose.Schema(
 
 supportTicketSchema.index({ status: 1, createdAt: -1 });
 supportTicketSchema.index({ email: 1, createdAt: -1 });
+// Queue views usually sort by newest tickets and sometimes narrow by requester email.
 
 module.exports = mongoose.model('SupportTicket', supportTicketSchema);

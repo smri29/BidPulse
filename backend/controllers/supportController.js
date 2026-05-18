@@ -105,6 +105,7 @@ exports.getSupportTickets = async (req, res) => {
 exports.updateSupportTicketStatus = async (req, res) => {
   try {
     const { status } = req.body;
+    // Admin UI is intentionally limited to the small supported status vocabulary.
     if (!['open', 'in_progress', 'resolved'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
@@ -118,6 +119,7 @@ exports.updateSupportTicketStatus = async (req, res) => {
     ticket.status = status;
     await ticket.save();
 
+    // Status emails are only sent when the ticket actually transitions to a new state.
     if (previousStatus !== status) {
       // Only notify the user when the status meaningfully changed.
       sendEmailAsync({

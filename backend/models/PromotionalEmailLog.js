@@ -41,5 +41,6 @@ const promotionalEmailLogSchema = new mongoose.Schema(
 );
 
 promotionalEmailLogSchema.index({ user: 1, year: 1, month: 1, dayOfMonth: 1 }, { unique: true });
+// One user can only receive one log entry per campaign window.
 
 module.exports = mongoose.model('PromotionalEmailLog', promotionalEmailLogSchema);

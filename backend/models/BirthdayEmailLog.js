@@ -28,5 +28,6 @@ const birthdayEmailLogSchema = new mongoose.Schema(
 );
 
 birthdayEmailLogSchema.index({ user: 1, year: 1 }, { unique: true });
+// One birthday email per user per year prevents accidental duplicate greetings.
 
 module.exports = mongoose.model('BirthdayEmailLog', birthdayEmailLogSchema);
