@@ -1,3 +1,7 @@
+/**
+ * Module: features/home/HomePage.jsx
+ * Purpose: Renders the Home Page screen by composing smaller feature-specific sections.
+ */
 import React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowRight, CalendarClock, History, Loader, MapPin, Radio, Search } from 'lucide-react';

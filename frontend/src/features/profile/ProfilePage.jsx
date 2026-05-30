@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/ProfilePage.jsx
+ * Purpose: Renders the Profile Page screen by composing smaller feature-specific sections.
+ */
 import React from 'react';
 import { Save, ShieldCheck } from 'lucide-react';
 

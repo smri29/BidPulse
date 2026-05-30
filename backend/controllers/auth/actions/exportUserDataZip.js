@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/auth/actions/exportUserDataZip.js
+ * Purpose: Implements one focused controller action so endpoint behavior stays separated by responsibility.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/auth/actions/exportUserDataZip.js
 // Purpose: export User Data Zip

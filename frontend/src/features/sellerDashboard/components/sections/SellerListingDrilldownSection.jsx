@@ -1,3 +1,7 @@
+/**
+ * Module: features/sellerDashboard/components/sections/SellerListingDrilldownSection.jsx
+ * Purpose: Presents the Seller Listing Drilldown Section UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 import { Trophy } from 'lucide-react';

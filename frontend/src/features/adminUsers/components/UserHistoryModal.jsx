@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminUsers/components/UserHistoryModal.jsx
+ * Purpose: Contains the state, effects, and event handlers that drive the User History Modal flow.
+ */
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { CalendarClock, DollarSign, Package, ShoppingBag, X } from 'lucide-react';

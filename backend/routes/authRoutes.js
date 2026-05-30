@@ -1,3 +1,7 @@
+/**
+ * Module: backend/routes/authRoutes.js
+ * Purpose: Maps HTTP endpoints to the backend handlers responsible for each route.
+ */
 const express = require('express');
 const { 
   register, 

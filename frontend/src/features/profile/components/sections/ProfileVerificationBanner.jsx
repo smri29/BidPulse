@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/components/sections/ProfileVerificationBanner.jsx
+ * Purpose: Presents the Profile Verification Banner UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { BadgeAlert } from 'lucide-react';
 

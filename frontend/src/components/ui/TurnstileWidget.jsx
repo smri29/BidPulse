@@ -1,3 +1,7 @@
+/**
+ * Module: components/ui/TurnstileWidget.jsx
+ * Purpose: Supports the Turnstile Widget module and keeps its responsibility isolated by file name.
+ */
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 const TURNSTILE_SCRIPT_ID = 'cf-turnstile-script';

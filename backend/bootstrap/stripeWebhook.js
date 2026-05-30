@@ -1,3 +1,7 @@
+/**
+ * Module: backend/bootstrap/stripeWebhook.js
+ * Purpose: Initializes shared backend startup behavior so server bootstrapping stays organized by concern.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/bootstrap/stripeWebhook.js
 // Purpose: stripe Webhook

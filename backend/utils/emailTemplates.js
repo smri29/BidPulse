@@ -1,3 +1,7 @@
+/**
+ * Module: backend/utils/emailTemplates.js
+ * Purpose: Provides reusable backend helper logic shared across services, controllers, or jobs.
+ */
 const escapeHtml = (value = '') =>
   String(value)
     .replace(/&/g, '&amp;')

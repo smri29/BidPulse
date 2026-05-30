@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminUsers/useAdminUsersData.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Admin Users Data flow.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';

@@ -1,3 +1,7 @@
+/**
+ * Module: components/ui/Reveal.jsx
+ * Purpose: Supports the Reveal module and keeps its responsibility isolated by file name.
+ */
 import React, { useEffect, useRef, useState } from 'react';
 
 // Reusable scroll-reveal wrapper for cards and sections across the frontend.

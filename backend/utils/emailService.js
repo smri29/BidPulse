@@ -1,4 +1,8 @@
-﻿const nodemailer = require('nodemailer');
+/**
+ * Module: backend/utils/emailService.js
+ * Purpose: Provides reusable backend helper logic shared across services, controllers, or jobs.
+ */
+const nodemailer = require('nodemailer');
 
 const transporters = new Map();
 // Email service strategy

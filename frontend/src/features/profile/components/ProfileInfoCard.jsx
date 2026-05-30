@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/components/ProfileInfoCard.jsx
+ * Purpose: Presents the Profile Info Card UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 

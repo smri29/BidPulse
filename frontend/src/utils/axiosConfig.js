@@ -1,4 +1,8 @@
-﻿import axios from 'axios';
+/**
+ * Module: utils/axiosConfig.js
+ * Purpose: Stores static configuration values used by the surrounding feature modules.
+ */
+import axios from 'axios';
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 

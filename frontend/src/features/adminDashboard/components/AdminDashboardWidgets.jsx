@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminDashboard/components/AdminDashboardWidgets.jsx
+ * Purpose: Presents the Admin Dashboard Widgets UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';

@@ -1,3 +1,7 @@
+/**
+ * Module: features/sellerDashboard/components/sections/SellerListingsSection.jsx
+ * Purpose: Presents the Seller Listings Section UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 
 import Reveal from '../../../../components/ui/Reveal';

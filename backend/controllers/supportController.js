@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/supportController.js
+ * Purpose: Provides controller-level coordination logic for this backend feature area.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/supportController.js
 // Purpose: support Controller compatibility export

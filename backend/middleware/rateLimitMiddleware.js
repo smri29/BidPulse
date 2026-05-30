@@ -1,3 +1,7 @@
+/**
+ * Module: backend/middleware/rateLimitMiddleware.js
+ * Purpose: Defines Express middleware that enforces shared request handling rules.
+ */
 const buckets = new Map();
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 let lastCleanupAt = 0;

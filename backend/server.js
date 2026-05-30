@@ -1,3 +1,7 @@
+/**
+ * Module: backend/server.js
+ * Purpose: Bootstraps the backend application, wires middleware and routes, and starts the API server.
+ */
 const express = require('express');
 const dotenv = require('dotenv');
 

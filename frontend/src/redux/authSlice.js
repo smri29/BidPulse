@@ -1,3 +1,7 @@
+/**
+ * Module: redux/authSlice.js
+ * Purpose: Owns Redux state transitions and async lifecycle wiring for this part of the app.
+ */
 import { createSlice } from '@reduxjs/toolkit';
 
 import { buildAuthExtraReducers } from './auth/authReducerCases';

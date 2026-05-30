@@ -1,3 +1,7 @@
+/**
+ * Module: backend/models/SupportTicket.js
+ * Purpose: Defines a Mongoose data model used to persist this backend domain entity.
+ */
 const mongoose = require('mongoose');
 
 const supportTicketSchema = new mongoose.Schema(

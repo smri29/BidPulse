@@ -1,3 +1,7 @@
+/**
+ * Module: features/sellerDashboard/exporters.js
+ * Purpose: Supports the exporters module and keeps its responsibility isolated by file name.
+ */
 export const triggerCsvDownload = (filename, headers, rows) => {
   const csvRows = [
     headers.join(','),

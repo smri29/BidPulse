@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/auction/helpers.js
+ * Purpose: Provides controller-level coordination logic for this backend feature area.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/auction/helpers.js
 // Purpose: helpers

@@ -1,3 +1,7 @@
+/**
+ * Module: features/home/homeConfig.js
+ * Purpose: Stores static configuration values used by the surrounding feature modules.
+ */
 export const WATCHLIST_KEY = 'AuctionPulse_watchlist';
 export const LEGACY_WATCHLIST_KEY = 'rizbid_watchlist';
 

@@ -1,3 +1,7 @@
+/**
+ * Module: features/helpCenter/components/HelpCenterFaqPanel.jsx
+ * Purpose: Presents the Help Center Faq Panel UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 import { HelpCircle } from 'lucide-react';

@@ -1,3 +1,7 @@
+/**
+ * Module: utils/imageUrl.js
+ * Purpose: Supports the image Url module and keeps its responsibility isolated by file name.
+ */
 const DEFAULT_AUCTION_IMAGE = 'https://via.placeholder.com/900x600?text=AuctionPulse+Listing';
 
 // Shared image fallback helpers keep the auction UI stable even with missing or broken URLs.

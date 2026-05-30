@@ -1,3 +1,7 @@
+/**
+ * Module: features/register/components/RegisterHero.jsx
+ * Purpose: Presents the Register Hero UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { BadgeCheck, Fingerprint, ShieldCheck, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';

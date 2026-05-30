@@ -1,3 +1,7 @@
+/**
+ * Module: components/AdminRoute.jsx
+ * Purpose: Supports the Admin Route module and keeps its responsibility isolated by file name.
+ */
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';

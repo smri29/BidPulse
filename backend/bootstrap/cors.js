@@ -1,3 +1,7 @@
+/**
+ * Module: backend/bootstrap/cors.js
+ * Purpose: Initializes shared backend startup behavior so server bootstrapping stays organized by concern.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/bootstrap/cors.js
 // Purpose: cors

@@ -1,3 +1,7 @@
+/**
+ * Module: features/sellerDashboard/components/SellerDashboardWidgets.jsx
+ * Purpose: Presents the Seller Dashboard Widgets UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';

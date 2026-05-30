@@ -1,3 +1,7 @@
+/**
+ * Module: features/auctionDetails/components/sections/AuctionOverviewSection.jsx
+ * Purpose: Presents the Auction Overview Section UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { Clock, DollarSign, Users } from 'lucide-react';
 

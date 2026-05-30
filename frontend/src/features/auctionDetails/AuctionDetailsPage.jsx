@@ -1,3 +1,7 @@
+/**
+ * Module: features/auctionDetails/AuctionDetailsPage.jsx
+ * Purpose: Renders the Auction Details Page screen by composing smaller feature-specific sections.
+ */
 import React, { useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';

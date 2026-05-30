@@ -1,3 +1,7 @@
+/**
+ * Module: pages/ForgotPassword.jsx
+ * Purpose: Supports the Forgot Password module and keeps its responsibility isolated by file name.
+ */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from '../utils/axiosConfig';;

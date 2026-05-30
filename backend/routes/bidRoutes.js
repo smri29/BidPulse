@@ -1,3 +1,7 @@
+/**
+ * Module: backend/routes/bidRoutes.js
+ * Purpose: Maps HTTP endpoints to the backend handlers responsible for each route.
+ */
 const express = require('express');
 const { placeBid, getBids } = require('../controllers/bidController');
 const { protect } = require('../middleware/authMiddleware');

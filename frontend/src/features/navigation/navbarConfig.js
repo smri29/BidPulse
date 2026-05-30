@@ -1,3 +1,7 @@
+/**
+ * Module: features/navigation/navbarConfig.js
+ * Purpose: Stores static configuration values used by the surrounding feature modules.
+ */
 export const SELLER_MODE_PATHS = ['/dashboard/seller', '/create-auction', '/edit-auction'];
 export const BIDDER_MODE_PATHS = ['/dashboard/bidder', '/auction'];
 export const MODE_KEY = 'AuctionPulse_dashboard_mode';

@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminNavigation/AdminNavbarView.jsx
+ * Purpose: Supports the Admin Navbar View module and keeps its responsibility isolated by file name.
+ */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, ChevronDown, ExternalLink, LogOut, Menu, User, X } from 'lucide-react';

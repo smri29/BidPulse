@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/components/ProfileField.jsx
+ * Purpose: Presents the Profile Field UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 
 const ProfileField = ({ label, required = false, children }) => (

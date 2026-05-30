@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/hooks/useProfileVerificationFlow.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Profile Verification Flow flow.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -17,6 +21,8 @@ import { createVerificationFormFromUser } from '../utils/profileForms';
 
 export const useProfileVerificationFlow = (user) => {
   const dispatch = useDispatch();
+  // Modal visibility and timers are kept locally because they represent
+  // short-lived UI workflow state rather than backend-authored profile data.
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [verificationCooldownEndsAt, setVerificationCooldownEndsAt] = useState(null);
   const [verificationCooldownLabel, setVerificationCooldownLabel] = useState('Awaiting Verification');
@@ -33,11 +39,15 @@ export const useProfileVerificationFlow = (user) => {
 
   useEffect(() => {
     if (!user) return;
+    // Seed the verification form from the current user so the user edits
+    // fewer fields manually when retrying verification.
     setVerificationForm(createVerificationFormFromUser(user));
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
+    // Restore any in-progress verification flow after refresh so countdowns
+    // and step state survive while the user checks email.
     const storedState = readVerificationUiState(user);
     if (!storedState) return;
 
@@ -76,6 +86,8 @@ export const useProfileVerificationFlow = (user) => {
 
   useEffect(() => {
     if (!user?.emailVerified) return;
+    // Once verification succeeds, clear every transient step so the flow
+    // cannot reopen in an outdated state.
     setIsVerificationModalOpen(false);
     setVerificationStep('form');
     setVerificationCooldownEndsAt(null);
@@ -89,6 +101,8 @@ export const useProfileVerificationFlow = (user) => {
       setVerificationCountdown(0);
       return undefined;
     }
+    // Countdown ticks once per second so buttons and helper labels stay in sync
+    // with the current lockout window.
     const updateCountdown = () => {
       const remainingSeconds = Math.max(0, Math.ceil((verificationCooldownEndsAt - Date.now()) / 1000));
       setVerificationCountdown(remainingSeconds);
@@ -104,6 +118,8 @@ export const useProfileVerificationFlow = (user) => {
       setOtpCountdown(0);
       return undefined;
     }
+    // OTP countdown is tracked separately because the cooldown window and
+    // the code-expiry window are related but not identical.
     const updateCountdown = () => {
       const remainingSeconds = Math.max(0, Math.ceil((otpExpiresAt - Date.now()) / 1000));
       setOtpCountdown(remainingSeconds);
@@ -125,6 +141,8 @@ export const useProfileVerificationFlow = (user) => {
       return;
     }
 
+    // Persist the current verification UI state so the user can safely refresh
+    // while waiting for email or entering the OTP code.
     writeVerificationUiState(user, {
       cooldownEndsAt: hasCooldown ? verificationCooldownEndsAt : null,
       cooldownLabel: verificationCooldownLabel,
@@ -144,6 +162,7 @@ export const useProfileVerificationFlow = (user) => {
   ]);
 
   const verificationAvatarPreview = useMemo(() => {
+    // Local file previews use object URLs until the backend confirms the upload.
     if (verificationAvatarFile) return URL.createObjectURL(verificationAvatarFile);
     return user?.avatarUrl || '';
   }, [verificationAvatarFile, user?.avatarUrl]);
@@ -160,6 +179,8 @@ export const useProfileVerificationFlow = (user) => {
   const isVerificationBusy = isStartingVerification || isVerifyingOtp;
 
   const openVerificationModal = () => {
+    // Reopen the most relevant step instead of always forcing the user back to
+    // the start of the workflow.
     if (isVerificationCooldownActive && verificationCooldownLabel === 'Link Sent') {
       setVerificationStep('link');
     } else if (otpExpiresAt && otpCountdown > 0) {
@@ -187,6 +208,7 @@ export const useProfileVerificationFlow = (user) => {
   const handleVerificationAvatarChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    // Client-side file-type validation gives faster feedback before upload.
     if (!file.type.startsWith('image/')) {
       toast.error('Please choose an image file.');
       return;
@@ -197,6 +219,8 @@ export const useProfileVerificationFlow = (user) => {
   const handleStartVerification = (event) => {
     event.preventDefault();
     setIsStartingVerification(true);
+    // Multipart form data is required because the request can include both
+    // text identity fields and an uploaded profile image.
     const payload = new FormData();
     payload.append('dob', verificationForm.dob);
     payload.append('country', verificationForm.country);
@@ -210,6 +234,8 @@ export const useProfileVerificationFlow = (user) => {
       .unwrap()
       .then((response) => {
         toast.success(response.message || 'Verification request created');
+        // A short resend cooldown prevents accidental duplicate verification
+        // requests while the user waits for the OTP or email link.
         setVerificationCooldownEndsAt(Date.now() + 60 * 1000);
         setVerificationCooldownLabel(
           response.verificationMethod === 'link' ? 'Link Sent' : 'Awaiting Verification'
@@ -248,6 +274,8 @@ export const useProfileVerificationFlow = (user) => {
 
   const handleAvatarUpload = (file, onFinally) => {
     if (!file) return;
+    // Profile picture updates are separate from verification submission so the
+    // account avatar can change without restarting the verification flow.
     setIsUploadingAvatar(true);
     dispatch(uploadAvatar(file))
       .unwrap()

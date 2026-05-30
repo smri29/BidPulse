@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/payment/paymentHelpers.js
+ * Purpose: Provides controller-level coordination logic for this backend feature area.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/payment/paymentHelpers.js
 // Purpose: payment Helpers

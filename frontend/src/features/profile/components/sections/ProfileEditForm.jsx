@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/components/sections/ProfileEditForm.jsx
+ * Purpose: Presents the Profile Edit Form UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { Plus, Save } from 'lucide-react';
 

@@ -1,3 +1,7 @@
+/**
+ * Module: features/register/useRegisterForm.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Register Form flow.
+ */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';

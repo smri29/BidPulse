@@ -1,3 +1,7 @@
+/**
+ * Module: backend/utils/birthdayEmailService.js
+ * Purpose: Provides reusable backend helper logic shared across services, controllers, or jobs.
+ */
 const User = require('../models/User');
 const BirthdayEmailLog = require('../models/BirthdayEmailLog');
 const templates = require('./emailTemplates');

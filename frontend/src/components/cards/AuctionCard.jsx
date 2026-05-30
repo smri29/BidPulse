@@ -1,3 +1,7 @@
+/**
+ * Module: components/cards/AuctionCard.jsx
+ * Purpose: Supports the Auction Card module and keeps its responsibility isolated by file name.
+ */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, DollarSign, Star, Users } from 'lucide-react';

@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/constants.js
+ * Purpose: Stores static configuration values used by the surrounding feature modules.
+ */
 // Shared profile form defaults and option lists live here so the page and modal
 // can reuse the same source of truth.
 export const initialVerificationForm = {

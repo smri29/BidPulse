@@ -1,3 +1,7 @@
+/**
+ * Module: features/auctionForm/Field.jsx
+ * Purpose: Supports the Field module and keeps its responsibility isolated by file name.
+ */
 import React from 'react';
 
 const AuctionField = ({ label, required = false, children }) => (

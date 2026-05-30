@@ -1,3 +1,7 @@
+/**
+ * Module: features/navigation/useNavbarState.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Navbar State flow.
+ */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';

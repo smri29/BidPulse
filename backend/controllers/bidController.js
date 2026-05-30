@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/bidController.js
+ * Purpose: Provides controller-level coordination logic for this backend feature area.
+ */
 const Auction = require('../models/Auction');
 const User = require('../models/User');
 

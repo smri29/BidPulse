@@ -1,3 +1,7 @@
+/**
+ * Module: redux/notificationSlice.js
+ * Purpose: Owns Redux state transitions and async lifecycle wiring for this part of the app.
+ */
 import { createSlice } from '@reduxjs/toolkit';
 
 const STORAGE_KEY_PREFIX = 'AuctionPulse_notifications';

@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/components/ProfileVerificationModal.jsx
+ * Purpose: Presents the Profile Verification Modal dialog and keeps related UI inputs grouped in one place.
+ */
 import React from 'react';
 import { User, X } from 'lucide-react';
 

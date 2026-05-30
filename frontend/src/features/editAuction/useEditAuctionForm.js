@@ -1,3 +1,7 @@
+/**
+ * Module: features/editAuction/useEditAuctionForm.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Edit Auction Form flow.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';

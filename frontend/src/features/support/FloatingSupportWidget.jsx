@@ -1,3 +1,7 @@
+/**
+ * Module: features/support/FloatingSupportWidget.jsx
+ * Purpose: Supports the Floating Support Widget module and keeps its responsibility isolated by file name.
+ */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Bot, LifeBuoy, MessageCircle, Send, User, X } from 'lucide-react';

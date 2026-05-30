@@ -1,3 +1,7 @@
+/**
+ * Module: backend/middleware/uploadMiddleware.js
+ * Purpose: Defines Express middleware that enforces shared request handling rules.
+ */
 const multer = require('multer');
 
 const storage = multer.memoryStorage();

@@ -1,3 +1,7 @@
+/**
+ * Module: features/helpCenter/components/SupportLiveChatPanel.jsx
+ * Purpose: Presents the Support Live Chat Panel UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 import { Bot, Send, User } from 'lucide-react';

@@ -1,3 +1,7 @@
+/**
+ * Module: features/createAuction/CreateAuctionPage.jsx
+ * Purpose: Renders the Create Auction Page screen by composing smaller feature-specific sections.
+ */
 import React from 'react';
 import { Info, Sparkles, UploadCloud, XCircle } from 'lucide-react';
 

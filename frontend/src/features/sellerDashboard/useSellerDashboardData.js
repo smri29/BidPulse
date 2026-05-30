@@ -1,3 +1,7 @@
+/**
+ * Module: features/sellerDashboard/useSellerDashboardData.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Seller Dashboard Data flow.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 

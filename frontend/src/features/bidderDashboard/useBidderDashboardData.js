@@ -1,3 +1,7 @@
+/**
+ * Module: features/bidderDashboard/useBidderDashboardData.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Bidder Dashboard Data flow.
+ */
 import { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 

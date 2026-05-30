@@ -1,3 +1,7 @@
+/**
+ * Module: frontend/eslint.config.js
+ * Purpose: Stores frontend tool or build configuration for the surrounding development workflow.
+ */
 import js from '@eslint/js';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';

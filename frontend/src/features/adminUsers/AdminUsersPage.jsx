@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminUsers/AdminUsersPage.jsx
+ * Purpose: Renders the Admin Users Page screen by composing smaller feature-specific sections.
+ */
 import React from 'react';
 import { AlertCircle, Ban, CheckCircle, Eye, Shield, User, Users } from 'lucide-react';
 

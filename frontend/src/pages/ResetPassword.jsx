@@ -1,3 +1,7 @@
+/**
+ * Module: pages/ResetPassword.jsx
+ * Purpose: Supports the Reset Password module and keeps its responsibility isolated by file name.
+ */
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../utils/axiosConfig';;

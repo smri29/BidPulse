@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/adminController.js
+ * Purpose: Provides controller-level coordination logic for this backend feature area.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/adminController.js
 // Purpose: admin Controller compatibility export

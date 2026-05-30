@@ -1,3 +1,7 @@
+/**
+ * Module: pages/Login.jsx
+ * Purpose: Supports the Login module and keeps its responsibility isolated by file name.
+ */
 import React, { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';

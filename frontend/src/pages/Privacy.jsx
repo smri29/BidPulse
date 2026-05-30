@@ -1,3 +1,7 @@
+/**
+ * Module: pages/Privacy.jsx
+ * Purpose: Supports the Privacy module and keeps its responsibility isolated by file name.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 import {

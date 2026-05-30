@@ -1,3 +1,7 @@
+/**
+ * Module: app/AppRoutes.jsx
+ * Purpose: Supports the App Routes module and keeps its responsibility isolated by file name.
+ */
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 

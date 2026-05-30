@@ -1,3 +1,7 @@
+/**
+ * Module: features/navigation/components/MobileNavMenu.jsx
+ * Purpose: Presents the Mobile Nav Menu UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';

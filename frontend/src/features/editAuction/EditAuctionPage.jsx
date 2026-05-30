@@ -1,3 +1,7 @@
+/**
+ * Module: features/editAuction/EditAuctionPage.jsx
+ * Purpose: Renders the Edit Auction Page screen by composing smaller feature-specific sections.
+ */
 import React from 'react';
 import { ImagePlus, Save, XCircle } from 'lucide-react';
 

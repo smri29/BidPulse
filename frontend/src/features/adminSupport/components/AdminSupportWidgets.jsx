@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminSupport/components/AdminSupportWidgets.jsx
+ * Purpose: Presents the Admin Support Widgets UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 

@@ -1,3 +1,7 @@
+/**
+ * Module: features/navigation/components/NavbarAuthControls.jsx
+ * Purpose: Presents the Navbar Auth Controls UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { Bell, ChevronDown, LayoutDashboard, LogOut, RefreshCw, Settings, User } from 'lucide-react';
 import { Link } from 'react-router-dom';

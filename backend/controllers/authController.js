@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/authController.js
+ * Purpose: Provides controller-level coordination logic for this backend feature area.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/authController.js
 // Purpose: auth Controller compatibility export

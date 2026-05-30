@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminAuctions/components/AdminAuctionsWidgets.jsx
+ * Purpose: Presents the Admin Auctions Widgets UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 

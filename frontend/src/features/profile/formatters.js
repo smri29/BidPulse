@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/formatters.js
+ * Purpose: Provides display formatting helpers so presentation rules stay out of component bodies.
+ */
 export const formatDate = (value) => {
   if (!value) return 'Not set';
   return new Date(value).toLocaleDateString();

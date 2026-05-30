@@ -1,3 +1,7 @@
+/**
+ * Module: features/navigation/NavbarView.jsx
+ * Purpose: Supports the Navbar View module and keeps its responsibility isolated by file name.
+ */
 import React from 'react';
 import { Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';

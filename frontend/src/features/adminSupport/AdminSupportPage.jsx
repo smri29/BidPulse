@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminSupport/AdminSupportPage.jsx
+ * Purpose: Renders the Admin Support Page screen by composing smaller feature-specific sections.
+ */
 import React from 'react';
 
 import Reveal from '../../components/ui/Reveal';

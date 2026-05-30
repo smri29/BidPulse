@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminAuctions/components/AdminAuctionsHeader.jsx
+ * Purpose: Presents the Admin Auctions Header UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 
 import Reveal from '../../../components/ui/Reveal';

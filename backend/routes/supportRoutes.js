@@ -1,3 +1,7 @@
+/**
+ * Module: backend/routes/supportRoutes.js
+ * Purpose: Maps HTTP endpoints to the backend handlers responsible for each route.
+ */
 const express = require('express');
 const router = express.Router();
 const {

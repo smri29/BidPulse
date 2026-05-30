@@ -1,6 +1,12 @@
+/**
+ * Module: redux/auth/authThunks.js
+ * Purpose: Defines async Redux actions that coordinate API requests and state updates.
+ */
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios, { getApiErrorMessage } from '../../utils/axiosConfig';
 
+// Most authenticated requests need the same bearer token lookup, so it is
+// centralized here to keep each thunk focused on its API contract.
 const getTokenFromState = (thunkAPI) => thunkAPI.getState().auth.user?.token;
 
 export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async (_, thunkAPI) => {
@@ -9,6 +15,8 @@ export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async 
     if (!token) return thunkAPI.rejectWithValue({ message: 'No active session', shouldLogout: true });
     const response = await axios.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
     const currentUser = { ...response.data, token };
+    // Local storage mirrors the current session so refreshes can restore auth
+    // state before Redux refetches the profile.
     localStorage.setItem('user', JSON.stringify(currentUser));
     return currentUser;
   } catch (error) {
@@ -20,6 +28,8 @@ export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async 
   }
 });
 
+// Many auth endpoints are plain POST requests with the same success/error
+// behavior, so this helper removes repetitive thunk boilerplate.
 const simplePost = (type, url, timeout) => createAsyncThunk(type, async (payload, thunkAPI) => {
   try {
     const response = await axios.post(url, payload, timeout ? { timeout } : undefined);
@@ -33,6 +43,8 @@ export const register = simplePost('auth/register', '/auth/register', 70000);
 export const login = createAsyncThunk('auth/login', async (userData, thunkAPI) => {
   try {
     const response = await axios.post('/auth/login', userData);
+    // Store the logged-in payload immediately so protected routes can resume
+    // without waiting for a second profile fetch.
     if (response.data) localStorage.setItem('user', JSON.stringify(response.data));
     return response.data;
   } catch (error) {
@@ -44,6 +56,7 @@ export const updateProfile = createAsyncThunk('auth/updateProfile', async (userD
   try {
     const token = getTokenFromState(thunkAPI);
     const response = await axios.put('/auth/updatedetails', userData, { headers: { Authorization: `Bearer ${token}` } });
+    // Keep the cached session user aligned with the latest saved profile fields.
     if (response.data) localStorage.setItem('user', JSON.stringify(response.data));
     return response.data;
   } catch (error) {
@@ -65,6 +78,8 @@ export const verifyEmailOtp = createAsyncThunk('auth/verifyEmailOtp', async (otp
   try {
     const token = getTokenFromState(thunkAPI);
     const response = await axios.post('/auth/verify-email-otp', { otp }, { headers: { Authorization: `Bearer ${token}` } });
+    // Verification may return an updated user object, so the local cache is
+    // refreshed when the server includes one.
     if (response.data?.user) localStorage.setItem('user', JSON.stringify(response.data.user));
     return response.data;
   } catch (error) {
@@ -96,6 +111,8 @@ export const verifyProfileOtp = createAsyncThunk('auth/verifyProfileOtp', async 
 export const uploadAvatar = createAsyncThunk('auth/uploadAvatar', async (file, thunkAPI) => {
   try {
     const token = getTokenFromState(thunkAPI);
+    // Avatar uploads are sent as multipart form data because the backend
+    // expects a binary file under the `avatar` field name.
     const formData = new FormData();
     formData.append('avatar', file);
     const response = await axios.post('/auth/avatar/upload', formData, { headers: { Authorization: `Bearer ${token}` } });
@@ -120,6 +137,7 @@ export const deleteAccount = createAsyncThunk('auth/deleteAccount', async (_, th
   try {
     const token = getTokenFromState(thunkAPI);
     await axios.delete('/auth/deleteaccount', { headers: { Authorization: `Bearer ${token}` } });
+    // Once the backend deletes the account, the local session cache must go too.
     localStorage.removeItem('user');
   } catch (error) {
     return thunkAPI.rejectWithValue(getApiErrorMessage(error));
@@ -127,5 +145,6 @@ export const deleteAccount = createAsyncThunk('auth/deleteAccount', async (_, th
 });
 
 export const logout = createAsyncThunk('auth/logout', async () => {
+  // Logout is intentionally client-side only because the API uses stateless JWTs.
   localStorage.removeItem('user');
 });

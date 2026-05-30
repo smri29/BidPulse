@@ -1,3 +1,7 @@
+/**
+ * Module: backend/jobs/registerBackgroundJobs.js
+ * Purpose: Registers scheduled backend jobs that run outside the request-response lifecycle.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/jobs/registerBackgroundJobs.js
 // Purpose: register Background Jobs

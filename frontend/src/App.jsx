@@ -1,3 +1,7 @@
+/**
+ * Module: App.jsx
+ * Purpose: Supports the App module and keeps its responsibility isolated by file name.
+ */
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { useSelector } from 'react-redux';

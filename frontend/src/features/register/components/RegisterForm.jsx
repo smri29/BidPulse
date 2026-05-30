@@ -1,3 +1,7 @@
+/**
+ * Module: features/register/components/RegisterForm.jsx
+ * Purpose: Presents the Register Form UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { ArrowRight, Check, CircleAlert, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { Link } from 'react-router-dom';

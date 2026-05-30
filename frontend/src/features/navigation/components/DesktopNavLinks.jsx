@@ -1,3 +1,7 @@
+/**
+ * Module: features/navigation/components/DesktopNavLinks.jsx
+ * Purpose: Presents the Desktop Nav Links UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { Link } from 'react-router-dom';
 

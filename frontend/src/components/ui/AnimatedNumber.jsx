@@ -1,3 +1,7 @@
+/**
+ * Module: components/ui/AnimatedNumber.jsx
+ * Purpose: Supports the Animated Number module and keeps its responsibility isolated by file name.
+ */
 import React, { useEffect, useRef, useState } from 'react';
 import { animate } from 'motion';
 import { useInView } from 'motion/react';

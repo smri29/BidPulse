@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/components/ProfileMetricCard.jsx
+ * Purpose: Presents the Profile Metric Card UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import AnimatedNumber from '../../../components/ui/AnimatedNumber';
 

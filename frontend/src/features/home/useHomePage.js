@@ -1,3 +1,7 @@
+/**
+ * Module: features/home/useHomePage.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Home Page flow.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';

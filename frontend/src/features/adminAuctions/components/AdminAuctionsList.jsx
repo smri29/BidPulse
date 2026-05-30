@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminAuctions/components/AdminAuctionsList.jsx
+ * Purpose: Presents the Admin Auctions List UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { Eye, Trash2 } from 'lucide-react';
 

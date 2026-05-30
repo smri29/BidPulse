@@ -1,3 +1,7 @@
+/**
+ * Module: features/bidderDashboard/BidderDashboardPage.jsx
+ * Purpose: Renders the Bidder Dashboard Page screen by composing smaller feature-specific sections.
+ */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';

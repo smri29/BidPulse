@@ -1,3 +1,7 @@
+/**
+ * Module: features/register/RegisterPage.jsx
+ * Purpose: Renders the Register Page screen by composing smaller feature-specific sections.
+ */
 import React from 'react';
 
 import Reveal from '../../components/ui/Reveal';

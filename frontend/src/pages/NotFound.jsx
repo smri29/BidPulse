@@ -1,3 +1,7 @@
+/**
+ * Module: pages/NotFound.jsx
+ * Purpose: Supports the Not Found module and keeps its responsibility isolated by file name.
+ */
 import React from 'react';
 import { Link } from 'react-router-dom';
 

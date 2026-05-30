@@ -1,3 +1,7 @@
+/**
+ * Module: features/auctionDetails/components/sections/AuctionHistorySection.jsx
+ * Purpose: Presents the Auction History Section UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 
 const AuctionHistorySection = ({ auction }) => (

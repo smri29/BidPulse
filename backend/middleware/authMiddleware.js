@@ -1,4 +1,8 @@
-﻿const jwt = require('jsonwebtoken');
+/**
+ * Module: backend/middleware/authMiddleware.js
+ * Purpose: Defines Express middleware that enforces shared request handling rules.
+ */
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const STATIC_ADMIN_DB_ID = '000000000000000000000999';
 

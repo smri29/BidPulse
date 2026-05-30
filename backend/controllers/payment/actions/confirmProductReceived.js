@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/payment/actions/confirmProductReceived.js
+ * Purpose: Implements one focused controller action so endpoint behavior stays separated by responsibility.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/payment/actions/confirmProductReceived.js
 // Purpose: confirm Product Received

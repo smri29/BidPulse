@@ -1,3 +1,7 @@
+/**
+ * Module: redux/adminSlice.js
+ * Purpose: Owns Redux state transitions and async lifecycle wiring for this part of the app.
+ */
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from '../utils/axiosConfig';
 

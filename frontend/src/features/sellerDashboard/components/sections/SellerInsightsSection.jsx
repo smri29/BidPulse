@@ -1,3 +1,7 @@
+/**
+ * Module: features/sellerDashboard/components/sections/SellerInsightsSection.jsx
+ * Purpose: Presents the Seller Insights Section UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 import { BarChart3, Clock3, DollarSign, Gavel, TrendingUp, Users } from 'lucide-react';

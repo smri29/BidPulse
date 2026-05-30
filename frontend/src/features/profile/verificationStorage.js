@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/verificationStorage.js
+ * Purpose: Wraps browser storage access for this feature so persistence rules stay centralized.
+ */
 const VERIFICATION_UI_STORAGE_PREFIX = 'auctionpulse_profile_verification_ui';
 
 export const getVerificationUiStorageKey = (user) => {

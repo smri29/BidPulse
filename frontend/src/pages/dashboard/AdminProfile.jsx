@@ -1,4 +1,8 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+/**
+ * Module: pages/dashboard/AdminProfile.jsx
+ * Purpose: Supports the Admin Profile module and keeps its responsibility isolated by file name.
+ */
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import axios from '../../utils/axiosConfig';
 import { Shield, Mail, Calendar, Activity, CheckCircle2, History, Package } from 'lucide-react';

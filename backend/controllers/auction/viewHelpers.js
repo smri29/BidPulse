@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/auction/viewHelpers.js
+ * Purpose: Provides controller-level coordination logic for this backend feature area.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/auction/viewHelpers.js
 // Purpose: view Helpers

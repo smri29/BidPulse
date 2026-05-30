@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminSupport/components/sections/AdminSupportTicketsPanel.jsx
+ * Purpose: Presents the Admin Support Tickets Panel UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { Search, Ticket } from 'lucide-react';
 

@@ -1,3 +1,7 @@
+/**
+ * Module: app/useAppRuntimeEffects.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use App Runtime Effects flow.
+ */
 import { useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { useDispatch } from 'react-redux';

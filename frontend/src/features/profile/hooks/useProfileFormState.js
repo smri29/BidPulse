@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/hooks/useProfileFormState.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Profile Form State flow.
+ */
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';

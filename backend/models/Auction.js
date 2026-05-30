@@ -1,3 +1,7 @@
+/**
+ * Module: backend/models/Auction.js
+ * Purpose: Defines a Mongoose data model used to persist this backend domain entity.
+ */
 const mongoose = require('mongoose');
 const MIN_TEST_REGISTRATION_WINDOW_HOURS = 2 / 60;
 

@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminDashboard/AdminDashboardPage.jsx
+ * Purpose: Renders the Admin Dashboard Page screen by composing smaller feature-specific sections.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 import {

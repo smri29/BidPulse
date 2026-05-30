@@ -1,4 +1,8 @@
-﻿import React from 'react';
+/**
+ * Module: components/Footer.jsx
+ * Purpose: Supports the Footer module and keeps its responsibility isolated by file name.
+ */
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Sparkles } from 'lucide-react';
 

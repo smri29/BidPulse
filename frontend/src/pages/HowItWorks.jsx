@@ -1,3 +1,7 @@
+/**
+ * Module: pages/HowItWorks.jsx
+ * Purpose: Supports the How It Works module and keeps its responsibility isolated by file name.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 import {

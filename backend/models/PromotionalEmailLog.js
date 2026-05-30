@@ -1,3 +1,7 @@
+/**
+ * Module: backend/models/PromotionalEmailLog.js
+ * Purpose: Defines a Mongoose data model used to persist this backend domain entity.
+ */
 const mongoose = require('mongoose');
 
 const promotionalEmailLogSchema = new mongoose.Schema(

@@ -1,3 +1,7 @@
+/**
+ * Module: backend/utils/promotionalCampaignService.js
+ * Purpose: Provides reusable backend helper logic shared across services, controllers, or jobs.
+ */
 const User = require('../models/User');
 const PromotionalEmailLog = require('../models/PromotionalEmailLog');
 const templates = require('./emailTemplates');

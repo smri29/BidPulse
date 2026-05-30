@@ -1,3 +1,7 @@
+/**
+ * Module: backend/routes/registerApiRoutes.js
+ * Purpose: Maps HTTP endpoints to the backend handlers responsible for each route.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/routes/registerApiRoutes.js
 // Purpose: register Api Routes

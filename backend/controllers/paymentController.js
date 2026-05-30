@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/paymentController.js
+ * Purpose: Provides controller-level coordination logic for this backend feature area.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/paymentController.js
 // Purpose: payment Controller compatibility export

@@ -1,3 +1,7 @@
+/**
+ * Module: features/helpCenter/helpCenterFaqs.js
+ * Purpose: Supports the help Center Faqs module and keeps its responsibility isolated by file name.
+ */
 export const helpCenterFaqs = [
   {
     q: 'What happens if delivery fails?',

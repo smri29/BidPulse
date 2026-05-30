@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/payment/index.js
+ * Purpose: Collects feature-specific controller actions into a single export surface for route files.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/payment/index.js
 // Purpose: module export index

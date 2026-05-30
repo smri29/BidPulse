@@ -1,3 +1,7 @@
+/**
+ * Module: main.jsx
+ * Purpose: Supports the main module and keeps its responsibility isolated by file name.
+ */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';

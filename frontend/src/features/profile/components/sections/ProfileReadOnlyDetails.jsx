@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/components/sections/ProfileReadOnlyDetails.jsx
+ * Purpose: Presents the Profile Read Only Details UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import {
   BadgeAlert,

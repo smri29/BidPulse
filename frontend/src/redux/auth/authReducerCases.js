@@ -1,3 +1,7 @@
+/**
+ * Module: redux/auth/authReducerCases.js
+ * Purpose: Groups reducer case handlers so the main Redux slice stays easier to read.
+ */
 import {
   deleteAccount,
   fetchCurrentUser,

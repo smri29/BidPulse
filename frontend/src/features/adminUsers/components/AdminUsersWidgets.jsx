@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminUsers/components/AdminUsersWidgets.jsx
+ * Purpose: Presents the Admin Users Widgets UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 import { Ban, CheckCircle, Mail, Shield, Unlock } from 'lucide-react';

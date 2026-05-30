@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/components/sections/ProfileHeaderSection.jsx
+ * Purpose: Presents the Profile Header Section UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 import { Mail, ShieldCheck, User } from 'lucide-react';

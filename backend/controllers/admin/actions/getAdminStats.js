@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/admin/actions/getAdminStats.js
+ * Purpose: Implements one focused controller action so endpoint behavior stays separated by responsibility.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/admin/actions/getAdminStats.js
 // Purpose: get Admin Stats

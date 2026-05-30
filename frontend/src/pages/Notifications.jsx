@@ -1,3 +1,7 @@
+/**
+ * Module: pages/Notifications.jsx
+ * Purpose: Supports the Notifications module and keeps its responsibility isolated by file name.
+ */
 import React, { useMemo } from 'react';
 import { Bell, CheckCircle, AlertTriangle, DollarSign, Clock, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';

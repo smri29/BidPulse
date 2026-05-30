@@ -1,3 +1,7 @@
+/**
+ * Module: features/auctionDetails/useAuctionDetails.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Auction Details flow.
+ */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { toast } from 'react-toastify';
@@ -7,6 +11,8 @@ import axios, { socketUrl } from '../../utils/axiosConfig';
 
 export const useAuctionDetails = (id) => {
   const { user } = useSelector((state) => state.auth);
+  // This hook keeps all auction-room interaction state near the page that
+  // needs it, while still separating the logic away from the JSX layout.
   const [auction, setAuction] = useState(null);
   const [loading, setLoading] = useState(true);
   const [bidAmount, setBidAmount] = useState('');
@@ -28,6 +34,8 @@ export const useAuctionDetails = (id) => {
       const res = await axios.get(`/auctions/${id}`);
       let nextAuction = res.data;
 
+      // If the current user won and returned from Stripe, try a light
+      // reconciliation pass so the UI reflects payment completion quickly.
       const isWinnerForAuction =
         user?.token &&
         String(nextAuction.winner?._id || nextAuction.winner || '') === String(user?._id || '') &&
@@ -50,6 +58,8 @@ export const useAuctionDetails = (id) => {
       }
 
       setAuction(nextAuction);
+      // Pre-fill the next logical values so the most common actions require
+      // less typing from the user.
       setBidAmount(String((nextAuction.currentPrice || 0) + 1));
       setRelistAmount(String(Math.max((nextAuction.startingPrice || 1) - 1, 1)));
     } catch {
@@ -60,6 +70,7 @@ export const useAuctionDetails = (id) => {
   }, [id, user?._id, user?.token]);
 
   useEffect(() => {
+    // A local clock drives all countdown labels from a single shared timestamp.
     const timer = setInterval(() => setTimeNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -72,6 +83,8 @@ export const useAuctionDetails = (id) => {
       socketRef.current = null;
     }
 
+    // The auction details view listens for server-side bid updates so the page
+    // stays live without relying on manual refreshes.
     const socket = io(socketUrl, {
       transports: ['websocket', 'polling'],
       auth: user?.token ? { token: user.token } : undefined,
@@ -95,6 +108,7 @@ export const useAuctionDetails = (id) => {
   }, [fetchAuction, id, user?.token]);
 
   useEffect(() => {
+    // Keep shipping details aligned with the latest known account name.
     setShippingDetails((prev) => ({
       ...prev,
       name: user?.name || prev.name || '',
@@ -102,6 +116,7 @@ export const useAuctionDetails = (id) => {
   }, [user?.name]);
 
   const registrationRemainingMs = useMemo(() => {
+    // Clamp all countdowns at zero so UI components never show negative times.
     if (!auction?.registrationEndAt) return 0;
     return Math.max(new Date(auction.registrationEndAt).getTime() - timeNow, 0);
   }, [auction?.registrationEndAt, timeNow]);
@@ -136,6 +151,8 @@ export const useAuctionDetails = (id) => {
   };
 
   const handleOpenAuctionRoom = async () => {
+    // Opening the room is restricted by backend turn order, but the frontend
+    // still handles optimistic messaging and refresh fallback.
     if (!user?.token) {
       toast.error('Please login first');
       return;
@@ -188,6 +205,8 @@ export const useAuctionDetails = (id) => {
 
   const handleNoRegistrationDecision = async (action) => {
     try {
+      // Relist requests include a revised starting price, while withdrawal
+      // requests only need the action type.
       await axios.post(
         `/auctions/${id}/no-registration-decision`,
         { action, reducedStartingPrice: action === 'relist' ? Number(relistAmount) : undefined },
@@ -203,6 +222,7 @@ export const useAuctionDetails = (id) => {
   const handlePayment = async (event) => {
     event.preventDefault();
     try {
+      // Successful checkout creation returns a Stripe-hosted redirect URL.
       const { data } = await axios.post(
         `/payment/checkout/${id}`,
         { shippingAddress: shippingDetails },
@@ -217,6 +237,8 @@ export const useAuctionDetails = (id) => {
   };
 
   const handleConfirmReceived = async () => {
+    // A native confirm is enough here because this is a single irreversible
+    // acknowledgement step after delivery.
     if (!window.confirm('Confirm that you received the product from AuctionPulse?')) return;
 
     try {

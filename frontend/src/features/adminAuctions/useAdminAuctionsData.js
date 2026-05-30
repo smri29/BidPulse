@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminAuctions/useAdminAuctionsData.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Admin Auctions Data flow.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';

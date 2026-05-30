@@ -1,3 +1,7 @@
+/**
+ * Module: features/auctionDetails/formatters.js
+ * Purpose: Provides display formatting helpers so presentation rules stay out of component bodies.
+ */
 export const formatRegistrationCountdown = (registrationRemainingMs) => {
   const totalSec = Math.floor(registrationRemainingMs / 1000);
   const hours = Math.floor(totalSec / 3600);

@@ -1,3 +1,7 @@
+/**
+ * Module: features/helpCenter/HelpCenterPage.jsx
+ * Purpose: Renders the Help Center Page screen by composing smaller feature-specific sections.
+ */
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';

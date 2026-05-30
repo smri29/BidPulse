@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminDashboard/useAdminDashboardData.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Admin Dashboard Data flow.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 

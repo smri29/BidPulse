@@ -1,3 +1,7 @@
+/**
+ * Module: features/sellerDashboard/components/sections/SellerDashboardHero.jsx
+ * Purpose: Presents the Seller Dashboard Hero UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { Download, FileText, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';

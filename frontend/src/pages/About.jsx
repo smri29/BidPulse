@@ -1,3 +1,7 @@
+/**
+ * Module: pages/About.jsx
+ * Purpose: Supports the About module and keeps its responsibility isolated by file name.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 import { Award, Globe, Gavel, ShieldCheck, Sparkles, Users } from 'lucide-react';

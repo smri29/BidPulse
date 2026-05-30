@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/useProfilePage.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Profile Page flow.
+ */
 import { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 

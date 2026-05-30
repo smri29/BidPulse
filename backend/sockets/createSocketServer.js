@@ -1,3 +1,7 @@
+/**
+ * Module: backend/sockets/createSocketServer.js
+ * Purpose: Configures realtime socket behavior and related notification wiring.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/sockets/createSocketServer.js
 // Purpose: create Socket Server

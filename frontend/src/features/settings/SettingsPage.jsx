@@ -1,3 +1,7 @@
+/**
+ * Module: features/settings/SettingsPage.jsx
+ * Purpose: Renders the Settings Page screen by composing smaller feature-specific sections.
+ */
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { DownloadCloud, Save, Shield } from 'lucide-react';

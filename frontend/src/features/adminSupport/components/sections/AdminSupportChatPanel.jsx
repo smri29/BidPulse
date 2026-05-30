@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminSupport/components/sections/AdminSupportChatPanel.jsx
+ * Purpose: Presents the Admin Support Chat Panel UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { MessageCircle, Send } from 'lucide-react';
 

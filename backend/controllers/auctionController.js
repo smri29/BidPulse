@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/auctionController.js
+ * Purpose: Provides controller-level coordination logic for this backend feature area.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/auctionController.js
 // Purpose: auction Controller compatibility export

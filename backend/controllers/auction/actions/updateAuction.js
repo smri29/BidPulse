@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/auction/actions/updateAuction.js
+ * Purpose: Implements one focused controller action so endpoint behavior stays separated by responsibility.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/auction/actions/updateAuction.js
 // Purpose: update Auction

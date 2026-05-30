@@ -1,3 +1,7 @@
+/**
+ * Module: pages/ProfileVerificationLink.jsx
+ * Purpose: Supports the Profile Verification Link module and keeps its responsibility isolated by file name.
+ */
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';

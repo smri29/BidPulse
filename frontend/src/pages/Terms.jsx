@@ -1,3 +1,7 @@
+/**
+ * Module: pages/Terms.jsx
+ * Purpose: Supports the Terms module and keeps its responsibility isolated by file name.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 import {

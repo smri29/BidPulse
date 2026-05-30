@@ -1,3 +1,7 @@
+/**
+ * Module: features/helpCenter/components/SupportTicketForm.jsx
+ * Purpose: Presents the Support Ticket Form UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { Send, Ticket } from 'lucide-react';
 

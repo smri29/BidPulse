@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminSupport/components/sections/AdminSupportHeader.jsx
+ * Purpose: Presents the Admin Support Header UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { Headphones, MailCheck, MessageCircle, Send, ShieldAlert, Ticket } from 'lucide-react';
 

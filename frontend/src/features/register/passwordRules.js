@@ -1,3 +1,7 @@
+/**
+ * Module: features/register/passwordRules.js
+ * Purpose: Supports the password Rules module and keeps its responsibility isolated by file name.
+ */
 export const getPasswordChecks = (value) => ({
   minLength: value.length >= 8,
   hasNumber: /\d/.test(value),

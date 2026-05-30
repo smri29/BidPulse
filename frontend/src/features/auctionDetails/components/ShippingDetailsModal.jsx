@@ -1,3 +1,7 @@
+/**
+ * Module: features/auctionDetails/components/ShippingDetailsModal.jsx
+ * Purpose: Presents the Shipping Details Modal dialog and keeps related UI inputs grouped in one place.
+ */
 import React from 'react';
 import { DollarSign, Lock, X } from 'lucide-react';
 

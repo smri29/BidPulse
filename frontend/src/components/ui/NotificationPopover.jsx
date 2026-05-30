@@ -1,3 +1,7 @@
+/**
+ * Module: components/ui/NotificationPopover.jsx
+ * Purpose: Supports the Notification Popover module and keeps its responsibility isolated by file name.
+ */
 import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Bell, CheckCircle, AlertTriangle, Clock, DollarSign } from 'lucide-react';

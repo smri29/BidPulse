@@ -1,3 +1,7 @@
+/**
+ * Module: redux/store.js
+ * Purpose: Supports the store module and keeps its responsibility isolated by file name.
+ */
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
 import auctionReducer from './auctionSlice';

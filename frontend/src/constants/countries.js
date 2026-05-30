@@ -1,3 +1,7 @@
+/**
+ * Module: constants/countries.js
+ * Purpose: Supports the countries module and keeps its responsibility isolated by file name.
+ */
 // Shared country list used in profile and verification flows.
 export const COUNTRIES = [
   'Afghanistan',

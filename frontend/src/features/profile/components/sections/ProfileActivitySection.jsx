@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/components/sections/ProfileActivitySection.jsx
+ * Purpose: Presents the Profile Activity Section UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { motion } from 'motion/react';
 

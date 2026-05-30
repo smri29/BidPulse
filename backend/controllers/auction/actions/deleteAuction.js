@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/auction/actions/deleteAuction.js
+ * Purpose: Implements one focused controller action so endpoint behavior stays separated by responsibility.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/auction/actions/deleteAuction.js
 // Purpose: delete Auction

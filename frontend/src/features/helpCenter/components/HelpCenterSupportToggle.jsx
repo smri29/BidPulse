@@ -1,3 +1,7 @@
+/**
+ * Module: features/helpCenter/components/HelpCenterSupportToggle.jsx
+ * Purpose: Presents the Help Center Support Toggle UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { Mail, MessageCircle } from 'lucide-react';
 

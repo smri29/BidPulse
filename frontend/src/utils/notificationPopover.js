@@ -1,3 +1,7 @@
+/**
+ * Module: utils/notificationPopover.js
+ * Purpose: Supports the notification Popover module and keeps its responsibility isolated by file name.
+ */
 const DISMISSED_STORAGE_PREFIX = 'AuctionPulse_notificationPopoverHidden';
 export const NOTIFICATION_POPOVER_EVENT = 'auctionpulse:notification-popover-hidden-change';
 

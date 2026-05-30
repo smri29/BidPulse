@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminAuctions/components/AuctionModerationModal.jsx
+ * Purpose: Presents the Auction Moderation Modal dialog and keeps related UI inputs grouped in one place.
+ */
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { CalendarClock, CheckCircle, XCircle } from 'lucide-react';

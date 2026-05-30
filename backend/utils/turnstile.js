@@ -1,3 +1,7 @@
+/**
+ * Module: backend/utils/turnstile.js
+ * Purpose: Provides reusable backend helper logic shared across services, controllers, or jobs.
+ */
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
 // Cloudflare Turnstile is used on the backend as the final authority for anti-bot verification.

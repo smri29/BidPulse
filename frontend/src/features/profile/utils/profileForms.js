@@ -1,3 +1,7 @@
+/**
+ * Module: features/profile/utils/profileForms.js
+ * Purpose: Holds reusable utility logic that is shared across multiple frontend features.
+ */
 export const createEmptyProfileForm = () => ({
   name: '',
   address: '',

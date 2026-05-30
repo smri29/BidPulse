@@ -1,3 +1,7 @@
+/**
+ * Module: features/sellerDashboard/SellerDashboardPage.jsx
+ * Purpose: Renders the Seller Dashboard Page screen by composing smaller feature-specific sections.
+ */
 import React from 'react';
 
 import SellerDashboardHero from './components/sections/SellerDashboardHero';

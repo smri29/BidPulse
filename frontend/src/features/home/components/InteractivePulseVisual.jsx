@@ -1,3 +1,7 @@
+/**
+ * Module: features/home/components/InteractivePulseVisual.jsx
+ * Purpose: Presents the Interactive Pulse Visual UI fragment so parent files can stay focused on flow and data.
+ */
 import React from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
 

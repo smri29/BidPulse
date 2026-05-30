@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/support/actions/updateSupportTicketStatus.js
+ * Purpose: Implements one focused controller action so endpoint behavior stays separated by responsibility.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/support/actions/updateSupportTicketStatus.js
 // Purpose: update Support Ticket Status

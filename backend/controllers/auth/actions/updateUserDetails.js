@@ -1,3 +1,7 @@
+/**
+ * Module: backend/controllers/auth/actions/updateUserDetails.js
+ * Purpose: Implements one focused controller action so endpoint behavior stays separated by responsibility.
+ */
 // ---------------------------------------------------------------------------
 // Module: backend/controllers/auth/actions/updateUserDetails.js
 // Purpose: update User Details

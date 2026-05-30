@@ -1,3 +1,7 @@
+/**
+ * Module: backend/config/db.js
+ * Purpose: Defines backend infrastructure configuration used by shared services and runtime setup.
+ */
 const mongoose = require('mongoose');
 
 const connectDB = async () => {

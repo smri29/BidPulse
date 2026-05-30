@@ -1,3 +1,7 @@
+/**
+ * Module: features/support/useSupportRoom.js
+ * Purpose: Contains the state, effects, and event handlers that drive the use Support Room flow.
+ */
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 

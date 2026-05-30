@@ -1,3 +1,7 @@
+/**
+ * Module: features/auctionDetails/deriveAuctionViewState.js
+ * Purpose: Supports the derive Auction View State module and keeps its responsibility isolated by file name.
+ */
 export const deriveAuctionViewState = ({
   auction,
   user,

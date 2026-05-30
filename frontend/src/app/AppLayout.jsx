@@ -1,3 +1,7 @@
+/**
+ * Module: app/AppLayout.jsx
+ * Purpose: Supports the App Layout module and keeps its responsibility isolated by file name.
+ */
 import React from 'react';
 import { ToastContainer } from 'react-toastify';
 

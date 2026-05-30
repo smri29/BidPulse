@@ -1,3 +1,7 @@
+/**
+ * Module: app/lazyPages.js
+ * Purpose: Supports the lazy Pages module and keeps its responsibility isolated by file name.
+ */
 import { lazy } from 'react';
 
 // Central lazy import map keeps route configuration readable.

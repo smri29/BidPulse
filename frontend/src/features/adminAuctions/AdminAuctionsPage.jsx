@@ -1,3 +1,7 @@
+/**
+ * Module: features/adminAuctions/AdminAuctionsPage.jsx
+ * Purpose: Renders the Admin Auctions Page screen by composing smaller feature-specific sections.
+ */
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
 

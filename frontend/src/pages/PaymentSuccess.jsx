@@ -1,4 +1,8 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+/**
+ * Module: pages/PaymentSuccess.jsx
+ * Purpose: Supports the Payment Success module and keeps its responsibility isolated by file name.
+ */
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
 import axios from '../utils/axiosConfig';
